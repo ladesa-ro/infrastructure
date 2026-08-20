@@ -4,7 +4,20 @@ Supply chain security, no contexto de software, é a preocupação com tudo que 
 
 ## SBOM: o inventário que resolveria isso
 
-Um SBOM (Software Bill of Materials) é exatamente esse inventário, gerado automaticamente a partir do build: toda dependência, direta e transitiva, com versão exata. Com um SBOM em mãos, responder "eu uso a biblioteca X, versão vulnerável?" é uma busca, não uma investigação. Os dois formatos dominantes hoje resolvem o mesmo problema com ênfase diferente: SPDX, um padrão da Linux Foundation e ISO, nasceu focado em compliance de licença; CycloneDX, da OWASP, nasceu mais focado em segurança, e inclui VEX (Vulnerability Exploitability eXchange), um jeito de declarar que uma vulnerabilidade conhecida numa dependência não é explorável no seu caso específico, informação que reduz ruído de alerta real.
+Um SBOM (Software Bill of Materials) é exatamente esse inventário, gerado automaticamente a partir do build: toda dependência, direta e transitiva, com versão exata. Com um SBOM em mãos, responder "eu uso a biblioteca X, versão vulnerável?" é uma busca, não uma investigação. Os dois formatos dominantes hoje resolvem o mesmo problema com ênfase diferente: SPDX, um padrão da Linux Foundation e ISO, nasceu focado em compliance de licença; CycloneDX, da [OWASP](owasp.md), nasceu mais focado em segurança, e inclui VEX (Vulnerability Exploitability eXchange), um jeito de declarar que uma vulnerabilidade conhecida numa dependência não é explorável no seu caso específico, informação que reduz ruído de alerta real.
+
+```mermaid
+sequenceDiagram
+    participant Vuln as vulnerabilidade anunciada (ex.: Log4Shell)
+    participant Time as time
+    participant SBOM as SBOM
+
+    Note over Time: sem SBOM
+    Time->>Time: investiga manualmente cada projeto
+    Note over Time: com SBOM
+    Time->>SBOM: busca "uso a biblioteca X, versão vulnerável?"
+    SBOM-->>Time: resposta imediata, é uma busca, não investigação
+```
 
 ## Quando compensa automatizar
 
@@ -13,6 +26,14 @@ Fixar versão de dependência manualmente, uma por uma, com checksum, funciona e
 ## Pra ir além
 
 Trivy e Syft são as ferramentas mais citadas pra gerar SBOM a partir de uma imagem de container já pronta, sem precisar instrumentar o processo de build. Ferramentas de scanning (ver [Vulnerability scanning](vulnerability-scanning.md)) normalmente consomem o SBOM gerado, não o contrário, SBOM é o inventário, scanning é a checagem contra base de vulnerabilidade conhecida.
+
+```mermaid
+flowchart LR
+    Imagem[imagem de container pronta] --> Gerador["Trivy/Syft: gera o SBOM"]
+    Gerador --> SBOMFile[SBOM: inventário de dependências]
+    SBOMFile --> Scanner[scanner de vulnerabilidade]
+    Scanner --> CVE[checa contra base de CVE conhecida]
+```
 
 A antítese de SBOM automatizado é não ter inventário nenhum, ou manter um manualmente, uma planilha atualizada por alguém sempre que lembra. Funciona enquanto o número de dependência é pequeno o bastante pra caber na cabeça de uma pessoa, mas quebra silenciosamente assim que esse número cresce, porque nada avisa quando o inventário manual ficou desatualizado.
 

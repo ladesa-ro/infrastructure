@@ -1,5 +1,15 @@
 # Promoção entre ambientes
 
+**TLDR**: depois que o CI builda, alguém (ou algo) decide qual versão vai pra qual ambiente e quando; GitLab modela isso como job manual, Azure DevOps como release separada do build, GitHub Actions via environment + input manual, GitOps como PR revisado num manifesto.
+
+| Modelo | Vá pra |
+|---|---|
+| Job manual, ambiente protegido | [GitLab](#gitlab-jobs-manuais-e-ambientes-protegidos) |
+| Release separada do build | [Azure DevOps](#azure-devops-release-classico-e-environments-em-yaml) |
+| Environment + input manual | [GitHub Actions](#github-actions-environments-approvals-e-o-que-falta-nativamente) |
+| Snapshot, stage de pipeline, plugin, PR revisado | [Outras estratégias](#outras-estrategias-relevantes) |
+| Comparação lado a lado | [Comparação entre os modelos](#comparacao-entre-os-modelos) |
+
 CI produz um artefato. Promoção é a etapa seguinte, e conceitualmente separada: decidir qual artefato específico, já construído, vai rodar em qual ambiente, e quando. As plataformas de CI/CD tratam essa etapa de formas bem diferentes: algumas têm um objeto de "release" separado do build, algumas modelam promoção como só mais um job de pipeline, e algumas assumem que git já é o registro de promoção e não precisam de UI nenhuma pra isso.
 
 ## GitLab: jobs manuais e ambientes protegidos
@@ -8,9 +18,26 @@ No [GitLab CI/CD](https://docs.gitlab.com/ci/environments/), um `environment` é
 
 [Ambientes protegidos](https://docs.gitlab.com/ci/environments/deployment_approvals/) vão além de `when: manual`: restringem quem tem permissão de rodar aquele job (só quem está na lista "Allowed to deploy") e podem exigir múltiplas aprovações antes da execução ser sequer permitida, um bloqueio genuíno, não só um botão que qualquer um pode apertar. GitLab também classifica ambientes automaticamente em tiers (development, staging, production) por convenção de nome, o que alimenta relatório e política sem configuração extra.
 
+```mermaid
+flowchart LR
+    Build[pipeline gera o artefato] --> Dev[deploy automático em staging]
+    Dev --> Gate{ambiente protegido: production}
+    Gate -->|aprovação de quem está na lista| Manual[job manual, when: manual]
+    Manual --> Prod[promovido pra production]
+```
+
 ## Azure DevOps: Release clássico e Environments em YAML
 
 O Azure DevOps historicamente separa duas coisas que o GitLab funde numa pipeline só: um **pipeline de build**, que produz e publica um artefato versionado, e um **pipeline de release** (Classic Release), que consome artefatos já publicados. É aqui que mora a diferença central em relação ao GitLab: ao criar uma release, quem implanta escolhe explicitamente qual build vai ser a fonte, a versão mais recente por padrão, mas também uma versão específica, ou a versão mais recente de uma branch específica (ver [Artifact sources em Classic release pipelines](https://learn.microsoft.com/en-us/azure/devops/pipelines/release/artifacts?view=azure-devops)). Isso permite pegar um build de duas semanas atrás, que nunca chegou a produção, e promovê-lo direto pra lá sem rodar o build de novo.
+
+```mermaid
+flowchart TB
+    Build[pipeline de build] --> B1[build v1.0]
+    Build --> B2[build v1.1]
+    Build --> B3[build v1.2, duas semanas atrás]
+    B3 -.->|escolhido explicitamente| Release[pipeline de release]
+    Release --> Prod[production, sem rebuild]
+```
 
 Cada [stage](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/stages?view=azure-devops) do release pipeline pode ter aprovação pré-deploy e pós-deploy, gate automatizado (uma checagem de API externa, por exemplo), e política de fila (deployar builds em sequência ou só o mais recente, cancelando os outros). O modelo mais novo, pipelines YAML multi-stage, converge pipeline de build e de deploy num arquivo só, com `stages` e `environments`, mas mantém a mesma ideia de aprovação por ambiente via [checks](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals) configurados no próprio ambiente, não no pipeline.
 
@@ -29,6 +56,15 @@ O que falta nativamente é o pedaço específico que o Azure DevOps oferece: esc
 **Jenkins**, sem conceito nativo de ambiente nem de release, historicamente resolve isso via plugin: o Copy Artifact Plugin copia artefato de um job pra outro, o Promoted Builds Plugin marca um build específico como "promovido" depois de critério manual ou automático, o que abre um job de deploy parametrizado com o número daquele build. É a versão "faça você mesmo" do que GitLab/Azure/Octopus oferecem prontos.
 
 **GitOps** (ver [Argo CD](argocd.md)) inverte a pergunta inteira: em vez de uma tela onde alguém escolhe "esta versão, para este ambiente", a versão desejada de cada ambiente já está declarada num arquivo, uma pasta ou branch por ambiente, cada um apontando pra uma tag de imagem. Promover é abrir um PR mudando essa referência (manualmente, ou automaticamente por uma ferramenta como o Argo CD Image Updater) e mergear, revisado como qualquer mudança de código; o agente de reconciliação (ver [pull vs. push](ci-cd.md#pull-vs-push-e-onde-o-runner-fica)) aplica sozinho a partir daí. Rastreabilidade e histórico de aprovação vivem no `git log`, não numa tela de release separada.
+
+```mermaid
+flowchart LR
+    Tag[nova tag de imagem publicada] --> PR[PR mudando a referência no manifest do ambiente]
+    PR --> Revisao[revisado como código]
+    Revisao --> Merge[merge]
+    Merge --> Agente[agente de reconciliação observa]
+    Agente --> Ambiente[aplica sozinho no ambiente]
+```
 
 ## Comparação entre os modelos
 

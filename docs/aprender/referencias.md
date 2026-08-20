@@ -4,6 +4,17 @@ Todo projeto de infraestrutura acaba escolhendo um conjunto específico de ferra
 
 Alguns links abaixo podem mudar de endereço com o tempo. Se algum estiver quebrado, busque pelo nome, a maioria desses recursos é fácil de achar de novo.
 
+```mermaid
+flowchart TB
+    Ref[esta página] --> Livros[Livros e referências canônicas]
+    Ref --> Listas[Roteiros e listas curadas]
+    Ref --> Blogs[Blogs de engenharia]
+    Ref --> Escritores[Escritores individuais]
+    Ref --> Cert[Certificações]
+    Ref --> Comunidades[Comunidades]
+    Ref --> Academia[Literatura acadêmica]
+```
+
 ## Livros e referências canônicas, gratuitas
 
 - **Site Reliability Engineering** e **The Site Reliability Workbook**, do Google, em [sre.google/books](https://sre.google/books): a referência mais citada da indústria pra confiabilidade tratada como engenharia.
@@ -25,6 +36,7 @@ Diferente de um livro ou um blog, esses recursos não se leem do início ao fim,
 - [awesome-iac](https://github.com/brandonhimpfen/awesome-iac): cobre a camada de provisionamento de infraestrutura (Terraform, Pulumi, Crossplane, CloudFormation, ver [IaC e provisionamento](iac-provisionamento.md)), incluindo ferramentas de teste (Terratest, Checkov) e policy as code (Open Policy Agent, Sentinel, ver [Policy as code](policy-as-code.md)).
 - [awesome-go, categoria devops-tools](https://awesome-go.com/devops-tools/): útil especificamente porque boa parte do ecossistema cloud native (Kubernetes, Terraform, o próprio `kubectl`) é escrito em Go, então essa lista cruza com as anteriores por um ângulo de linguagem, não de categoria de problema.
 - [awesome-devops-br](https://github.com/devops-br/awesome-devops-br): a versão em português da mesma ideia, com livros, blogs técnicos e comunidade de língua portuguesa, incluindo comparações como Puppet vs. Ansible escritas por quem trabalha com isso no Brasil.
+- [awesome-sysadmin](https://github.com/kahun/awesome-sysadmin), de kahun, a lista original que deu origem ao formato: mais de 40 categorias de ferramenta open source de administração de sistema (backup, virtualização, banco de dados, monitoramento, segurança), mais próxima do dia a dia de operação de servidor do que do vocabulário mais recente de "cloud native" das listas acima. O fork [awesome-foss/awesome-sysadmin](https://github.com/awesome-foss/awesome-sysadmin) é hoje o mais ativo e o mais estrelado dos dois, com licença de cada ferramenta identificada (SPDX), aviso de dependência não-livre, e uma versão HTML navegável com filtro, útil quando a lista Markdown cru fica grande demais pra ler linear.
 
 ## Blogs de engenharia de empresas grandes
 
@@ -69,3 +81,13 @@ Artigos da Wikipédia sobre conceitos técnicos ([DevOps](https://en.wikipedia.o
 ## Como usar esta página
 
 Se você está começando, não tente ler tudo isso de uma vez. Comece pelas páginas anteriores desta seção Aprender, volte aqui quando um conceito específico aparecer e você quiser ir mais fundo. Se você já é experiente, use como checklist: o que você já conhece bem, o que é familiar só de nome, e o que nunca ouviu falar é um jeito rápido de mapear lacuna real.
+
+```mermaid
+flowchart LR
+    subgraph Iniciante["Começando agora"]
+        Paginas[páginas anteriores do Aprender] --> Volta[volta aqui quando um conceito aparecer]
+    end
+    subgraph Experiente["Já experiente"]
+        Checklist[usa como checklist] --> Lacuna[mapeia lacuna real de conhecimento]
+    end
+```

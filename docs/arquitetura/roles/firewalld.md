@@ -10,6 +10,20 @@ As tasks usam `firewall-cmd` direto via `ansible.builtin.command`, com um `--que
 
 Atenção a essa pegadinha, conferida de verdade no node: o `sshd` da própria VM escuta na porta 22 padrão (`ss -tlnp` confirma, `0.0.0.0:22`), sem nenhum `Port` customizado no `sshd_config`, mesmo quem administra acessando por uma porta diferente de fora. O firewalld roda depois que o NAT já traduziu a porta, então a regra tem que liberar a porta que a VM enxerga, 22, não a porta externa usada em `~/.ssh/config`. Usar a porta externa aqui bloquearia o próprio SSH ao ligar o firewalld.
 
+```mermaid
+flowchart LR
+    Externo[porta externa, NAT] --> Roteador[roteador/provedor traduz]
+    Roteador --> VM[VM enxerga só a porta 22]
+    VM --> Firewalld[firewalld libera a porta 22, não a externa]
+```
+
 `firewalld_interface_admin` é a interface da [malha ZeroTier](../../aprender/ssh.md#vpn-ponto-a-site-vs-malha) já em uso neste node. O nome real foi conferido com `ip -o link show`; como o ZeroTier nomeia por rede, vale reconferir se o node for reprovisionado ou entrar em outra network. Administração, API do k3s e afins, fica restrita a essa interface, nunca exposta na interface pública.
 
 `firewalld_redes_k3s` são as duas faixas internas do [CNI](../../aprender/rede-interna-do-cluster.md) do k3s, pods em 10.42.0.0/16 e services em 10.43.0.0/16, conferidas de verdade no cluster com `kubectl get nodes -o jsonpath='{.items[0].spec.podCIDR}'` e o clusterIP do Service `kubernetes`. Elas vão pra zona confiável por origem, não por nome de interface, porque cada pod cria sua própria interface `veth*` dinamicamente e não daria pra manter uma lista fixa. Sem isso, o firewalld aplicaria a política padrão da zona pública também ao tráfego interno entre pods, derrubando a rede do cluster inteiro. Esse era o risco real por trás do aviso genérico de que a mudança "pode quebrar o tráfego entre pods".
+
+```mermaid
+flowchart TD
+    Pod1[pod cria veth dinamicamente] -.->|não dá pra listar por interface| ZonaOrigem[zona confiável por faixa de origem]
+    Pod2[10.42.0.0/16, 10.43.0.0/16] --> ZonaOrigem
+    ZonaOrigem --> TrafegoOK[tráfego interno entre pods preservado]
+```

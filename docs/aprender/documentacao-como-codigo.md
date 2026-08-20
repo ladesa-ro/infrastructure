@@ -2,9 +2,23 @@
 
 Docs-as-code é tratar documentação com o mesmo fluxo de trabalho de código: Markdown versionado em Git, revisado por PR, publicado automaticamente por CI, em vez de wiki editada direto no navegador, sem revisão nem histórico real.
 
+```mermaid
+flowchart LR
+    Escreve[alguém escreve Markdown] --> PR[abre PR]
+    PR --> Revisa[revisão, igual código]
+    Revisa --> Merge[merge]
+    Merge --> CI[CI publica automaticamente]
+```
+
 ## As três opções mais citadas
 
 MkDocs é a opção mais simples das três: lê um `mkdocs.yml`, converte Markdown pra HTML, gera um site estático leve, sem framework JavaScript nem Node.js envolvido, instala com `pip` e roda localmente em menos de um minuto. Docusaurus é mais rico: suporta versionamento de documentação lado a lado (útil pra biblioteca com múltiplas versões suportadas ao mesmo tempo) e MDX (Markdown com componente React embutido), à custa de precisar de um pipeline de build em Node.js. GitBook é o oposto dos outros dois: uma plataforma hospedada, com editor colaborativo, sem gerar arquivo estático nenhum pra você hospedar sozinho, boa pra time com gente não-técnica editando, ruim pra quem quer os arquivos versionados no próprio Git como fonte única.
+
+```mermaid
+flowchart LR
+    MkDocs["MkDocs: simples, sem Node.js"] --- Docusaurus["Docusaurus: versionamento, MDX, precisa Node.js"]
+    Docusaurus --- GitBook["GitBook: hospedado, sem arquivo estático próprio"]
+```
 
 ## Pra ir além
 

@@ -6,6 +6,18 @@ Threat modeling é o exercício de, antes de construir (ou revisando algo já co
 
 STRIDE, criado pela Microsoft nos anos 90, classifica ameaça em seis categorias (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege), aplicadas componente por componente sobre um diagrama de fluxo de dado do sistema. É técnico e direto, pensado pra quem já está no nível de arquitetura/engenharia. PASTA (Process for Attack Simulation & Threat Analysis) parte de um lugar diferente: risco de negócio primeiro, simulação de ataque realista depois, e junta gente de fora da engenharia (decisão de negócio) no processo, o que STRIDE não faz. Na prática, muitos times usam STRIDE pra identificar ameaça técnica e PASTA (ou algo inspirado nele) pra decidir prioridade de investimento.
 
+```mermaid
+flowchart TB
+    subgraph STRIDE["STRIDE"]
+        S1[diagrama de fluxo de dado] --> S2[seis categorias técnicas de ameaça]
+    end
+    subgraph PASTA["PASTA"]
+        P1[risco de negócio primeiro] --> P2[simulação de ataque realista]
+    end
+    S2 -->|identifica ameaça técnica| Prioridade[decisão de prioridade de investimento]
+    P2 -->|junta decisão de negócio| Prioridade
+```
+
 ## Um exemplo informal do mesmo raciocínio
 
 Separar AppProjects do Argo CD por nível de confiança (ver [Argo CD](argocd.md)) é, na essência, um exercício de threat modeling não formalizado: "o que aconteceria se uma dessas aplicações fosse comprometida" é a mesma pergunta que STRIDE ou PASTA fariam de forma estruturada, só que sem documentar como um dos dois frameworks.
@@ -14,4 +26,16 @@ Separar AppProjects do Argo CD por nível de confiança (ver [Argo CD](argocd.md
 
 A antítese de threat modeling estruturado é revisão de segurança ad-hoc, alguém olha o design e aponta o que parece arriscado, sem checklist nem categoria. Funciona quando quem revisa já tem muita experiência acumulada especificamente no tipo de sistema em questão, mas não transfere esse conhecimento pra quem revisa depois, e tende a deixar categorias inteiras de ameaça de fora sem perceber.
 
-Onde aprofundar: o [Threat Modeling Manifesto](https://www.threatmodelingmanifesto.org), assinado por vários praticantes influentes da área, é curto e resume princípios em vez de prescrever um processo único, bom ponto de partida antes de escolher STRIDE, PASTA, ou outro framework específico.
+```mermaid
+flowchart LR
+    subgraph AdHoc["Revisão ad-hoc"]
+        Design1[design] --> Intuicao[intuição de quem revisa]
+        Intuicao -.->|conhecimento não transferido| Proximo1[próxima revisão do zero]
+    end
+    subgraph Estruturado["Threat modeling estruturado"]
+        Design2[design] --> Framework[STRIDE/PASTA guia a busca]
+        Framework -->|categorias documentadas| Proximo2[próxima revisão reaproveita]
+    end
+```
+
+Onde aprofundar: o [Threat Modeling Manifesto](https://www.threatmodelingmanifesto.org), assinado por vários praticantes influentes da área, é curto e resume princípios em vez de prescrever um processo único, bom ponto de partida antes de escolher STRIDE, PASTA, ou outro framework específico. Um complemento comum a STRIDE/PASTA é consultar [MITRE ATT&CK](mitre-attack.md) na hora de listar ameaça: em vez de só categoria abstrata, ele traz técnica de ataque documentada de verdade pra cada categoria.

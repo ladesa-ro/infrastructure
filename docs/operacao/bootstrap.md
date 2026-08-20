@@ -1,6 +1,32 @@
 # Bootstrap mínimo na VM
 
+**TLDR**: 9 passos, do acesso SSH até o timer de reconciliação ativo. Passos 1 e o início do 5 rodam na sua máquina; o resto roda numa sessão SSH no node. Sempre `--check` antes de rodar de verdade.
+
 Passo a passo completo, do zero até o [Ansible](../aprender/ansible.md) e o [Argo CD](../aprender/argocd.md) assumirem sozinhos a reconciliação do que já está em `argocd/foundation`. Isso **não** inclui subir as aplicações (`web`, `docs`, `management-service`, `timetable-generator`, `authentication-service`) via Argo CD, isso depende de cada um desses repositórios ganhar sua própria pasta `gitops`, trabalho que ainda não começou em nenhum deles. Quando começar, vira sua própria documentação, não uma extensão desta.
+
+```mermaid
+flowchart TD
+    P0[0. acesso SSH] --> P1[1. instalar dependências]
+    P1 --> P2[2. senha do Ansible Vault]
+    P2 --> P3[3. deploy key infrastructure]
+    P3 --> P4[4. deploy key infrastructure-vault]
+    P4 --> P5[5. clonar o repositório]
+    P5 --> P6[6. primeira execução: k3s, vault-repo, Argo CD]
+    P6 --> P7[7. gate de drift zero]
+    P7 --> P8[8. ligar o firewalld]
+    P8 --> P9[9. ligar reconciliação automática]
+```
+
+```mermaid
+flowchart LR
+    subgraph SuaMaquina["Sua máquina"]
+        Passo1[passo 1] --- Passo5a[início do passo 5]
+    end
+    subgraph Node["Sessão SSH no node"]
+        Passo5b[resto do passo 5] --- Passo6a9[passos 6 a 9]
+    end
+    SuaMaquina -->|ssh alias| Node
+```
 
 Cada bloco de comando abaixo é pra copiar e colar, na ordem. A maioria roda direto numa sessão SSH no node; os passos 1 e a primeira parte do 5 são exceção, e rodam da sua própria máquina, marcados explicitamente onde isso muda. Todos assumem `bash` (funcionam em `zsh`/`dash`/`sh` também, a sintaxe é POSIX). Não funcionam em `fish`: usam `export VAR=valor` (em `fish` seria `set -x VAR valor`) e um laço `for ... do ... done` (em `fish` seria `for ... ; ... ; end`, com substituição de comando via `(...)` em vez de `$(...)`). Se a sessão SSH abrir num shell diferente, rodar `bash` primeiro pra entrar num subshell compatível antes de colar qualquer bloco.
 
@@ -74,6 +100,14 @@ Nesta primeira vez, `--check` não tem muito o que prever: k3s, o binário do he
 
 Atenção: essa execução reinicia o k3s. O node ainda não tem `/etc/rancher/k3s/config.yaml`, o role cria esse arquivo agora, e a criação conta como mudança, então o k3s reinicia pra aplicar. É esperado, é um reinício de controle-plane real, não algo que só aparece no `--check`. Pods continuam rodando, é só o control plane que pisca.
 
+```mermaid
+flowchart TD
+    Check["--check: só confirma sintaxe, nada existe ainda"] --> Real[execução real]
+    Real --> ConfigYaml[cria config.yaml, conta como mudança]
+    ConfigYaml --> Restart[k3s reinicia, control plane pisca]
+    Restart --> PodsOK[pods continuam rodando]
+```
+
 ```bash
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 ansible-playbook -i ansible/inventory/hosts.yml ansible/site.yml --skip-tags firewalld,self-pull-timer --vault-password-file /root/infrastructure-vault-pass --check
@@ -133,3 +167,15 @@ A saída precisa mostrar `active`. A partir daqui o node reaplica este repositó
 ## O que não está aqui
 
 Subir `web`, `docs`, `management-service`, `timetable-generator` e `authentication-service` via Argo CD. Depende de cada repositório ganhar sua própria pasta `gitops`, ainda não começou.
+
+## Cheatsheet: tags por passo
+
+| Passo | Tag/flag |
+|---|---|
+| 1 | `--tags prereqs` (em `bootstrap.yml`) |
+| 5 | `--tags clone` (em `bootstrap.yml`) |
+| 6 | `--skip-tags firewalld,self-pull-timer` (em `site.yml`) |
+| 8 | `--tags firewalld` |
+| 9 | `--tags self-pull-timer` |
+| Qualquer passo real | `--vault-password-file /root/infrastructure-vault-pass` |
+| Preview antes de aplicar | `--check` |

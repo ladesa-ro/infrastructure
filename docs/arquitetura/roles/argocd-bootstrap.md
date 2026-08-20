@@ -6,7 +6,26 @@ Bootstrap do [Argo CD](../../aprender/argocd.md): o release [Helm](../../aprende
 
 Dois AppProjects, não um só, por escopo de risco: `ladesa` cobre só `infrastructure.git` e os charts Helm que os serviços de foundation já usam hoje (Infisical, Portainer), com `clusterResourceWhitelist` largo (`ClusterRole`, `ClusterRoleBinding`, `CustomResourceDefinition`, os dois tipos de webhook), porque cert-manager e o Infisical Operator legitimamente precisam disso. `ladesa-satellites` cobre os cinco repositórios de time (`web`, `docs`, `management-service`, `timetable-generator`, `authentication-service`) mais o chart da Stakater, sem nenhum recurso cluster-wide além de `Namespace`. Sem essa separação, um commit malicioso ou uma credencial de CI comprometida em qualquer um desses cinco repositórios de time poderia criar um `ClusterRoleBinding` de cluster-admin ou um `MutatingWebhookConfiguration` interceptando qualquer pod do cluster, não só afetar o próprio namespace. Nenhum `app-*.yaml` desses repositórios existe ainda (ver [Estrutura](../estrutura.md)), então quando forem criados, devem declarar `project: ladesa-satellites`, nunca `project: ladesa`.
 
+```mermaid
+flowchart TB
+    subgraph Ladesa["AppProject ladesa"]
+        Infra[infrastructure.git] --> Whitelist1[clusterResourceWhitelist largo: ClusterRole, CRD, webhook]
+    end
+    subgraph Satellites["AppProject ladesa-satellites"]
+        Times[5 repositórios de time] --> Whitelist2[sem recurso cluster-wide além de Namespace]
+    end
+    Times -.->|credencial comprometida| Contido[dano contido ao próprio namespace]
+```
+
 O role nunca faz `helm upgrade --install` cego. Antes de tocar no release, lê o que já está instalado e compara com o que este repositório declara, e só aplica se houver divergência real, o mesmo princípio de [idempotência](../../aprender/ansible.md#idempotencia-na-pratica) do resto do Ansible. Isso importa porque o [`ansible-pull`](../../aprender/ansible.md#ansible-pull-vs-push) roda sozinho, sem ninguém olhando: sem essa checagem, um ajuste manual feito pra debugar em produção seria desfeito na próxima execução sem aviso. O mesmo vale pro root.yaml, sempre com kubectl diff antes de kubectl apply.
+
+```mermaid
+flowchart TD
+    Ciclo[ansible-pull roda sozinho, sem supervisão] --> Le[lê release já instalado]
+    Le --> Compara{diverge do declarado?}
+    Compara -->|não| NoOp[nada acontece, ajuste manual preservado]
+    Compara -->|sim| Aplica[helm upgrade, kubectl diff antes de apply]
+```
 
 A versão do chart, 10.3.3, entrega o Argo CD v3.5.1. Confirmado em agosto de 2026, contra a documentação oficial de versões testadas do Argo CD, que essa linha (v3.5.x) é testada contra Kubernetes v1.33, a versão do k3s deste cluster na época. Se `argocd_chart_versao` for atualizado no futuro, vale reconferir essa compatibilidade contra a mesma documentação, essa afirmação não se atualiza sozinha.
 

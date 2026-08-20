@@ -1,6 +1,15 @@
 # Checklist
 
+**TLDR**: 10 itens, na ordem do [bootstrap](bootstrap.md); não marca sem conferir de verdade; se um item falhar, não segue pro próximo.
+
 Esta seção é **how-to guide** (este checklist) e **tutorial** ([Bootstrap mínimo na VM](bootstrap.md)), no sentido de [Diátaxis](../aprender/diataxis.md): passo a passo prático, escrito pra ser executado, não pra ser lido como explicação. Cada item corresponde a um passo em [Bootstrap mínimo na VM](bootstrap.md). Serve pra saber onde você está e o que ainda falta, não pra marcar sem conferir de verdade o resultado de cada comando.
+
+```mermaid
+flowchart LR
+    Item[cada item do checklist] --> Confere{resultado conferido de verdade?}
+    Confere -->|sim| Proximo[segue pro próximo item]
+    Confere -->|não| Para[não marca, não segue]
+```
 
 - [ ] Acesso SSH ao node configurado (`~/.ssh/config`, alias próprio) (*sua máquina*): [configurar e validar](bootstrap.md#0-antes-de-tudo)
 - [ ] `ansible-core`, `jq` e o CLI do `argocd` instalados no node, checksum do `argocd` conferido pelo próprio Ansible (*sua máquina, via `bootstrap.yml`*): [configurar e validar](bootstrap.md#1-instalar-as-dependencias-no-node)
@@ -15,3 +24,14 @@ Esta seção é **how-to guide** (este checklist) e **tutorial** ([Bootstrap mí
 - [ ] Timer do `ansible-pull` habilitado (`systemctl status ansible-pull.timer` mostra `active`) (*node, via SSH*): [configurar e validar](bootstrap.md#9-ligar-a-reconciliacao-automatica)
 
 Se algum item não estiver limpo, não segue pro próximo. É a mesma regra do [gate de drift zero](../arquitetura/gate-de-drift-zero.md), só que pro bootstrap inteiro.
+
+```mermaid
+flowchart TD
+    subgraph SuaMaquina["Itens na sua máquina"]
+        SSH[acesso SSH] --- DeployKeys[gerar deploy keys] --- Clone[clonar repositório]
+    end
+    subgraph Node["Itens no node"]
+        Deps[dependências] --- VaultPass[senha do vault] --- Exec[primeira execução] --- Gate[gate de drift zero] --- FW[firewalld] --- Timer[timer ativo]
+    end
+    SuaMaquina --> Node
+```

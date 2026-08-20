@@ -1,5 +1,15 @@
 # Desenvolvimento
 
+**TLDR**: três modos, três vozes (Aprender impessoal, Arquitetura fatual, Operação imperativa); linha editorial adaptada de oito style guides externos; dois gates de CI (lychee + travessão); commits Conventional Commits só no título.
+
+| Termo | Vá pra |
+|---|---|
+| Modo e voz por seção | [Estrutura de conteúdo](#estrutura-de-conteudo-modo-e-voz-por-secao) |
+| Regras de redação adotadas | [Linha editorial](#linha-editorial) |
+| Lint de Ansible/YAML | [Lint](#lint) |
+| Gates de CI da documentação | [Qualidade da documentação](#qualidade-da-documentacao) |
+| Convenção de commit | [Commits](#commits) |
+
 ## Estrutura de conteúdo: modo e voz por seção
 
 As três trilhas ([Aprender](../aprender/index.md), [Arquitetura](../arquitetura/index.md), [Operação](checklist.md)) seguem [Diátaxis](../aprender/diataxis.md), não são só uma divisão temática. Cada seção corresponde a um modo diferente, e o modo determina tanto o que entra em cada página quanto a voz usada pra escrever ela:
@@ -11,6 +21,15 @@ As três trilhas ([Aprender](../aprender/index.md), [Arquitetura](../arquitetura
 **Operação é tutorial e how-to guide**: segunda pessoa, voz ativa, modo imperativo ("copie a chave", "rode o comando"), assumindo que quem lê já sabe o básico (isso está no Aprender) e só precisa do passo concreto. `bootstrap.md`, guiado do início ao fim pra quem nunca fez, é mais tutorial; `checklist.md`, pra quem já sabe e só quer confirmar onde parou, é mais how-to guide.
 
 Misturar um modo com outro é o erro mais comum que Diátaxis nomeia: uma página do Aprender que menciona um fato real deste cluster, ou uma página de Operação que para pra explicar teoria em vez de instruir, confunde as duas pessoas que estavam lendo por motivos diferentes.
+
+```mermaid
+flowchart TB
+    Aprender["Aprender: explicação, 3ª pessoa, sem fato de cluster"]
+    Arquitetura["Arquitetura: referência, 3ª pessoa, fato + porquê"]
+    Operacao["Operação: tutorial/how-to, 2ª pessoa, imperativo"]
+    Aprender -.->|erro comum| Mistura[fato de cluster infiltrado]
+    Operacao -.->|erro comum| Teoria[teoria em vez de instrução]
+```
 
 ## Linha editorial
 
@@ -39,6 +58,16 @@ Além da estrutura por modo acima, as regras de redação abaixo vêm de ler os 
 ## Qualidade da documentação
 
 O workflow `quality.yml` roda em todo push e PR que toca `docs/` ou o `README.md`, com dois gates: [lychee](https://lychee.cli.rs) checa todo link externo e interno das páginas (configurado em `.lychee.toml`, aceitando `403`/`429` como respostas válidas de bot-blocking, não link quebrado de verdade), e um segundo job falha se encontrar o caractere de travessão em qualquer arquivo `.md`, a regra de estilo deste repositório (ver [Referências](../aprender/referencias.md) e o restante da seção Aprender pra exemplo do tom esperado). O princípio por trás dos dois gates é o mesmo que a [documentação da Stripe](https://docs.stripe.com), citada como referência de qualidade em documentação de API, aplica: link quebrado ou inconsistência de estilo falha o build, não aparece publicado pra quem lê. Rodar localmente antes de propor mudança grande:
+
+```mermaid
+flowchart LR
+    Push[push ou PR toca docs/] --> Lychee[gate: lychee, links quebrados]
+    Push --> Travessao[gate: grep de travessão]
+    Lychee --> Falha1{falhou?}
+    Travessao --> Falha2{falhou?}
+    Falha1 -->|sim| Bloqueia[build falha, não publica]
+    Falha2 -->|sim| Bloqueia
+```
 
 ```bash
 docker run --rm -v "$PWD":/docs -w /docs lycheeverse/lychee --config .lychee.toml 'docs/**/*.md' 'README.md'

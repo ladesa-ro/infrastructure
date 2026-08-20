@@ -1,6 +1,27 @@
 # Ansible
 
+**TLDR**: descreve o estado desejado de uma máquina em YAML e aplica via SSH, sem agente no destino; `--check` mostra o que vai mudar antes de mudar de verdade; `ansible-pull` faz o próprio host se reconfigurar sozinho, periodicamente.
+
+| Termo | Vá pra |
+|---|---|
+| Push vs. pull | [`ansible-pull` vs. push](#ansible-pull-vs-push) |
+| Rodar de novo sem quebrar nada | [Idempotência na prática](#idempotencia-na-pratica) |
+| Ver o que vai mudar antes de mudar | [Modo `--check`](#modo-check) |
+| Por que nunca burlar o `--check` | [Por que nunca forçar mutação real sob `--check`](#por-que-nunca-forcar-mutacao-real-sob-check) |
+| Rodar só um pedaço | [Tags](#tags) |
+| Cifrar segredo em arquivo | [Ansible Vault](#ansible-vault) |
+
 Ansible descreve o estado desejado de uma máquina (pacotes instalados, arquivos de configuração, serviços ativos) em YAML, e aplica isso via SSH, sem precisar de agente instalado no destino. Cada unidade de trabalho é uma **task**; um conjunto ordenado de tasks reutilizável é um **role**; um **playbook** decide quais roles rodam, em que ordem, contra quais hosts.
+
+```mermaid
+flowchart TD
+    P[playbook] -->|decide ordem e hosts| R1[role A]
+    P --> R2[role B]
+    R1 --> T1[task 1]
+    R1 --> T2[task 2]
+    R2 --> T3[task 1]
+    R2 --> T4[task 2]
+```
 
 ## `ansible-pull` vs. push
 
@@ -62,5 +83,28 @@ Configuration management (o que o Ansible faz) é uma camada diferente de infras
 Pra times maiores, existe uma camada de orquestração e UI sobre o Ansible puro, hoje chamada Ansible Automation Platform (o antigo Ansible Tower foi descontinuado e virou "automation controller", um componente dentro dessa plataforma maior), ou sua versão open source, AWX. Um setup baseado só em `ansible-pull` cumpre o mesmo papel de "rodar sozinho" sem precisar dessa camada extra.
 
 Vale também conhecer o debate mutable vs. immutable infrastructure: a abordagem do Ansible é mutável, a mesma máquina é reconfigurada repetidamente, in-place. A antítese, imutável, reconstrói a imagem inteira a cada mudança e substitui a máquina, em vez de editá-la; Packer é a ferramenta mais citada nessa categoria pra imagem de VM (AMI da AWS, disco de VMware, e outros formatos, todos a partir da mesma definição), e a versão mais comum disso hoje é simplesmente a imagem de container em si, reconstruída a cada mudança de Dockerfile, o mesmo princípio aplicado numa unidade menor. Cada abordagem tem trade-offs diferentes de velocidade, auditabilidade e complexidade operacional.
+
+```mermaid
+flowchart LR
+    subgraph Mutavel["Mutável (Ansible)"]
+        M1[máquina existente] -->|reconfigura in-place| M1
+    end
+    subgraph Imutavel["Imutável (Packer, imagem de container)"]
+        I1[imagem nova] -->|substitui inteira| I2[máquina antiga descartada]
+    end
+```
+
+## Cheatsheet
+
+| Comando/conceito | O que faz |
+|---|---|
+| `ansible-playbook site.yml --check` | Simula, mostra o que mudaria, não aplica |
+| `ansible-playbook site.yml --tags X` | Roda só a tag `X` |
+| `ansible-playbook site.yml --skip-tags X` | Roda tudo, exceto a tag `X` |
+| `ansible-pull -U <repo>` | O próprio host clona e aplica o playbook localmente |
+| `ansible-vault encrypt <arquivo>` | Cifra um arquivo com senha simétrica |
+| `--vault-password-file <arquivo>` | Aponta pra senha na hora de decifrar |
+| `ok` no resultado de uma task | Idempotente, nada mudou |
+| `changed` no resultado de uma task | Aplicou uma mudança real |
 
 Onde aprofundar: a documentação oficial em [docs.ansible.com](https://docs.ansible.com) cobre todo módulo em detalhe, mas é referência, não material de aprendizado sequencial. Pra isso, *Ansible for DevOps*, de Jeff Geerling ([ansiblefordevops.com](https://www.ansiblefordevops.com)), é o livro mais citado da comunidade, escrito por alguém que administra Ansible em produção desde 2013 e mantém o livro atualizado continuamente.

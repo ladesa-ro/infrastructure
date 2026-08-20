@@ -8,6 +8,14 @@ O objetivo deste repositório é ser a fonte da verdade de como a VM é configur
 
 **Idempotente**: rodar duas vezes produz o mesmo resultado que rodar uma vez. Isso é o que permite rodar tudo de novo, periodicamente, sem supervisão (o `ansible-pull` a cada ciclo, o Argo CD continuamente) sem medo de quebrar algo que já está funcionando.
 
+```mermaid
+flowchart LR
+    Estado[estado desejado declarado em código] --> Ferramenta[Ansible / Argo CD compara com o real]
+    Ferramenta --> Decide{diferença?}
+    Decide -->|sim| Converge[converge pro declarado]
+    Decide -->|não| NoOp[no-op, idempotente]
+```
+
 ## O fluxo de ponta a ponta
 
 ```mermaid
@@ -41,6 +49,17 @@ flowchart TD
 ```
 
 Duas metades bem diferentes: a esquerda (Ansible) cuida só do que precisa existir antes de qualquer coisa em Kubernetes existir, o próprio k3s, o firewall, os segredos de bootstrap, e o release do Argo CD. A partir do momento em que o `root.yaml` é aplicado, a direita (Argo CD) assume: tudo em `argocd/apps` é sincronizado continuamente, sem depender do Ansible rodar de novo. A fronteira entre as duas metades está detalhada em [`argocd-bootstrap`](roles/argocd-bootstrap.md).
+
+```mermaid
+flowchart LR
+    subgraph Ansible["Metade Ansible"]
+        K3s[k3s] --- FW[firewall] --- Segredos[segredos de bootstrap] --- Release[release do Argo CD]
+    end
+    subgraph ArgoCDMetade["Metade Argo CD"]
+        Root[root.yaml aplicado] --> Continuo[sincronização contínua de argocd/apps]
+    end
+    Release -->|fronteira: root.yaml| Root
+```
 
 ## Por onde ir a partir daqui
 

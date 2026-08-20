@@ -20,7 +20,6 @@ theme:
         icon: material/brightness-4
         name: Tema claro
   features:
-    - navigation.sections
     - navigation.top
     - content.code.copy
     - content.action.edit
@@ -67,14 +66,18 @@ nav:
               - Mensageria e streaming: aprender/mensageria.md
               - Artifact management: aprender/artifact-management.md
               - Container registry: aprender/container-registry.md
+              - Servidores web: aprender/servidores-web.md
           - Confiabilidade:
               - Observabilidade: aprender/observabilidade.md
               - Service mesh: aprender/service-mesh.md
+              - Service discovery: aprender/service-discovery.md
               - Chaos engineering: aprender/chaos-engineering.md
               - Backup e disaster recovery: aprender/backup-e-disaster-recovery.md
           - Segurança e compliance:
               - Supply chain e SBOM: aprender/supply-chain-e-sbom.md
               - Threat modeling: aprender/threat-modeling.md
+              - MITRE ATT&CK: aprender/mitre-attack.md
+              - OWASP: aprender/owasp.md
               - Zero Trust: aprender/zero-trust.md
               - Runtime security: aprender/runtime-security.md
               - Vulnerability scanning: aprender/vulnerability-scanning.md
@@ -82,6 +85,7 @@ nav:
               - Identidade e diretório: aprender/identidade-e-diretorio.md
           - Fundamentos alternativos:
               - NixOS: aprender/nixos.md
+              - Virtualização: aprender/virtualizacao.md
               - Documentação como código: aprender/documentacao-como-codigo.md
               - Diátaxis: aprender/diataxis.md
       - Referências: aprender/referencias.md

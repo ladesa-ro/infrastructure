@@ -2,6 +2,15 @@
 
 Um projeto de infraestrutura pequeno costuma viver na intersecção de vários papéis que, em times maiores, seriam pessoas ou squads diferentes; uma pessoa só cobre pedaços de todos eles. Vale saber nomear cada um, o que cada um prioriza, e onde as prioridades tensionam entre si, mesmo que você nunca venha a se especializar em só um. [roadmap.sh](https://roadmap.sh) tem roteiros visuais e gratuitos, nó por nó, pra cada um dos papéis abaixo, útil como checklist de "o que ainda falta" pra quem já está no meio do caminho.
 
+```mermaid
+flowchart TB
+    DevOps[DevOps: cultura de responsabilidade compartilhada] --> SRE[SRE: confiabilidade como engenharia]
+    DevOps --> PlatEng[Platform Engineering: golden paths pros times]
+    DevOps --> DevSecOps[DevSecOps: segurança dentro do fluxo]
+    DevSecOps --> GitOps[GitOps: Git como fonte única, aplicado em produção]
+    PlatEng --> GitOps
+```
+
 ## SRE (Site Reliability Engineering)
 
 Disciplina criada no Google, formalizada no livro *Site Reliability Engineering*, disponível de graça em [sre.google/books](https://sre.google/books). O foco é confiabilidade tratada como engenharia, não como heroísmo: SLOs (objetivos de nível de serviço), orçamento de erro (error budget), post-mortems sem culpa, automação do trabalho repetitivo ("toil"). Ver também [Site reliability engineering](https://en.wikipedia.org/wiki/Site_reliability_engineering) na Wikipédia.
@@ -26,4 +35,13 @@ Um princípio mais estreito que os anteriores, específico de como aplicar mudan
 
 Velocidade de entrega (o que Platform Engineering geralmente otimiza) e confiabilidade (o que SRE geralmente otimiza) competem por atenção o tempo todo: automatizar rápido demais sem gate de segurança é o oposto de DevSecOps; travar tudo atrás de aprovação manual é o oposto de DevOps. Reconhecer esse tipo de tensão, e escolher deliberadamente onde ceder, é boa parte do trabalho real desses papéis, mais do que decorar qual ferramenta usar.
 
+```mermaid
+flowchart LR
+    Velocidade["Velocidade de entrega (Platform Engineering)"] <-->|tensão constante| Confiabilidade["Confiabilidade (SRE)"]
+    Velocidade -.->|rápido demais, sem gate| RiscoSeg[oposto de DevSecOps]
+    Confiabilidade -.->|aprovação manual em tudo| RiscoLento[oposto de DevOps]
+```
+
 Um framework útil pra pensar em como times e plataformas se organizam ao redor desses papéis: *Team Topologies*, de Matthew Skelton e Manuel Pais ([teamtopologies.com](https://teamtopologies.com)), que nomeia o "platform team" como um dos quatro tipos fundamentais de time em engenharia de software.
+
+ChatOps é uma prática adjacente, não um papel: rodar comando de operação (deploy, rollback, escalar réplica) a partir de um bot dentro do chat do time (Slack, Discord, Microsoft Teams) em vez de abrir um terminal separado, o que deixa o histórico de quem rodou o quê, e quando, visível pra todo mundo no mesmo canal onde a conversa sobre o incidente já está acontecendo.

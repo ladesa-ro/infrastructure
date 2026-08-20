@@ -6,11 +6,26 @@ Compliance, no sentido de segurança da informação, é demonstrar formalmente,
 
 SOC 2 é o mais comum entre empresas SaaS americanas: cobre cinco critérios (segurança, disponibilidade, integridade de processamento, confidencialidade, privacidade), com dois tipos de relatório, Type I (retrato num instante) e Type II (efetividade dos controles ao longo de um período, geralmente 6-12 meses, o que a maioria dos clientes enterprise realmente pede). ISO 27001 é o equivalente internacional, um padrão global, com certificação de verdade por um órgão credenciado, e compartilha a maior parte dos mesmos controles que o SOC 2. NIST (o framework de cibersegurança do governo americano, não uma certificação) organiza tudo em cinco funções (Identify, Protect, Detect, Respond, Recover) e não emite certificado, é uma referência voluntária que outros frameworks (incluindo os dois acima) costumam citar como base.
 
+```mermaid
+flowchart TB
+    NIST["NIST: referência voluntária, sem certificado"] --> SOC2["SOC 2: relatório, foco SaaS americano"]
+    NIST --> ISO["ISO 27001: certificação global, mesmos controles"]
+    SOC2 -.->|Type I| Instante[retrato num instante]
+    SOC2 -.->|Type II| Periodo[efetividade ao longo de 6-12 meses]
+```
+
 ## Certificação de infraestrutura, não só de profissional
 
 SOC 2/ISO 27001/NIST certificam processo de segurança de uma organização. Existe uma categoria vizinha, certificação de infraestrutura física e de conformidade setorial, que certifica a instalação ou o setor, não a pessoa que administra ([Referências](referencias.md) cobre certificação profissional individual, LFCS/CKA/Terraform Associate, categoria diferente desta).
 
 **Tier III**, do Uptime Institute, classifica datacenter por redundância física: um site Tier III tem manutenibilidade concorrente, dá pra fazer manutenção em qualquer componente sem derrubar o serviço, com caminho redundante de energia e refrigeração, mas ainda vulnerável a algum ponto único de falha (Tier IV remove isso também). A certificação tem duas fases: TCDD (Tier Certification of Design Documents), antes de construir, e TCCF (Tier Certification of Constructed Facility), depois de construído, com inspeção no local.
+
+```mermaid
+flowchart LR
+    Projeto[projeto do datacenter] --> TCDD[TCDD: certifica o design, antes de construir]
+    TCDD --> Construcao[datacenter construído]
+    Construcao --> TCCF[TCCF: inspeção no local, depois de construído]
+```
 
 **ISO 27701** estende o modelo do ISO 27001 especificamente pra dado pessoal (PII): um Privacy Information Management System (PIMS), voltado pra quem processa dado de terceiro e precisa demonstrar isso formalmente, adjacente a LGPD/GDPR na prática, mesmo sem ser a lei em si.
 

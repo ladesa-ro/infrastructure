@@ -23,9 +23,23 @@ Esta seção é **explicação**, no sentido de [Diátaxis](diataxis.md): contex
 
 Depois de entender essas peças, [Arquitetura](../arquitetura/index.md) mostra como um cluster real as usa na prática, e [Operação](../operacao/checklist.md) é o roteiro executável. Nenhuma página acima é exaustiva de propósito: cada uma termina com "Pra ir além", apontando pra outras ferramentas, abordagens e literatura além do que foi escolhido em qualquer projeto específico.
 
+```mermaid
+flowchart LR
+    Aprender[Aprender: explicação geral] --> Arquitetura[Arquitetura: referência de um cluster real]
+    Arquitetura --> Operacao[Operação: roteiro executável]
+```
+
 ## Também relevante
 
 As páginas acima cobrem o núcleo mais comum desse tipo de stack. As páginas abaixo cobrem categorias inteiras do ecossistema de infraestrutura que apareceram com força nas listas curadas em [Referências](referencias.md), mais periféricas ou específicas de escala/setor. Estão organizadas em quatro grupos, servem pra você conhecer o mapa completo, não só o núcleo.
+
+```mermaid
+flowchart TB
+    Relevante["Também relevante"] --> Entrega["Entrega e plataforma"]
+    Relevante --> Confiab["Confiabilidade"]
+    Relevante --> Seguranca["Segurança e compliance"]
+    Relevante --> Fundamentos["Fundamentos alternativos"]
+```
 
 ### Entrega e plataforma
 
@@ -38,6 +52,7 @@ As páginas acima cobrem o núcleo mais comum desse tipo de stack. As páginas a
 | Desacoplar quem produz um evento de quem consome | [Mensageria e streaming](mensageria.md) |
 | Onde um pacote/binário publicado vive, versionado | [Artifact management](artifact-management.md) |
 | Onde uma imagem de container publicada vive, versionada | [Container registry](container-registry.md) |
+| Nginx, Apache, Caddy: servir arquivo estático e repassar pra aplicação por trás | [Servidores web](servidores-web.md) |
 
 ### Confiabilidade
 
@@ -45,6 +60,7 @@ As páginas acima cobrem o núcleo mais comum desse tipo de stack. As páginas a
 |---|---|
 | Métrica, log e trace: como saber o que está acontecendo dentro do cluster | [Observabilidade](observabilidade.md) |
 | Criptografia e roteamento automático entre serviços dentro do cluster | [Service mesh](service-mesh.md) |
+| Como um serviço acha o endereço de outro que muda o tempo todo | [Service discovery](service-discovery.md) |
 | Injetar falha de propósito pra descobrir problema antes que ele aconteça sozinho | [Chaos engineering](chaos-engineering.md) |
 | Ter cópia recuperável de dado, e um roteiro real pra voltar a operar depois de perder algo | [Backup e disaster recovery](backup-e-disaster-recovery.md) |
 
@@ -54,6 +70,8 @@ As páginas acima cobrem o núcleo mais comum desse tipo de stack. As páginas a
 |---|---|
 | Inventário de dependência de um build, e por que isso importa depois de um incidente como o Log4Shell | [Supply chain e SBOM](supply-chain-e-sbom.md) |
 | Perguntar sistematicamente "o que pode dar errado aqui, de propósito" antes de construir | [Threat modeling](threat-modeling.md) |
+| O catálogo público de tática e técnica de adversário real, usado pra detecção e defesa | [MITRE ATT&CK](mitre-attack.md) |
+| A fundação por trás do Top 10, do ASVS e de boa parte do vocabulário de segurança de aplicação | [OWASP](owasp.md) |
 | Eliminar confiança implícita baseada em localização de rede | [Zero Trust](zero-trust.md) |
 | Detectar comportamento anômalo depois que algo já está rodando | [Runtime security](runtime-security.md) |
 | Checar código/dependência/imagem contra vulnerabilidade conhecida | [Vulnerability scanning](vulnerability-scanning.md) |
@@ -65,5 +83,6 @@ As páginas acima cobrem o núcleo mais comum desse tipo de stack. As páginas a
 | Categoria | Vá pra |
 |---|---|
 | O sistema operacional inteiro declarado, não só o que o Ansible toca | [NixOS](nixos.md) |
+| Máquina virtual vs. container: KVM, QEMU, libvirt, Xen | [Virtualização](virtualizacao.md) |
 | Documentação versionada e revisada como código, em vez de wiki solto | [Documentação como código](documentacao-como-codigo.md) |
 | Os quatro tipos de documentação técnica, e por que misturá-los confunde o leitor | [Diátaxis](diataxis.md) |

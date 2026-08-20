@@ -2,9 +2,23 @@
 
 Um container registry guarda imagem de container versionada por tag (ver [CI, CD e CD](ci-cd.md)), pronta pra ser puxada por qualquer node que precise rodar aquele container. É uma peça que fica entre "build da imagem" e "deploy": um manifesto Kubernetes ou um chart Helm sempre referencia uma tag de imagem que já existe num registry, nunca uma imagem construída localmente.
 
+```mermaid
+flowchart LR
+    Build[build da imagem] --> Registry[container registry, tag fixa]
+    Registry --> Node1[node A puxa a imagem]
+    Registry --> Node2[node B puxa a imagem]
+    Manifesto[manifesto/chart] -.->|referencia a tag| Registry
+```
+
 ## As opções mais citadas
 
 Docker Hub é o registry público mais conhecido, gratuito com limite de taxa pra puxar imagem, é onde a maioria das imagens base (`postgres`, `redis`, `nginx`) vive. Harbor, projeto graduado da CNCF, é a opção self-hosted mais citada quando um time precisa de controle próprio: soma scanning de vulnerabilidade (integra com Trivy, ver [Vulnerability scanning](vulnerability-scanning.md)), RBAC, assinatura de imagem, e replicação entre registries. Quay, da Red Hat, é comparável a Harbor em recurso, com plano hospedado gratuito pra repositório público. GitHub Container Registry (GHCR) é o mais simples de adotar pra quem já vive no GitHub: GitHub Actions builda e publica sem precisar configurar credencial nenhuma, usando o próprio token da Action.
+
+```mermaid
+flowchart TB
+    Publico["Docker Hub: público, simples, limite de taxa"] --- GHCR["GHCR: mais simples pra quem já vive no GitHub"]
+    GHCR --- SelfHosted["Harbor/Quay: self-hosted, scanning, RBAC, replicação"]
+```
 
 ## Pra ir além
 

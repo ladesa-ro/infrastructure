@@ -1,5 +1,16 @@
 # SSH
 
+**TLDR**: um protocolo pra shell remoto e clone de Git, com chave assimétrica; chave pessoal autentica uma pessoa, deploy key autentica só um repositório; túnel SSH (`-L`/`-R`/`-D`/`-J`) encapsula outro tráfego sem precisar de VPN.
+
+| Termo | Vá pra |
+|---|---|
+| Chave pessoal vs. deploy key | [Chave pessoal vs. deploy key](#chave-pessoal-vs-deploy-key) |
+| Alias pra não digitar tudo de novo | [`~/.ssh/config` e alias](#sshconfig-e-alias) |
+| Confiar na primeira conexão | [`known_hosts`](#known_hosts-e-por-que-fixar-a-chave-do-host-remoto) |
+| Evitar chave errada | [`IdentitiesOnly=yes`](#identitiesonlyyes) |
+| Encapsular outro tráfego | [Tunelamento SSH](#tunelamento-ssh) |
+| VPN ponto-a-site vs. malha | [VPN](#vpn-ponto-a-site-vs-malha) |
+
 SSH (Secure Shell) é o protocolo usado tanto pra administrar um servidor remoto (uma sessão de terminal remota) quanto pra um servidor clonar repositórios Git privados (`git@github.com:...`). São duas finalidades diferentes, e é comum usar duas chaves diferentes pra cada uma, importante não confundir as duas.
 
 ## Chave pessoal vs. deploy key
@@ -36,6 +47,23 @@ Esse arquivo costuma ficar só na máquina de quem administra, fora de qualquer 
 
 Toda primeira conexão SSH pergunta "confia nessa máquina?" (TOFU, trust-on-first-use). Deixar isso acontecer sem checar é um risco real de man-in-the-middle. Uma prática mais segura é fixar de antemão a chave pública oficial do host remoto (por exemplo via `ansible.builtin.known_hosts`, antes de qualquer clone automatizado) em vez de aceitar cegamente (`accept_hostkey: true`).
 
+```mermaid
+sequenceDiagram
+    participant C as cliente SSH
+    participant H as host remoto
+
+    Note over C,H: TOFU, sem known_hosts fixado
+    C->>H: primeira conexão
+    H-->>C: apresenta chave pública
+    C->>C: "confia nessa máquina?" (risco de MITM)
+
+    Note over C,H: com known_hosts fixado antes
+    C->>C: chave oficial já registrada
+    C->>H: conecta
+    H-->>C: apresenta chave pública
+    C->>C: compara com o que já está fixado, sem perguntar
+```
+
 ## `IdentitiesOnly=yes`
 
 Rodar `git clone`/`git pull` com `GIT_SSH_COMMAND="ssh -i <chave> -o IdentitiesOnly=yes"` evita um problema comum: sem essa opção, o cliente SSH tenta todas as chaves disponíveis no agente antes da que foi especificada, o que pode causar falha de autenticação silenciosa ou usar a chave errada por engano quando várias deploy keys convivem na mesma máquina.
@@ -52,6 +80,22 @@ Além de abrir um shell remoto, uma conexão SSH pode encapsular outro tráfego 
 
 **Jump host / `ProxyJump`** (`-J`): encadeia a conexão através de um host intermediário pra alcançar um destino final que não é acessível diretamente, o mecanismo por trás do padrão de [bastion host](https://en.wikipedia.org/wiki/Bastion_host) citado abaixo.
 
+```mermaid
+flowchart LR
+    subgraph Local["-L, local forwarding"]
+        LA[porta local] -->|via túnel| LB[destino visto pelo servidor]
+    end
+    subgraph Remote["-R, remote forwarding"]
+        RA[porta no servidor] -->|via túnel| RB[destino visto pelo cliente]
+    end
+    subgraph Dynamic["-D, dynamic forwarding"]
+        DA[proxy SOCKS local] -->|destino escolhido por app| DB[qualquer destino, via túnel]
+    end
+    subgraph Jump["-J, jump host"]
+        JA[cliente] --> JB[host intermediário] --> JC[destino final inacessível direto]
+    end
+```
+
 ## VPN: ponto-a-site vs. malha
 
 Pra acesso administrativo (não git), outro padrão comum em infraestrutura maior é o [bastion host](https://en.wikipedia.org/wiki/Bastion_host) / jump host: em vez de expor SSH de cada máquina pra internet, só um host intermediário é exposto, e todo acesso passa por ele (`ProxyJump` no `~/.ssh/config`, ver a seção de tunelamento acima). Uma VPN resolve um problema adjacente por outro mecanismo, [rede privada](https://en.wikipedia.org/wiki/Virtual_private_network) não exposta publicamente, em vez de um host único exposto.
@@ -60,6 +104,21 @@ Duas categorias diferentes de VPN valem distinguir. **Ponto-a-site** é o modelo
 
 WireGuard, separadamente, não é bem uma categoria própria: é um protocolo, bem mais novo e mais simples que o do OpenVPN, e hoje é a base de boa parte das ferramentas mais recentes da categoria (incluindo Tailscale), usado tanto em VPN ponto-a-site quanto como camada de transporte dentro de uma malha.
 
+```mermaid
+flowchart TB
+    subgraph PontoASite["Ponto-a-site (OpenVPN)"]
+        S1[servidor VPN central]
+        CA[cliente A] <--> S1
+        CB[cliente B] <--> S1
+        Note1[todo tráfego passa pelo servidor, mesmo entre A e B]
+    end
+    subgraph Malha["Malha (ZeroTier, Tailscale)"]
+        MA[dispositivo A] <-->|direto quando possível| MB[dispositivo B]
+        MA -.->|coordenação| Coord[servidor de coordenação]
+        MB -.->|coordenação| Coord
+    end
+```
+
 Uma malha VPN costuma vir com resolução de nome própria pros dispositivos dentro dela, split DNS (ver [DNS e DHCP](dns-e-dhcp.md)): nome interno da malha resolve só através do servidor DNS dela, enquanto o resto do tráfego DNS segue pro resolvedor público normal.
 
 ## Pra ir além
@@ -67,5 +126,18 @@ Uma malha VPN costuma vir com resolução de nome própria pros dispositivos den
 SSH é um protocolo de acesso remoto seguro entre vários que já existiram: antecedeu ferramentas como `telnet`/`rsh`, que trafegavam tudo (inclusive senha) em texto puro, e continua sendo o padrão de fato pra Linux/Unix hoje. No mundo Windows, o equivalente histórico é RDP (Remote Desktop Protocol), um protocolo bem diferente, gráfico em vez de texto, embora o Windows moderno também suporte SSH nativamente. Mosh (mobile shell) é um parente direto do SSH, pensado pra conexão instável (Wi-Fi ruim, roaming entre redes), usa SSH só pra autenticar e depois assume a sessão por UDP.
 
 Deploy keys estáticas têm uma desvantagem real: se vazam, valem pra sempre até alguém revogar manualmente. A antítese disso é acesso de curta duração: certificados SSH emitidos por uma CA interna, via ferramentas como o SSH secrets engine do HashiCorp Vault ou o Teleport, que expiram sozinhos em minutos ou horas em vez de ficarem válidos indefinidamente.
+
+## Cheatsheet
+
+| Comando/flag | O que faz |
+|---|---|
+| `ssh-keygen -t ed25519 -f <arquivo>` | Gera um par de chaves novo |
+| `ssh -i <chave> usuario@host` | Conecta usando uma chave específica |
+| `ssh -L porta_local:destino:porta_destino host` | Local forwarding |
+| `ssh -R porta_remota:destino:porta_destino host` | Remote forwarding |
+| `ssh -D porta_local host` | Dynamic forwarding, cria proxy SOCKS |
+| `ssh -J bastion destino` | Jump host via `ProxyJump` |
+| `GIT_SSH_COMMAND="ssh -i <chave> -o IdentitiesOnly=yes"` | Força uma chave específica pro Git |
+| `ansible.builtin.known_hosts` | Fixa a chave do host antes do TOFU perguntar |
 
 Documentação de referência: `man ssh_config` e `man sshd_config` cobrem todas as opções mencionadas aqui em detalhe.

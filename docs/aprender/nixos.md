@@ -2,9 +2,28 @@
 
 NixOS é uma distribuição Linux inteira construída ao redor de um princípio radical: o sistema operacional inteiro, todo pacote instalado, todo serviço, toda configuração, é declarado num único arquivo (`/etc/nixos/configuration.nix`), e aplicar essa configuração constrói um sistema novo do zero a partir dela, em vez de editar o sistema existente incrementalmente. Cada geração do sistema fica guardada; se uma atualização quebrar algo, o rollback é instantâneo, volta pra geração anterior, que continua existindo intacta, não foi sobrescrita.
 
+```mermaid
+flowchart LR
+    Config[configuration.nix mudou] --> Build[constrói geração nova, do zero]
+    Build --> G1[geração 1] & G2[geração 2] & G3[geração 3, atual]
+    G3 -.->|quebrou algo?| Rollback[rollback instantâneo]
+    Rollback --> G2
+```
+
 ## A diferença real de filosofia contra configuration management tradicional
 
 Ansible (ver [Ansible](ansible.md)) é declarativo dentro de cada task, mas o sistema final é resultado de aplicar uma sequência de tasks sobre uma máquina que já existia antes, e só administra o que as tasks efetivamente tocam, o resto do sistema fica fora do controle declarado. NixOS não tem esse ponto cego: a configuração descreve o sistema inteiro, não um subconjunto dele, então não existe "deriva" possível entre o que está declarado e o que existe de verdade, o próprio mecanismo de build garante isso.
+
+```mermaid
+flowchart TB
+    subgraph AnsibleModel["Ansible"]
+        M1[máquina pré-existente] --> T1[tasks tocam só o que é declarado]
+        T1 -.->|resto do sistema| PontoCego[fora do controle declarado]
+    end
+    subgraph NixModel["NixOS"]
+        M2[configuration.nix] -->|descreve o sistema inteiro| Sistema[nenhum ponto cego possível]
+    end
+```
 
 ## O custo de adotar
 

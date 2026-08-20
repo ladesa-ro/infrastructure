@@ -2,9 +2,28 @@
 
 Um message broker desacopla quem produz um evento (uma aplicação que precisa avisar "isto aconteceu") de quem consome ele, sem os dois precisarem estar disponíveis ao mesmo tempo nem se conhecerem diretamente. Diferente de uma chamada HTTP direta entre dois serviços, o produtor publica numa fila ou tópico e segue em frente, e o broker garante a entrega (com graus diferentes de garantia, dependendo da ferramenta) pro consumidor, mesmo que ele esteja temporariamente fora do ar.
 
+```mermaid
+sequenceDiagram
+    participant P as produtor
+    participant B as broker
+    participant C as consumidor
+
+    P->>B: publica evento e segue em frente
+    Note over C: consumidor fora do ar
+    B->>B: guarda o evento na fila/tópico
+    Note over C: consumidor volta
+    B->>C: entrega o evento
+```
+
 ## As três opções mais citadas
 
 RabbitMQ é o broker mais tradicional dos três: modelo de fila com roteamento flexível (exchanges, routing keys), décadas de uso em sistema transacional de negócio, e o mais fácil de operar pra quem está começando. RabbitMQ, Kafka e NATS resolvem o mesmo problema geral com trade-offs bem diferentes. Kafka é otimizado pra throughput altíssimo e retenção longa do histórico de eventos (um consumidor pode "rebobinar" e reprocessar tudo desde o início), o padrão de fato pra event sourcing e pipeline de dados em escala, mas exige bem mais recurso de infraestrutura pra rodar bem (a própria documentação recomenda algo como 64–128GB de RAM e discos SSD dedicados por broker numa instalação séria) e mais complexidade operacional que os outros dois. NATS é o mais leve e o mais rápido dos três, latência sub-milissegundo, pensado pra comunicação entre microsserviços e IoT; com a extensão JetStream ganha persistência e durabilidade que o NATS original não tinha. RabbitMQ fica no meio: mais simples que Kafka, mais recurso (fila com garantia de entrega configurável, suporte a cluster) que o NATS básico.
+
+```mermaid
+flowchart LR
+    NATS["NATS: mais leve, latência sub-ms"] --> RabbitMQ["RabbitMQ: meio-termo, fácil de operar"]
+    RabbitMQ --> Kafka["Kafka: throughput altíssimo, mais recurso e complexidade"]
+```
 
 ## Pra ir além
 

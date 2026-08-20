@@ -2,6 +2,13 @@
 
 Este repositório não guarda tudo. Não pode: senha e chave privada, por definição, não vão pra um repositório em texto puro nem cifrado sem necessidade. O risco disso não é o valor estar fora do git, é o quê está fora do git virar conhecimento tribal que ninguém mais lembra. Esta tabela existe pra isso não acontecer: cada linha aponta pra uma coisa que não está versionada, mas o fato dela existir, onde ela vive, e como recriar, está.
 
+```mermaid
+flowchart LR
+    ForaGit[valor fora do git] --> SoValor{só o valor fica de fora?}
+    SoValor -->|sim, sem registro| Tribal[conhecimento tribal, ninguém lembra]
+    SoValor -->|não, linha nesta tabela| Documentado[existência, local e recriação documentados]
+```
+
 | O quê | Onde | Arquivo ou local exato | Por que não pode estar no git | Como recriar se perder |
 |---|---|---|---|---|
 | Acesso [SSH](../aprender/ssh.md) ao node | *sua máquina* | `~/.ssh/config`, alias próprio | endereço e porta reais de um servidor de produção não devem ficar públicos num repositório | Pedir o endereço e a porta a quem já tem acesso, configurar o alias localmente |
@@ -15,3 +22,19 @@ Este repositório não guarda tudo. Não pode: senha e chave privada, por defini
 | Acesso da machine identity aos projetos | *Infisical* | dentro de cada projeto, Access Control | é permissão, não segredo, mas só existe na configuração do Infisical, não em arquivo nenhum | Conceder de novo, projeto por projeto, pela UI |
 
 Regra pra manter esta lista útil: toda vez que alguma coisa nova precisar viver fora do git, uma linha entra aqui antes de considerar o trabalho terminado.
+
+```mermaid
+flowchart TB
+    subgraph SuaMaquina["Sua máquina"]
+        SSHConfig["~/.ssh/config"]
+    end
+    subgraph Node["Node"]
+        VaultPass[senha do Ansible Vault] --- Keys[deploy keys, metade privada] --- Deps[ansible-core, jq, argocd CLI]
+    end
+    subgraph GitHub["GitHub"]
+        PubKeys[deploy keys, metade pública]
+    end
+    subgraph Infisical["Infisical"]
+        Projetos[projetos e valores] --- Acesso[acesso da machine identity]
+    end
+```

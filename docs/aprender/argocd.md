@@ -1,5 +1,14 @@
 # Argo CD
 
+**TLDR**: observa um repositório Git e mantém o cluster Kubernetes sincronizado sozinho, sem `kubectl apply` manual. Application é a unidade sincronizada, AppProject limita o que ela pode criar, e sync pode ser manual ou automático.
+
+| Termo | Vá pra |
+|---|---|
+| Registrar tudo de uma vez | [O padrão app-of-apps](#o-padrao-app-of-apps) |
+| Limite de permissão | [AppProject](#appproject-o-limite-de-permissao) |
+| Aprovar cada mudança ou não | [Sync manual vs. automático](#sync-manual-vs-automatico) |
+| Quem é dono do quê com o Ansible | [Fronteira de posse](#fronteira-de-posse-com-o-ansible) |
+
 Argo CD é uma ferramenta de GitOps: ele observa um repositório Git continuamente e mantém o cluster Kubernetes sincronizado com o que está declarado lá, sem precisar de ninguém rodando `kubectl apply` manualmente. Cada unidade sincronizada é um **Application**, um recurso Kubernetes próprio que aponta pra um caminho num repositório Git e um destino (namespace, cluster).
 
 ## O padrão app-of-apps
@@ -21,11 +30,32 @@ flowchart TD
 
 Um Application, sozinho, poderia sincronizar qualquer tipo de recurso Kubernetes, de qualquer repositório. O **AppProject** é o que restringe isso: define de quais repositórios Git um Application daquele projeto pode vir, e quais tipos de recurso (`kind`) ele tem permissão de criar. Um padrão comum é separar AppProjects por nível de confiança, um mais permissivo pra código de infraestrutura própria, outro mais restrito pra repositórios de times diferentes, limitando o dano possível de uma credencial de CI comprometida num deles.
 
+```mermaid
+flowchart TB
+    subgraph Confiavel["AppProject de confiança"]
+        RepoA[repositório próprio] --> AppA[Application]
+        AppA -->|kind amplo| ClusterWide[ClusterRole, CRD, webhook]
+    end
+    subgraph Restrito["AppProject restrito"]
+        RepoB[repositório de time externo] --> AppB[Application]
+        AppB -->|kind limitado| Namespaced[só recurso do próprio namespace]
+    end
+```
+
 ## Sync manual vs. automático
 
 Ver [Promoção entre ambientes](promocao-entre-ambientes.md) pra como esse modelo de promoção via Git se compara ao de GitLab, Azure DevOps e GitHub Actions.
 
 Um Application pode sincronizar automaticamente (qualquer mudança no Git é aplicada sozinha) ou manualmente (alguém aprova cada sync). É uma opção do Argo CD, não uma regra fixa da ferramenta, e times que adotam GitOps sobre um sistema que já tem dado real de produção costumam começar em modo manual, só ligando sync automático depois que o diff contra o cluster real está comprovadamente vazio.
+
+```mermaid
+stateDiagram-v2
+    [*] --> ModoManual: adoção sobre sistema com dado real
+    ModoManual --> DiffConferido: cada sync aprovado manualmente
+    DiffConferido --> DiffVazio: diff contra cluster real bate limpo
+    DiffVazio --> ModoAutomatico: sync automático ligado
+    ModoAutomatico --> ModoAutomatico: qualquer mudança no Git aplica sozinha
+```
 
 ## Fronteira de posse com o Ansible
 
@@ -39,8 +69,30 @@ Dentro do próprio ecossistema GitOps existe uma variação de como versionar se
 
 A antítese do GitOps é o modelo mais antigo, CD tradicional por push (ver a distinção completa entre pull e push em [CI, CD e CD](ci-cd.md)): um pipeline (Jenkins, GitHub Actions) roda `kubectl apply`/`helm upgrade` direto contra o cluster ao final do build, com uma credencial de escrita guardada no próprio pipeline. Funciona, e ainda é o modelo mais comum fora do mundo Kubernetes, mas espalha credencial de escrita do cluster por todo runner de CI, e não tem reconciliação contínua: se alguém mexer manualmente no cluster depois do deploy, nada corrige isso sozinho, diferente do agente do Argo CD, que detecta e corrige drift a cada ciclo.
 
+```mermaid
+flowchart LR
+    subgraph GitOpsPull["GitOps, pull"]
+        Git1[repositório Git] -.->|observado continuamente| Agente[agente dentro do cluster]
+        Agente -->|reconcilia e corrige drift| Cluster1[cluster]
+    end
+    subgraph PushTradicional["CD tradicional, push"]
+        Pipeline[pipeline de CI, credencial de escrita] -->|kubectl apply, uma vez| Cluster2[cluster]
+        Cluster2 -.->|drift manual depois| Cluster2
+    end
+```
+
 Progressive delivery (canary releases, blue-green deployments, rollback automático baseado em métricas) é uma camada que fica acima do GitOps básico: Argo Rollouts é a extensão mais comum pra isso dentro do próprio ecossistema Argo.
 
 Helm e Kustomize são as duas ferramentas de templating/composição de manifests Kubernetes mais comuns, e resolvem o mesmo problema (evitar duplicar YAML entre ambientes) de jeitos opostos: Helm empacota tudo num chart parametrizado por values, Kustomize parte de um manifest base e aplica patches por cima, sem nenhuma linguagem de template.
+
+## Cheatsheet
+
+| Comando/conceito | O que faz |
+|---|---|
+| `argocd app diff <app> --core` | Compara o Git contra o cluster, sem senha de admin |
+| `argocd app sync <app>` | Sincroniza manualmente |
+| `syncPolicy.automated` | Liga sync automático na Application |
+| `clusterResourceWhitelist` | Define `kind` de recurso cluster-wide permitido no AppProject |
+| `namespaceResourceWhitelist` | Define `kind` de recurso por namespace permitido |
 
 Onde aprofundar: a documentação oficial em [argo-cd.readthedocs.io](https://argo-cd.readthedocs.io) é completa e inclui um getting started guiado.

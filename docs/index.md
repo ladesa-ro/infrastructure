@@ -4,7 +4,21 @@ Bootstrap declarativo e setup GitOps de um cluster k3s de node único. Os dados 
 
 O [Ansible](aprender/ansible.md) instala o [k3s](aprender/k3s.md), configura o [firewalld](aprender/firewalld.md), clona os segredos de bootstrap do [`infrastructure-vault`](https://github.com/ladesa-ro/infrastructure-vault), instala o release do [Argo CD](aprender/argocd.md), e aplica um único arquivo, o `root.yaml`. O Argo CD sincroniza tudo que descobre a partir dali, em `argocd/apps`. Nenhum segredo, em texto puro ou cifrado, fica neste repositório: todos vivem em `infrastructure-vault`.
 
+```mermaid
+flowchart LR
+    Ansible[Ansible] --> K3s[k3s] --> FW[firewalld] --> Vault[clona infrastructure-vault]
+    Vault --> ArgoCD[instala Argo CD]
+    ArgoCD -->|kubectl apply| Root[root.yaml]
+    Root --> Apps[argocd/apps sincronizado continuamente]
+```
+
 Esta documentação está dividida em três trilhas, que se referenciam entre si mas podem ser lidas de forma independente. A divisão segue [Diátaxis](aprender/diataxis.md): cada trilha responde a um tipo diferente de necessidade, não ao mesmo assunto visto de ângulos diferentes.
+
+```mermaid
+flowchart TB
+    Aprender["Aprender: explicação, sem instrução"] --> Arquitetura["Arquitetura: referência deste cluster"]
+    Arquitetura --> Operacao["Operação: tutorial e how-to guide"]
+```
 
 ## [Aprender](aprender/index.md) (explicação)
 
