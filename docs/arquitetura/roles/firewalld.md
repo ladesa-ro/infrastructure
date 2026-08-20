@@ -1,6 +1,6 @@
 # firewalld
 
-Liga um firewall pela primeira vez num node de produção que hoje não tem nenhum. Confirmei isso direto no node: `firewalld` não está instalado nem ativo em `ldsa`. É a mudança de maior risco de todo o bootstrap, uma regra errada pode cortar o próprio SSH ou quebrar o tráfego entre pods.
+Liga um firewall pela primeira vez num node de produção que hoje não tem nenhum. Confirmei isso direto no node: `firewalld` não está instalado nem ativo. É a mudança de maior risco de todo o bootstrap, uma regra errada pode cortar o próprio SSH ou quebrar o tráfego entre pods.
 
 Por isso este role fica na tag `firewalld`, pulada por padrão pelo timer do ansible-pull. Só roda manualmente, com `--check` primeiro, com alguém acompanhando. Depois da primeira execução supervisionada, o role é idempotente e pode voltar pro caminho automático.
 

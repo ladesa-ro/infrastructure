@@ -1,0 +1,48 @@
+name: quality
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/**
+      - README.md
+      - .lychee.toml
+      - .github/workflows/quality.yml
+  pull_request:
+    paths:
+      - docs/**
+      - README.md
+      - .lychee.toml
+      - .github/workflows/quality.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checar links quebrados (lychee)
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --config .lychee.toml
+            --no-progress
+            'docs/**/*.md'
+            'README.md'
+          fail: true
+
+  estilo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sem travessão em nenhuma doc (regra de estilo deste repositório)
+        run: |
+          if grep -rn "—" docs/ README.md; then
+            echo "Achei travessão (—) num arquivo de documentação. Reescreva com vírgula, ponto, ou frase separada."
+            exit 1
+          fi

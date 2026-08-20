@@ -14,7 +14,7 @@ Diferente do resto deste guia, este passo roda da sua própria máquina, não nu
 
 ```bash
 cd ansible
-ansible-playbook -i ldsa, bootstrap.yml --tags prereqs
+ansible-playbook -i <alias>, bootstrap.yml --tags prereqs
 ```
 
 Se algum download falhar checksum, o próprio Ansible para com erro, o binário baixado não é o esperado.
@@ -56,13 +56,13 @@ Copiar a saída do último comando e adicionar em `github.com/ladesa-ro/infrastr
 Só o `infrastructure`. O `infrastructure-vault` é clonado automaticamente pelo role `vault-repo`, no próximo passo, não precisa fazer isso na mão. De novo da sua própria máquina, mesmo `bootstrap.yml` do passo 1, agora com a deploy key já registrada:
 
 ```bash
-ansible-playbook -i ldsa, bootstrap.yml --tags clone
+ansible-playbook -i <alias>, bootstrap.yml --tags clone
 ```
 
 A partir daqui, os comandos voltam a ser numa sessão SSH no node, dentro de `/opt/infrastructure`.
 
 ```bash
-ssh ldsa
+ssh <alias>
 cd /opt/infrastructure
 ```
 
@@ -94,7 +94,7 @@ for app in $(kubectl get applications -n argocd -o jsonpath='{.items[*].metadata
 done
 ```
 
-Só segue pro próximo passo depois que isso rodar limpo, sem diff nenhum, em todas. Ver também [Gate de drift zero](gate-de-drift-zero.md) pra entender por que essa regra existe.
+Só segue pro próximo passo depois que isso rodar limpo, sem diff nenhum, em todas. Ver também [Gate de drift zero](../arquitetura/gate-de-drift-zero.md) pra entender por que essa regra existe.
 
 ## 8. Ligar o firewalld
 

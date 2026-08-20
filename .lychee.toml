@@ -1,0 +1,19 @@
+no_progress = true
+cache = true
+max_cache_age = "1d"
+cache_exclude_status = "429,500.."
+max_redirects = 5
+max_retries = 3
+max_concurrency = 16
+host_concurrency = 4
+retry_wait_time = 2
+timeout = 20
+accept = ["200..=299", "403", "429"]
+insecure = false
+min_tls = "TLSv1_2"
+exclude_all_private = true
+exclude = [
+  # infrastructure-vault é privado: 404 pra requisição não autenticada é o
+  # comportamento esperado do GitHub pra repositório privado, não um link quebrado.
+  "^https://github\\.com/ladesa-ro/infrastructure-vault$",
+]

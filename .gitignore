@@ -1,3 +1,4 @@
 *.retry
 /site/
 /_site/
+.lycheecache

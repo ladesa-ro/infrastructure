@@ -1,23 +1,19 @@
 # infrastructure
 
-Bootstrap declarativo e setup GitOps do cluster ldsa, um node único de k3s. Os dados de conexão não ficam neste repositório; quem administra usa o alias `ldsa` já configurado no próprio `~/.ssh/config`.
+Bootstrap declarativo e setup GitOps de um cluster k3s de node único. Os dados de conexão não ficam neste repositório; quem administra usa um alias próprio já configurado no `~/.ssh/config`.
 
 O Ansible instala o k3s, configura o firewalld, clona os segredos de bootstrap do [`infrastructure-vault`](https://github.com/ladesa-ro/infrastructure-vault), instala o release do Argo CD, e aplica um único arquivo, o `root.yaml`. O Argo CD sincroniza tudo que descobre a partir dali, em `argocd/apps`. Nenhum segredo, em texto puro ou cifrado, fica neste repositório: todos vivem em `infrastructure-vault`.
 
-## Checklist
+Esta documentação está dividida em três trilhas, que se referenciam entre si mas podem ser lidas de forma independente:
 
-Cada item corresponde a um passo em [Bootstrap mínimo na VM](bootstrap.md). Serve pra saber onde você está e o que ainda falta, não pra marcar sem conferir de verdade o resultado de cada comando.
+## [Aprender](aprender/index.md)
 
-- [ ] Acesso SSH ao node configurado (`~/.ssh/config`, alias `ldsa`) (*sua máquina*): [configurar e validar](bootstrap.md#0-antes-de-tudo)
-- [ ] `ansible-core`, `jq` e o CLI do `argocd` instalados no node, checksum do `argocd` conferido pelo próprio Ansible (*sua máquina, via `bootstrap.yml`*): [configurar e validar](bootstrap.md#1-instalar-as-dependencias-no-node)
-- [ ] Senha do Ansible Vault gerada em `/root/infrastructure-vault-pass` (*node, via SSH*): [configurar e validar](bootstrap.md#2-gerar-a-senha-do-ansible-vault)
-- [ ] Deploy key SSH do `infrastructure` gerada (*node, via SSH*): [configurar e validar](bootstrap.md#3-gerar-e-registrar-a-deploy-key-ssh-do-infrastructure)
-- [ ] Deploy key do `infrastructure` registrada como leitura em `github.com/ladesa-ro/infrastructure` (*GitHub, no navegador*): [configurar e validar](bootstrap.md#3-gerar-e-registrar-a-deploy-key-ssh-do-infrastructure)
-- [ ] Deploy key SSH do `infrastructure-vault` gerada e registrada como leitura em `github.com/ladesa-ro/infrastructure-vault` (*node, via SSH* e *GitHub, no navegador*): [configurar e validar](bootstrap.md#4-gerar-e-registrar-a-deploy-key-ssh-do-infrastructure-vault)
-- [ ] Repositório `infrastructure` clonado no node com sua deploy key (*sua máquina, via `bootstrap.yml`*): [configurar e validar](bootstrap.md#5-clonar-o-repositorio-no-node)
-- [ ] Primeira execução (`k3s` + `vault-repo` + `argocd-bootstrap`) rodada com `--check` e depois de verdade, sem erro (*node, via SSH*): [configurar e validar](bootstrap.md#6-primeira-execucao-k3s-vault-repo-e-o-release-do-argo-cd)
-- [ ] Gate de drift zero: `argocd app diff --core` vazio em **todas** as Applications, não só nas óbvias (*node, via SSH*): [configurar e validar](bootstrap.md#7-gate-de-drift-zero)
-- [ ] Firewalld ligado, e uma segunda conexão SSH testada com sucesso antes de fechar a primeira (*a segunda conexão é da sua máquina, o resto é no node*): [configurar e validar](bootstrap.md#8-ligar-o-firewalld)
-- [ ] Timer do `ansible-pull` habilitado (`systemctl status ansible-pull.timer` mostra `active`) (*node, via SSH*): [configurar e validar](bootstrap.md#9-ligar-a-reconciliacao-automatica)
+SSH, git, Ansible, k3s, firewalld, Argo CD: o que cada peça é e faz, de forma geral, sem depender deste cluster específico. Comece aqui se algum desses nomes não é familiar.
 
-Se algum item não estiver limpo, não segue pro próximo. É a mesma regra do gate de drift zero, só que pro bootstrap inteiro.
+## [Arquitetura](arquitetura/index.md)
+
+Como este cluster específico usa cada peça: a estrutura do repositório, o que cada role do Ansible faz e por quê, onde os segredos vivem, o que já roda hoje em produção, e os diagramas de fluxo do sistema inteiro.
+
+## [Operação](operacao/checklist.md)
+
+O roteiro executável: checklist, o passo a passo do bootstrap na VM, os scripts de manutenção, o que fica fora do git, e as convenções de desenvolvimento (lint, commits).

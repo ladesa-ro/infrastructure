@@ -1,5 +1,5 @@
 site_name: infrastructure
-site_description: Bootstrap declarativo e setup GitOps do cluster ldsa
+site_description: Bootstrap declarativo e setup GitOps de um cluster k3s de node único
 site_url: https://ladesa-ro.github.io/infrastructure/
 repo_url: https://github.com/ladesa-ro/infrastructure
 repo_name: ladesa-ro/infrastructure
@@ -28,24 +28,76 @@ theme:
 markdown_extensions:
   - tables
   - admonition
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - toc:
       permalink: true
   - pymdownx.highlight
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
   - Início: index.md
-  - Estrutura: estrutura.md
-  - Roles do Ansible:
-      - k3s: roles/k3s.md
-      - firewalld: roles/firewalld.md
-      - vault-repo: roles/vault-repo.md
-      - argocd-bootstrap: roles/argocd-bootstrap.md
-      - self-pull-timer: roles/self-pull-timer.md
-  - Segredos: segredos.md
-  - Foundation: foundation.md
-  - Scripts: scripts.md
-  - Gate de drift zero: gate-de-drift-zero.md
-  - Bootstrap na VM: bootstrap.md
-  - Estado fora do git: estado-fora-do-git.md
-  - Desenvolvimento: desenvolvimento.md
+  - Aprender:
+      - Visão geral: aprender/index.md
+      - Git: aprender/git.md
+      - SSH: aprender/ssh.md
+      - Ansible: aprender/ansible.md
+      - k3s: aprender/k3s.md
+      - firewalld: aprender/firewalld.md
+      - Argo CD: aprender/argocd.md
+      - Infisical: aprender/infisical.md
+      - CI, CD e CD: aprender/ci-cd.md
+      - Operators: aprender/kubernetes-operators.md
+      - Rede interna do cluster: aprender/rede-interna-do-cluster.md
+      - DNS e DHCP: aprender/dns-e-dhcp.md
+      - Dados no cluster: aprender/dados-no-cluster.md
+      - TLS automático: aprender/tls-automatico.md
+      - Papéis: aprender/papeis.md
+      - Também relevante:
+          - Entrega e plataforma:
+              - IaC e provisionamento: aprender/iac-provisionamento.md
+              - Policy as code: aprender/policy-as-code.md
+              - Internal Developer Platform: aprender/idp.md
+              - API gateway: aprender/api-gateway.md
+              - Mensageria e streaming: aprender/mensageria.md
+              - Artifact management: aprender/artifact-management.md
+              - Container registry: aprender/container-registry.md
+          - Confiabilidade:
+              - Observabilidade: aprender/observabilidade.md
+              - Service mesh: aprender/service-mesh.md
+              - Chaos engineering: aprender/chaos-engineering.md
+              - Backup e disaster recovery: aprender/backup-e-disaster-recovery.md
+          - Segurança e compliance:
+              - Supply chain e SBOM: aprender/supply-chain-e-sbom.md
+              - Threat modeling: aprender/threat-modeling.md
+              - Zero Trust: aprender/zero-trust.md
+              - Runtime security: aprender/runtime-security.md
+              - Vulnerability scanning: aprender/vulnerability-scanning.md
+              - Compliance e frameworks: aprender/compliance-e-frameworks.md
+              - Identidade e diretório: aprender/identidade-e-diretorio.md
+          - Fundamentos alternativos:
+              - NixOS: aprender/nixos.md
+              - Documentação como código: aprender/documentacao-como-codigo.md
+      - Referências: aprender/referencias.md
+  - Arquitetura:
+      - Visão geral e fluxo: arquitetura/index.md
+      - Estrutura: arquitetura/estrutura.md
+      - Roles do Ansible:
+          - k3s: arquitetura/roles/k3s.md
+          - firewalld: arquitetura/roles/firewalld.md
+          - vault-repo: arquitetura/roles/vault-repo.md
+          - argocd-bootstrap: arquitetura/roles/argocd-bootstrap.md
+          - self-pull-timer: arquitetura/roles/self-pull-timer.md
+      - Segredos: arquitetura/segredos.md
+      - Foundation: arquitetura/foundation.md
+      - Gate de drift zero: arquitetura/gate-de-drift-zero.md
+  - Operação:
+      - Checklist: operacao/checklist.md
+      - Bootstrap na VM: operacao/bootstrap.md
+      - Scripts: operacao/scripts.md
+      - Estado fora do git: operacao/estado-fora-do-git.md
+      - Desenvolvimento: operacao/desenvolvimento.md

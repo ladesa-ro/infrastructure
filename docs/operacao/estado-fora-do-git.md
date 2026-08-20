@@ -4,7 +4,7 @@ Este repositório não guarda tudo. Não pode: senha e chave privada, por defini
 
 | O quê | Onde | Arquivo ou local exato | Por que não pode estar no git | Como recriar se perder |
 |---|---|---|---|---|
-| Acesso SSH ao node | *sua máquina* | `~/.ssh/config`, alias `ldsa` | endereço e porta reais de um servidor de produção não devem ficar públicos num repositório | Pedir o endereço e a porta a quem já tem acesso, configurar o alias localmente |
+| Acesso SSH ao node | *sua máquina* | `~/.ssh/config`, alias próprio | endereço e porta reais de um servidor de produção não devem ficar públicos num repositório | Pedir o endereço e a porta a quem já tem acesso, configurar o alias localmente |
 | Senha do Ansible Vault | *node* | `/root/infrastructure-vault-pass`, `0600` | decripta os cinco arquivos cifrados em `infrastructure-vault` | Gerar senha nova (`openssl rand -base64 32 > ...`), depois rodar `scripts/create-from-cluster` de novo pros quatro Secrets (eles ainda existem no cluster) e recapturar `k3s-token` a partir de `/var/lib/rancher/k3s/server/token`, sobrescrevendo os arquivos cifrados em `infrastructure-vault` |
 | Deploy key SSH do `infrastructure`, metade privada | *node* | `/root/.ssh/infrastructure-deploy-key` | dá acesso de clone ao repositório `infrastructure` | Gerar par novo (isso também invalida a metade pública já registrada, ver linha abaixo) |
 | Deploy key SSH do `infrastructure`, metade pública | *GitHub* | Settings → Deploy keys, do repositório `infrastructure` | é o que autoriza a chave privada acima | Registrar a nova chave pública gerada ao lado |
