@@ -1,1 +1,3 @@
 *.retry
+/site/
+/_site/

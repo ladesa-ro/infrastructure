@@ -1,0 +1,17 @@
+# Estado fora do git
+
+Este repositório não guarda tudo. Não pode: senha e chave privada, por definição, não vão pra um repositório em texto puro nem cifrado sem necessidade. O risco disso não é o valor estar fora do git, é o quê está fora do git virar conhecimento tribal que ninguém mais lembra. Esta tabela existe pra isso não acontecer: cada linha aponta pra uma coisa que não está versionada, mas o fato dela existir, onde ela vive, e como recriar, está.
+
+| O quê | Onde | Arquivo ou local exato | Por que não pode estar no git | Como recriar se perder |
+|---|---|---|---|---|
+| Acesso SSH ao node | *sua máquina* | `~/.ssh/config`, alias `ldsa` | endereço e porta reais de um servidor de produção não devem ficar públicos num repositório | Pedir o endereço e a porta a quem já tem acesso, configurar o alias localmente |
+| Senha do Ansible Vault | *node* | `/root/infrastructure-vault-pass`, `0600` | decripta os cinco arquivos cifrados em `infrastructure-vault` | Gerar senha nova (`openssl rand -base64 32 > ...`), depois rodar `scripts/create-from-cluster` de novo pros quatro Secrets (eles ainda existem no cluster) e recapturar `k3s-token` a partir de `/var/lib/rancher/k3s/server/token`, sobrescrevendo os arquivos cifrados em `infrastructure-vault` |
+| Deploy key SSH do `infrastructure`, metade privada | *node* | `/root/.ssh/infrastructure-deploy-key` | dá acesso de clone ao repositório `infrastructure` | Gerar par novo (isso também invalida a metade pública já registrada, ver linha abaixo) |
+| Deploy key SSH do `infrastructure`, metade pública | *GitHub* | Settings → Deploy keys, do repositório `infrastructure` | é o que autoriza a chave privada acima | Registrar a nova chave pública gerada ao lado |
+| Deploy key SSH do `infrastructure-vault`, metade privada | *node* | `/root/.ssh/infrastructure-vault-deploy-key` | dá acesso de clone ao repositório `infrastructure-vault` | Gerar par novo (isso também invalida a metade pública já registrada, ver linha abaixo) |
+| Deploy key SSH do `infrastructure-vault`, metade pública | *GitHub* | Settings → Deploy keys, do repositório `infrastructure-vault` | é o que autoriza a chave privada acima | Registrar a nova chave pública gerada ao lado |
+| `ansible-core`, `jq` e o CLI do `argocd` | *node* | pacotes `apt` e binário em `/usr/local/bin` | pré-requisito que o `ansible-pull` não consegue instalar sozinho, é o que roda antes dele existir | Ver [passo 1 do bootstrap](bootstrap.md#1-instalar-as-dependencias-no-node) |
+| Projetos e valores no Infisical | *Infisical* | `infisical.ladesa.com.br`: `foundation-mariadb-6s-ji`, `foundation-minio-z-hvh` | senha de app/banco tem sistema próprio pra isso, o Infisical, não faz sentido duplicar em outro cofre | Recriar o projeto, colar o valor, conceder acesso de leitura à machine identity `universal-auth-credentials`, atualizar o `projectSlug` no `infisicalsecret-*.yaml` correspondente |
+| Acesso da machine identity aos projetos | *Infisical* | dentro de cada projeto, Access Control | é permissão, não segredo, mas só existe na configuração do Infisical, não em arquivo nenhum | Conceder de novo, projeto por projeto, pela UI |
+
+Regra pra manter esta lista útil: toda vez que alguma coisa nova precisar viver fora do git, uma linha entra aqui antes de considerar o trabalho terminado.

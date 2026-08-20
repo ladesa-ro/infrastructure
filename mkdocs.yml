@@ -1,0 +1,51 @@
+site_name: infrastructure
+site_description: Bootstrap declarativo e setup GitOps do cluster ldsa
+site_url: https://ladesa-ro.github.io/infrastructure/
+repo_url: https://github.com/ladesa-ro/infrastructure
+repo_name: ladesa-ro/infrastructure
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: pt-BR
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Tema escuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Tema claro
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+
+markdown_extensions:
+  - tables
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+nav:
+  - Início: index.md
+  - Estrutura: estrutura.md
+  - Roles do Ansible:
+      - k3s: roles/k3s.md
+      - firewalld: roles/firewalld.md
+      - vault-repo: roles/vault-repo.md
+      - argocd-bootstrap: roles/argocd-bootstrap.md
+      - self-pull-timer: roles/self-pull-timer.md
+  - Segredos: segredos.md
+  - Foundation: foundation.md
+  - Scripts: scripts.md
+  - Gate de drift zero: gate-de-drift-zero.md
+  - Bootstrap na VM: bootstrap.md
+  - Estado fora do git: estado-fora-do-git.md
+  - Desenvolvimento: desenvolvimento.md
