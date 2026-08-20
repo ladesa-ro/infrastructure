@@ -1,6 +1,6 @@
 # Aprender
 
-Esta seção ensina conceitos e ferramentas de infraestrutura de forma geral, sem depender de nenhuma decisão específica de nenhum projeto. Se você já sabe o que é SSH, Ansible, Argo CD, k3s, firewalld e git, pule direto pra [Arquitetura](../arquitetura/index.md) ou [Operação](../operacao/checklist.md). Se está chegando agora, comece por aqui: cada página cobre uma peça, o que ela faz, por que existe, e como as peças costumam se encaixar num setup desse tipo. As decisões específicas de um cluster real (o que ele de fato usa, e por quê) ficam inteiramente em [Arquitetura](../arquitetura/index.md).
+Esta seção é **explicação**, no sentido de [Diátaxis](diataxis.md): contexto e raciocínio, sem instrução nenhuma misturada. Ensina conceitos e ferramentas de infraestrutura de forma geral, sem depender de nenhuma decisão específica de nenhum projeto. Se você já sabe o que é [SSH](ssh.md), [Ansible](ansible.md), [Argo CD](argocd.md), [k3s](k3s.md), [firewalld](firewalld.md) e [Git](git.md), pule direto pra [Arquitetura](../arquitetura/index.md) ou [Operação](../operacao/checklist.md). Se está chegando agora, comece por aqui: cada página cobre uma peça, o que ela faz, por que existe, e como as peças costumam se encaixar num setup desse tipo. As decisões específicas de um cluster real (o que ele de fato usa, e por quê) ficam inteiramente em [Arquitetura](../arquitetura/index.md).
 
 | Se você precisa entender | Vá pra |
 |---|---|
@@ -12,7 +12,8 @@ Esta seção ensina conceitos e ferramentas de infraestrutura de forma geral, se
 | Como o Argo CD descobre e aplica tudo sozinho, sem o Ansible | [Argo CD](argocd.md) |
 | O que é uma plataforma de gestão de segredos, e como o Infisical se encaixa | [Infisical](infisical.md) |
 | A diferença real entre integração contínua, entrega contínua e deploy contínuo | [CI, CD e CD](ci-cd.md) |
-| O padrão que o Infisical Kubernetes Operator implementa, e onde mais ele aparece | [Operators](kubernetes-operators.md) |
+| Como GitLab, Azure DevOps e GitHub Actions decidem qual versão vai pra qual ambiente | [Promoção entre ambientes](promocao-entre-ambientes.md) |
+| O padrão que o [Infisical](infisical.md) Kubernetes Operator implementa, e onde mais ele aparece | [Operators](kubernetes-operators.md) |
 | Como um pod acha outro pelo nome, e como `LoadBalancer` funciona sem cloud nenhuma | [Rede interna do cluster](rede-interna-do-cluster.md) |
 | Como nome vira IP, e como uma máquina nova descobre o próprio IP na rede | [DNS e DHCP](dns-e-dhcp.md) |
 | Bancos e storage S3 rodando dentro do próprio cluster, e o trade-off disso | [Dados no cluster](dados-no-cluster.md) |
@@ -65,3 +66,4 @@ As páginas acima cobrem o núcleo mais comum desse tipo de stack. As páginas a
 |---|---|
 | O sistema operacional inteiro declarado, não só o que o Ansible toca | [NixOS](nixos.md) |
 | Documentação versionada e revisada como código, em vez de wiki solto | [Documentação como código](documentacao-como-codigo.md) |
+| Os quatro tipos de documentação técnica, e por que misturá-los confunde o leitor | [Diátaxis](diataxis.md) |

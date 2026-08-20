@@ -1,6 +1,6 @@
 # Rede interna do cluster
 
-Distribuições Kubernetes leves como k3s costumam trazer embutidas, por padrão, três peças de rede que em outras instalações precisariam ser escolhidas e instaladas à parte.
+Distribuições Kubernetes leves como [k3s](k3s.md) costumam trazer embutidas, por padrão, três peças de rede que em outras instalações precisariam ser escolhidas e instaladas à parte.
 
 ## CNI: como um pod fala com outro
 

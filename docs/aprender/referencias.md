@@ -56,7 +56,7 @@ Não são pré-requisito pra trabalhar com infraestrutura, mas são um jeito est
 ## Comunidades e discussão contínua
 
 - **CNCF** (Cloud Native Computing Foundation): organização que hospeda Kubernetes, Argo (incluindo o Argo CD, ver [Argo CD](argocd.md)), Helm, e boa parte do ecossistema cloud native. Vale acompanhar os projetos em incubação, é onde a próxima geração de ferramentas geralmente aparece primeiro.
-- Listas de discussão, fóruns e Slack/Discord de cada projeto específico (Ansible, Kubernetes, Argo CD) costumam ter mais profundidade técnica que buscadores genéricos pra dúvida específica de versão.
+- Listas de discussão, fóruns e Slack/Discord de cada projeto específico ([Ansible](ansible.md), [Kubernetes](https://kubernetes.io/docs), [Argo CD](argocd.md)) costumam ter mais profundidade técnica que buscadores genéricos pra dúvida específica de versão.
 
 ## Literatura acadêmica
 

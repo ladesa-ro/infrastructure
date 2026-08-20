@@ -2,6 +2,14 @@
 
 Um service mesh é uma camada de infraestrutura dedicada à comunicação entre serviços dentro de um cluster: cada pod ganha um proxy sidecar (um segundo container, invisível pra aplicação), e todo tráfego entre serviços passa por esses proxies em vez de ir direto. Isso centraliza, fora do código de cada aplicação, coisas como criptografia automática entre serviços (mTLS), retry, circuit breaker, roteamento de tráfego por porcentagem (base do canary deployment citado em [CI, CD e CD](ci-cd.md)), e observabilidade de rede (quem fala com quem, com que latência).
 
+## mTLS: os dois lados provam identidade
+
+TLS comum (o que garante o cadeado no navegador) só autentica um lado: o servidor prova sua identidade pro cliente via certificado, o cliente permanece anônimo nesse nível (login/senha ou token, se existir, acontecem numa camada acima). mTLS (mutual TLS) exige certificado dos dois lados: o cliente também precisa provar quem é antes do servidor aceitar a conexão, cada serviço vira ao mesmo tempo cliente e servidor de mTLS na comunicação com outro serviço. É essa camada extra que um sidecar de service mesh automatiza pra toda comunicação interna, emitindo, rotacionando e verificando certificados de curta duração pra cada pod sem intervenção manual.
+
+A alternativa mais comum a mTLS pra autenticar serviço-a-serviço é um token compartilhado ou API key fixo por chamada, mais simples de montar (sem infraestrutura de certificado nenhuma), mas sem a rotação automática nem a prova criptográfica de identidade que um certificado oferece: um token vazado funciona até alguém notar e revogar manualmente, um certificado de curta duração expira sozinho.
+
+OpenSSL (ver [TLS automático](tls-automatico.md)) é a ferramenta mais direta pra inspecionar um certificado mTLS manualmente: `openssl s_client` com as flags `-cert`/`-key` simula o lado cliente de um handshake mTLS, útil pra depurar uma conexão que está falhando por causa de certificado.
+
 ## Como se relaciona com um Ingress Controller
 
 Um Ingress Controller (ver [API gateway](api-gateway.md)) resolve um problema vizinho mas diferente: tráfego entrando no cluster vindo de fora. Um service mesh cuida do tráfego entre serviços já dentro do cluster, depois que a requisição já entrou. Adotar um mesh tem custo real, mais um componente pra operar, overhead de CPU/memória por causa do sidecar em cada pod, complexidade de debug quando algo dá errado no proxy em vez de na aplicação, e só compensa a partir de um número de serviços que se comunicam entre si com frequência suficiente pra as garantias do mesh (mTLS automático, retry padronizado) valerem o custo.
@@ -14,4 +22,4 @@ Na categoria "Service Mesh" tanto do [awesome-devops](https://github.com/wmarius
 
 A antítese de service mesh não é "nenhuma segurança de rede", é resolver o mesmo problema em camadas mais baixas ou mais simples: firewall no nível de host (ver [firewalld](firewalld.md)), TLS configurado manualmente aplicação por aplicação em vez de automático via sidecar, e Network Policies nativas do Kubernetes (mais granulares que uma zona de firewall, mas sem criptografia nem retry automático). É um degrau intermediário real entre "nada" e "service mesh completo" que muitos clusters desse tamanho usam antes de justificar um mesh.
 
-Onde aprofundar: [Linkerd](https://linkerd.io/2/overview/) e [Istio](https://istio.io/latest/docs/) têm ambos um "getting started" guiado que já demonstra mTLS automático em poucos minutos, o jeito mais rápido de entender o que um mesh de fato adiciona.
+Onde aprofundar: [Linkerd](https://linkerd.io/2/overview/) e [Istio](https://istio.io/latest/docs/) têm ambos um "getting started" guiado que já demonstra mTLS em poucos minutos, o jeito mais rápido de entender o que um mesh de fato adiciona.

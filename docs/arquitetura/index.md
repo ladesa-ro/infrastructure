@@ -1,6 +1,6 @@
 # Arquitetura
 
-Esta seção explica o desenho deste cluster específico: como as peças descritas em [Aprender](../aprender/index.md) se encaixam aqui, e por que cada decisão foi tomada. Se você quer só executar o bootstrap, vá direto pra [Operação](../operacao/checklist.md); volte aqui quando precisar entender o porquê por trás de um passo.
+Esta seção é **referência**, no sentido de [Diátaxis](../aprender/diataxis.md): fato sobre este cluster específico, organizado pra consulta, com o porquê de cada decisão ao lado, não uma lição guiada nem um passo a passo. O desenho é como as peças descritas em [Aprender](../aprender/index.md) se encaixam aqui, e por que cada decisão foi tomada. Se você quer só executar o bootstrap, vá direto pra [Operação](../operacao/checklist.md); volte aqui quando precisar entender o porquê por trás de um passo.
 
 O objetivo deste repositório é ser a fonte da verdade de como a VM é configurada. Nada de "esqueci como configurei isso": todo estado que importa está declarado em código, versionado, e reaplicável do zero. Duas propriedades tornam isso possível, ambas explicadas em detalhe em [Ansible](../aprender/ansible.md):
 

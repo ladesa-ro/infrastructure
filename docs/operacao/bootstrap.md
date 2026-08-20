@@ -1,6 +1,6 @@
 # Bootstrap mínimo na VM
 
-Passo a passo completo, do zero até o Ansible e o Argo CD assumirem sozinhos a reconciliação do que já está em `argocd/foundation`. Isso **não** inclui subir as aplicações (`web`, `docs`, `management-service`, `timetable-generator`, `authentication-service`) via Argo CD, isso depende de cada um desses repositórios ganhar sua própria pasta `gitops`, trabalho que ainda não começou em nenhum deles. Quando começar, vira sua própria documentação, não uma extensão desta.
+Passo a passo completo, do zero até o [Ansible](../aprender/ansible.md) e o [Argo CD](../aprender/argocd.md) assumirem sozinhos a reconciliação do que já está em `argocd/foundation`. Isso **não** inclui subir as aplicações (`web`, `docs`, `management-service`, `timetable-generator`, `authentication-service`) via Argo CD, isso depende de cada um desses repositórios ganhar sua própria pasta `gitops`, trabalho que ainda não começou em nenhum deles. Quando começar, vira sua própria documentação, não uma extensão desta.
 
 Cada bloco de comando abaixo é pra copiar e colar, na ordem. A maioria roda direto numa sessão SSH no node; os passos 1 e a primeira parte do 5 são exceção, e rodam da sua própria máquina, marcados explicitamente onde isso muda. Todos assumem `bash` (funcionam em `zsh`/`dash`/`sh` também, a sintaxe é POSIX). Não funcionam em `fish`: usam `export VAR=valor` (em `fish` seria `set -x VAR valor`) e um laço `for ... do ... done` (em `fish` seria `for ... ; ... ; end`, com substituição de comando via `(...)` em vez de `$(...)`). Se a sessão SSH abrir num shell diferente, rodar `bash` primeiro pra entrar num subshell compatível antes de colar qualquer bloco.
 
@@ -10,7 +10,7 @@ Precisa de acesso SSH configurado ao node (o alias, endereço e porta reais não
 
 ## 1. Instalar as dependências no node
 
-Diferente do resto deste guia, este passo roda da sua própria máquina, não numa sessão SSH no node: o node ainda não tem `ansible-core`, então não dá pra usar o `ansible-pull` pra instalar o próprio `ansible-core`. `ansible/bootstrap.yml` resolve isso via push, com `ansible.builtin.raw` (que não depende de Python já existir no destino), e de passagem já deixa `jq` (pros scripts de captura de segredo) e o CLI do `argocd` (pro gate de drift zero mais adiante, fixado por versão e checksum, a mesma versão que o chart do Argo CD deste repositório instala) prontos. Precisa ter `ansible-core` instalado na sua própria máquina antes de rodar isso, a partir do seu clone local deste repositório:
+Diferente do resto deste guia, este passo roda da sua própria máquina, não numa sessão SSH no node: o node ainda não tem `ansible-core`, então não dá pra usar o [`ansible-pull`](../aprender/ansible.md#ansible-pull-vs-push) pra instalar o próprio `ansible-core`. `ansible/bootstrap.yml` resolve isso via [push](../aprender/ansible.md#ansible-pull-vs-push), com `ansible.builtin.raw` (que não depende de Python já existir no destino), e de passagem já deixa `jq` (pros scripts de captura de segredo) e o CLI do `argocd` (pro [gate de drift zero](../arquitetura/gate-de-drift-zero.md) mais adiante, fixado por versão e checksum, a mesma versão que o chart do Argo CD deste repositório instala) prontos. Precisa ter `ansible-core` instalado na sua própria máquina antes de rodar isso, a partir do seu clone local deste repositório:
 
 ```bash
 cd ansible
@@ -19,9 +19,9 @@ ansible-playbook -i <alias>, bootstrap.yml --tags prereqs
 
 Se algum download falhar checksum, o próprio Ansible para com erro, o binário baixado não é o esperado.
 
-## 2. Gerar a senha do Ansible Vault
+## 2. Gerar a senha do [Ansible Vault](../aprender/ansible.md#ansible-vault)
 
-Sem exibir o valor em tela nenhuma, redirecionado direto pro arquivo:
+Sem exibir o valor em tela nenhuma, redirecionado direto pro arquivo com [`openssl rand`](../aprender/tls-automatico.md#openssl-o-canivete-suico-manual):
 
 ```bash
 umask 077
@@ -29,7 +29,7 @@ openssl rand -base64 32 > /root/infrastructure-vault-pass
 chmod 600 /root/infrastructure-vault-pass
 ```
 
-## 3. Gerar e registrar a deploy key SSH do infrastructure
+## 3. Gerar e registrar a [deploy key](../aprender/ssh.md#chave-pessoal-vs-deploy-key) SSH do infrastructure
 
 O node precisa de uma chave própria, só leitura, pra clonar este repositório:
 
@@ -66,9 +66,9 @@ ssh <alias>
 cd /opt/infrastructure
 ```
 
-## 6. Primeira execução: k3s, vault-repo e o release do Argo CD
+## 6. Primeira execução: [k3s](../aprender/k3s.md), vault-repo e o release do [Argo CD](../aprender/argocd.md)
 
-Pulando o firewalld e o timer de propósito, os dois só entram depois. Rodar `--check` primeiro, ler a saída, só depois rodar de verdade.
+Pulando o [firewalld](../aprender/firewalld.md) e o timer de propósito, os dois só entram depois. Rodar [`--check`](../aprender/ansible.md#modo-check) primeiro, ler a saída, só depois rodar de verdade.
 
 Nesta primeira vez, `--check` não tem muito o que prever: k3s, o binário do helm e o clone do `infrastructure-vault` ainda não existem de verdade nesse node, e nada que dependa deles (release do Argo CD, diff do `root.yaml`, segredos) consegue ser conferido ainda, só confirma que a sintaxe e a ordem das tasks estão corretas. Cada role avisa isso explicitamente na saída. O `--check` volta a ser um preview de verdade a partir da segunda execução em diante.
 
@@ -96,7 +96,7 @@ done
 
 Só segue pro próximo passo depois que isso rodar limpo, sem diff nenhum, em todas. Ver também [Gate de drift zero](../arquitetura/gate-de-drift-zero.md) pra entender por que essa regra existe.
 
-## 8. Ligar o firewalld
+## 8. Ligar o [firewalld](../aprender/firewalld.md)
 
 Atenção: quem administra acessa o node por uma porta externa não-padrão, mas isso é NAT feito antes de chegar na VM. O `sshd` da própria VM escuta na porta 22 padrão (confira com `ss -tlnp | grep sshd`), e é essa porta, 22, que o firewalld precisa liberar, já comitada como default. Usar a porta externa por engano bloquearia o próprio SSH.
 

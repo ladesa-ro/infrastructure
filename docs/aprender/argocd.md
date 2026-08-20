@@ -23,6 +23,8 @@ Um Application, sozinho, poderia sincronizar qualquer tipo de recurso Kubernetes
 
 ## Sync manual vs. automático
 
+Ver [Promoção entre ambientes](promocao-entre-ambientes.md) pra como esse modelo de promoção via Git se compara ao de GitLab, Azure DevOps e GitHub Actions.
+
 Um Application pode sincronizar automaticamente (qualquer mudança no Git é aplicada sozinha) ou manualmente (alguém aprova cada sync). É uma opção do Argo CD, não uma regra fixa da ferramenta, e times que adotam GitOps sobre um sistema que já tem dado real de produção costumam começar em modo manual, só ligando sync automático depois que o diff contra o cluster real está comprovadamente vazio.
 
 ## Fronteira de posse com o Ansible

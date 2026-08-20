@@ -1,6 +1,6 @@
 # Internal Developer Platform
 
-Uma Internal Developer Platform (IDP) é a materialização concreta do que a disciplina de Platform Engineering constrói (ver [Papéis](papeis.md)): uma superfície única, geralmente com uma interface própria, onde quem desenvolve consegue ver o que existe (quais serviços, quem é dono, o que está rodando onde), e pedir coisas novas (um banco, um ambiente, um namespace) sem precisar abrir um YAML de infraestrutura nem entender Ansible ou Argo CD. A lista [awesome-devops](https://github.com/wmariuss/awesome-devops) tem uma categoria dedicada a isso, "Internal Developer Platforms", separada de "Applications Platforms" (Kubernetes em si).
+Uma Internal Developer Platform (IDP) é a materialização concreta do que a disciplina de Platform Engineering constrói (ver [Papéis](papeis.md)): uma superfície única, geralmente com uma interface própria, onde quem desenvolve consegue ver o que existe (quais serviços, quem é dono, o que está rodando onde), e pedir coisas novas (um banco, um ambiente, um namespace) sem precisar abrir um YAML de infraestrutura nem entender [Ansible](ansible.md) ou [Argo CD](argocd.md). A lista [awesome-devops](https://github.com/wmariuss/awesome-devops) tem uma categoria dedicada a isso, "Internal Developer Platforms", separada de "Applications Platforms" (Kubernetes em si).
 
 ## Duas abordagens bem diferentes dentro da mesma categoria
 

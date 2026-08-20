@@ -11,3 +11,5 @@ MkDocs é a opção mais simples das três: lê um `mkdocs.yml`, converte Markdo
 A antítese de docs-as-code é wiki tradicional (Confluence, um wiki interno), edição direta, sem revisão obrigatória nem histórico de verdade (a maioria tem "histórico de versão", mas não integrado ao mesmo fluxo de revisão do código). Funciona bem quando quem escreve documentação não é a mesma pessoa que escreve código e não quer lidar com Git, mas perde a garantia de que a documentação e o código evoluem juntos, revisados no mesmo PR.
 
 Onde aprofundar: a comparação completa em [MkDocs vs Docusaurus vs GitBook](https://blog.markdowntools.com/posts/mkdocs-vs-docusaurus-vs-gitbook) cobre os três casos de uso onde cada ferramenta faz mais sentido, com mais detalhe do que cabe aqui.
+
+Docs-as-code resolve só a camada de tooling e fluxo de revisão, como o conteúdo chega versionado e revisado. Não diz nada sobre como organizar o conteúdo em si, categoria diferente de problema coberta por [Diátaxis](diataxis.md).

@@ -12,6 +12,6 @@ Migrar de um setup tradicional pra NixOS significa reconstruir a máquina do zer
 
 ## Pra ir além
 
-A antítese completa de NixOS é o modelo mutável tradicional: a mesma máquina reconfigurada repetidamente in-place, sem garantia estrutural contra drift, só disciplina de ferramenta (idempotência do Ansible, por exemplo) pra minimizar o risco.
+A antítese completa de NixOS é o modelo mutável tradicional: a mesma máquina reconfigurada repetidamente in-place, sem garantia estrutural contra drift, só disciplina de ferramenta (idempotência do [Ansible](ansible.md), por exemplo) pra minimizar o risco.
 
 Onde aprofundar: o [NixOS Wiki](https://wiki.nixos.org/wiki/NixOS) é mantido pela própria comunidade e é mais acessível como primeira leitura do que a documentação de referência da linguagem Nix em si, que tem curva de aprendizado real.
