@@ -1,0 +1,15 @@
+---
+- name: Bootstrap do cluster ldsa
+  hosts: all
+  become: true
+  roles:
+    - role: k3s
+      tags: [k3s]
+    - role: firewalld
+      tags: [firewalld]
+    - role: vault-repo
+      tags: [vault-repo]
+    - role: argocd-bootstrap
+      tags: [argocd-bootstrap]
+    - role: self-pull-timer
+      tags: [self-pull-timer]

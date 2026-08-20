@@ -1,0 +1,69 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ladesa-satellites
+  namespace: argocd
+spec:
+  description: Repositórios satélite (web, docs, management-service, timetable-generator, authentication-service), sem escopo de recursos cluster-wide
+  sourceRepos:
+    - https://github.com/ladesa-ro/web.git
+    - https://github.com/ladesa-ro/docs.git
+    - https://github.com/ladesa-ro/management-service.git
+    - https://github.com/ladesa-ro/timetable-generator.git
+    - https://github.com/ladesa-ro/authentication-service.git
+    - https://stakater.github.io/stakater-charts
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: "*"
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: argoproj.io
+      kind: Application
+    - group: argoproj.io
+      kind: AppProject
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: ""
+      kind: Pod
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: apps
+      kind: DaemonSet
+    - group: batch
+      kind: Job
+    - group: batch
+      kind: CronJob
+    - group: rbac.authorization.k8s.io
+      kind: Role
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: cert-manager.io
+      kind: Certificate
+    - group: cert-manager.io
+      kind: Issuer
+    - group: cert-manager.io
+      kind: ClusterIssuer
+    - group: secrets.infisical.com
+      kind: InfisicalSecret
+    - group: secrets.infisical.com
+      kind: InfisicalPushSecret

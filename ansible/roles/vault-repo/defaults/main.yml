@@ -1,0 +1,5 @@
+---
+vault_repo_url: git@github.com:ladesa-ro/infrastructure-vault.git
+vault_repo_dir: /opt/infrastructure-vault
+vault_repo_deploy_key: /root/.ssh/infrastructure-vault-deploy-key
+vault_repo_versao: main

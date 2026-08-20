@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-mariadb
+  namespace: dados
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-mariadb
+  template:
+    metadata:
+      labels:
+        app: db-mariadb
+    spec:
+      containers:
+      - name: db-mariadb
+        image: docker.io/mariadb:12
+        ports:
+          - containerPort: 3306
+        envFrom:
+          - secretRef:
+              name: mariadb-env
+        volumeMounts:
+          - name: mariadbdata
+            mountPath: /var/lib/mysql
+          - name: backups
+            mountPath: /backups
+      volumes:
+        - name: mariadbdata
+          hostPath:
+            path: /root/dados/vols/mariadbdata
+            type: DirectoryOrCreate
+        - name: backups
+          hostPath:
+            path: /root/dados/vols/backups/mariadb
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-mariadb
+  namespace: dados
+spec:
+  type: NodePort
+  ports:
+    - port: 3306
+      targetPort: 3306
+      nodePort: 30996
+  selector:
+    app: db-mariadb
+

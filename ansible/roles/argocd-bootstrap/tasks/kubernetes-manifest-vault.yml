@@ -1,0 +1,69 @@
+---
+- name: Definir arquivo temporário do manifest cifrado
+  ansible.builtin.set_fact:
+    kubernetes_manifest_temporario: "/run/infrastructure-vault-{{ kubernetes_manifest_vault | basename | regex_replace('[^A-Za-z0-9_.-]', '-') }}"
+  no_log: true
+
+- name: Conferir se o manifest cifrado já foi clonado de verdade
+  ansible.builtin.stat:
+    path: "{{ kubernetes_manifest_vault }}"
+  register: kubernetes_manifest_vault_stat
+  when: ansible_check_mode
+
+- name: Conferir se o preview deste segredo pode rodar
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/tasks/gate-check-mode-prereq.yml"
+  vars:
+    gate_fact_name: vault_manifest_gate
+    gate_prereq_ok: "{{ kubernetes_manifest_vault_stat.stat.exists | default(true) }}"
+    gate_message: >-
+      {{ kubernetes_manifest_vault }} ainda não existe, porque o
+      infrastructure-vault só seria clonado de verdade numa execução real.
+      Pulando o preview deste segredo.
+
+- name: Reconciliar manifest Kubernetes cifrado
+  when: vault_manifest_gate
+  block:
+    - name: Copiar manifest descriptografado somente para memória volátil
+      ansible.builtin.copy:
+        src: "{{ kubernetes_manifest_vault }}"
+        dest: "{{ kubernetes_manifest_temporario }}"
+        owner: root
+        group: root
+        mode: "0600"
+        decrypt: true
+      no_log: true
+      changed_when: false
+      check_mode: false
+
+    - name: Comparar manifest cifrado com o cluster sem imprimir o Secret
+      ansible.builtin.shell:
+        cmd: "kubectl diff -f {{ kubernetes_manifest_temporario }} >/dev/null"
+      environment:
+        KUBECONFIG: "{{ argocd_kubeconfig }}"
+      register: kubernetes_manifest_diff
+      changed_when: kubernetes_manifest_diff.rc != 0
+      failed_when: >-
+        kubernetes_manifest_diff.rc > 1 and not
+        ('namespaces' in (kubernetes_manifest_diff.stdout ~ kubernetes_manifest_diff.stderr) and
+         'not found' in (kubernetes_manifest_diff.stdout ~ kubernetes_manifest_diff.stderr))
+      check_mode: false
+      no_log: true
+
+    - name: Aplicar manifest cifrado quando necessário
+      ansible.builtin.command:
+        cmd: "kubectl apply -f {{ kubernetes_manifest_temporario }}"
+      environment:
+        KUBECONFIG: "{{ argocd_kubeconfig }}"
+      when:
+        - not ansible_check_mode
+        - kubernetes_manifest_diff.rc != 0
+      changed_when: true
+      no_log: true
+  always:
+    - name: Apagar manifest descriptografado da memória volátil
+      ansible.builtin.file:
+        path: "{{ kubernetes_manifest_temporario }}"
+        state: absent
+      changed_when: false
+      no_log: true
+      check_mode: false

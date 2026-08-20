@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-server
+  namespace: redis-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-server
+  template:
+    metadata:
+      labels:
+        app: redis-server
+        name: redis-server
+    spec:
+      containers:
+        - name: redis-server
+          image: bitnami/redis
+          ports:
+            - containerPort: 6379
+              name: redis-server
+          env:
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "no"
+          envFrom:
+            - secretRef:
+                name: redis-secret
+          volumeMounts:
+            - name: lv-storage
+              mountPath: /bitnami/redis/data
+      volumes:
+        - name: lv-storage
+          persistentVolumeClaim:
+            claimName: redis-pvc

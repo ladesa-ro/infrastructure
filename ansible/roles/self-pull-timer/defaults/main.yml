@@ -1,0 +1,7 @@
+---
+self_pull_deploy_key: /root/.ssh/infrastructure-deploy-key
+self_pull_vault_pass_file: /root/infrastructure-vault-pass
+self_pull_vault_repo_deploy_key: >-
+  {{ vault_repo_deploy_key | mandatory('vault_repo_deploy_key não está
+  definida - o role vault-repo precisa estar em site.yml antes de
+  self-pull-timer') }}

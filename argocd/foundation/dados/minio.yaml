@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: dados
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+      - name: minio
+        image: docker.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+        args:
+          - server
+          - /data
+          - --console-address
+          - ":9001"
+        ports:
+          - containerPort: 9000
+          - containerPort: 9001
+        envFrom:
+          - secretRef:
+              name: minio-env
+        volumeMounts:
+          - name: minio-data
+            mountPath: /data
+      volumes:
+        - name: minio-data
+          hostPath:
+            path: /root/dados/vols/miniodata
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: dados
+spec:
+  type: NodePort
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: 9000
+      nodePort: 30900
+    - name: console
+      port: 9001
+      targetPort: 9001
+      nodePort: 30901
+  selector:
+    app: minio
+

@@ -1,0 +1,217 @@
+---
+- name: Conferir se o helm já está instalado na versão certa
+  ansible.builtin.command:
+    cmd: helm version --short
+  register: helm_versao_atual
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Instalar/atualizar o helm fixado e verificado
+  when: not (helm_versao_atual.rc == 0 and (helm_versao | regex_escape) in (helm_versao_atual.stdout | default('')))
+  block:
+    - name: Baixar o tarball do helm fixado e verificado
+      ansible.builtin.get_url:
+        url: "{{ helm_download_url }}"
+        dest: "/tmp/helm-{{ helm_versao }}.tar.gz"
+        checksum: "sha256:{{ helm_binary_sha256 }}"
+        mode: "0600"
+
+    - name: Extrair o binário do helm
+      ansible.builtin.unarchive:
+        src: "/tmp/helm-{{ helm_versao }}.tar.gz"
+        dest: /tmp
+        remote_src: true
+
+    - name: Instalar o binário do helm em /usr/local/bin
+      ansible.builtin.copy:
+        src: /tmp/linux-amd64/helm
+        dest: /usr/local/bin/helm
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0755"
+  always:
+    - name: Limpar arquivos temporários do helm
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/helm-{{ helm_versao }}.tar.gz"
+        - /tmp/linux-amd64
+
+- name: Conferir que o host declarou a versão do chart
+  ansible.builtin.assert:
+    that:
+      - argocd_chart_versao is defined
+      - (argocd_chart_versao | string | trim) | length > 0
+    fail_msg: >-
+      falta argocd_chart_versao no host_vars deste cluster. Sem pino, um
+      `helm upgrade` traria o chart mais recente do dia.
+
+- name: Conferir se o cluster já existe de verdade
+  ansible.builtin.stat:
+    path: "{{ argocd_kubeconfig }}"
+  register: argocd_kubeconfig_stat
+  when: ansible_check_mode
+
+- name: Conferir se a reconciliação do Argo CD pode rodar
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/tasks/gate-check-mode-prereq.yml"
+  vars:
+    gate_fact_name: argocd_reconciliar_gate
+    gate_prereq_ok: >-
+      {{ helm_versao_atual.rc == 0 and
+         (argocd_kubeconfig_stat.stat.exists | default(true)) }}
+    gate_message: >-
+      Modo --check numa primeira execução: helm disponível =
+      {{ helm_versao_atual.rc == 0 }}, {{ argocd_kubeconfig }} existe =
+      {{ argocd_kubeconfig_stat.stat.exists | default('?') }}. Nenhum dos
+      dois seria criado de verdade sob --check; nada neste role que
+      dependa do helm ou do cluster pode ser conferido ainda.
+
+- name: Reconciliar o release do Argo CD e os manifests do root
+  when: argocd_reconciliar_gate
+  block:
+    - name: Garantir o repositório Helm do Argo
+      ansible.builtin.command:
+        cmd: >-
+          helm repo add {{ argocd_helm_repo_nome }} {{ argocd_helm_repo_url }}
+          --force-update
+      changed_when: false
+      check_mode: false
+
+    - name: Ler os releases deste cluster
+      ansible.builtin.command:
+        cmd: helm list --all-namespaces --output json
+      environment:
+        KUBECONFIG: "{{ argocd_kubeconfig }}"
+      register: helm_lista
+      changed_when: false
+      check_mode: false
+
+    - name: Achar o release do Argo CD, se já existir
+      ansible.builtin.set_fact:
+        argocd_release_atual: >-
+          {{ (helm_lista.stdout | from_json
+              | selectattr('name', 'equalto', argocd_release)
+              | selectattr('namespace', 'equalto', argocd_namespace)
+              | list | first) | default({}, true) }}
+
+    - name: Ler os values do release já instalado
+      ansible.builtin.command:
+        cmd: helm get values {{ argocd_release }} -n {{ argocd_namespace }} -o yaml
+      environment:
+        KUBECONFIG: "{{ argocd_kubeconfig }}"
+      register: valores_no_cluster
+      changed_when: false
+      check_mode: false
+      when: argocd_release_atual | length > 0
+
+    - name: Comparar o release com o que este repositório declara
+      ansible.builtin.set_fact:
+        argocd_versao_no_cluster: >-
+          {{ (argocd_release_atual.chart | default('')) | regex_replace('^argo-cd-', '') }}
+        argocd_valores_declarados: "{{ lookup('file', argocd_valores_arquivo) | from_yaml }}"
+        argocd_valores_no_cluster: >-
+          {{ ((valores_no_cluster.stdout | default('') | from_yaml) or {}) }}
+
+    - name: Decidir se há o que aplicar
+      ansible.builtin.set_fact:
+        argocd_motivos: >-
+          {%- set m = [] -%}
+          {%- if argocd_release_atual | length == 0 -%}
+            {%- set _ = m.append('o release ' ~ argocd_release ~ ' não existe neste cluster') -%}
+          {%- else -%}
+            {%- if argocd_versao_no_cluster != (argocd_chart_versao | string) -%}
+              {%- set _ = m.append('chart: o cluster tem ' ~ argocd_versao_no_cluster ~ ', o repositório declara ' ~ argocd_chart_versao) -%}
+            {%- endif -%}
+            {%- if argocd_valores_no_cluster != argocd_valores_declarados -%}
+              {%- set _ = m.append('values divergem do que o repositório declara') -%}
+            {%- endif -%}
+          {%- endif -%}
+          {{ m }}
+
+    - name: Dizer que o release já está como o repositório declara
+      ansible.builtin.debug:
+        msg: >-
+          release {{ argocd_release }} na revisão
+          {{ argocd_release_atual.revision | default('?') }}, chart
+          {{ argocd_versao_no_cluster }}, values conferindo com o repositório.
+      when: argocd_motivos | length == 0
+
+    - name: Dizer por que o helm vai rodar
+      ansible.builtin.debug:
+        msg: "{{ argocd_motivos }}"
+      when: argocd_motivos | length > 0
+
+    - name: Instalar ou atualizar o release do Argo CD
+      ansible.builtin.command:
+        cmd: >-
+          helm upgrade --install {{ argocd_release }} {{ argocd_chart }}
+          --namespace {{ argocd_namespace }} --create-namespace
+          --version {{ argocd_chart_versao }}
+          --values -
+        stdin: "{{ lookup('file', argocd_valores_arquivo) }}"
+      environment:
+        KUBECONFIG: "{{ argocd_kubeconfig }}"
+      when: argocd_motivos | length > 0
+      changed_when: true
+
+    - name: Esperar o argocd-server voltar
+      ansible.builtin.command:
+        cmd: >-
+          kubectl rollout status deployment/{{ argocd_release }}-server
+          -n {{ argocd_namespace }} --timeout=300s
+      environment:
+        KUBECONFIG: "{{ argocd_kubeconfig }}"
+      when: argocd_motivos | length > 0
+      changed_when: false
+
+    - name: Reconciliar segredos de bootstrap cifrados no Ansible Vault
+      ansible.builtin.include_tasks: kubernetes-manifest-vault.yml
+      loop: "{{ argocd_kubernetes_manifests_vault }}"
+      loop_control:
+        loop_var: kubernetes_manifest_vault
+        label: "{{ kubernetes_manifest_vault | basename }}"
+
+    - name: Juntar os manifests do root (AppProject + Application)
+      ansible.builtin.set_fact:
+        argocd_manifests: |-
+          {% for arquivo in query('fileglob', argocd_raiz_manifests ~ '/*.yaml') | sort %}
+          ---
+          {{ lookup('file', arquivo) }}
+          {% endfor %}
+
+    - name: Conferir que achou os dois manifests esperados
+      ansible.builtin.assert:
+        that:
+          - "'kind: Application' in argocd_manifests"
+          - "'kind: AppProject' in argocd_manifests"
+        fail_msg: >-
+          não achei o Application e o AppProject em {{ argocd_raiz_manifests }}.
+          Aplicar um conjunto vazio não daria erro nenhum, só não faria nada.
+
+    - name: Ver se os manifests do root divergem do cluster
+      ansible.builtin.command:
+        cmd: kubectl diff -f -
+        stdin: "{{ argocd_manifests }}"
+      environment:
+        KUBECONFIG: "{{ argocd_kubeconfig }}"
+      register: diff_root
+      changed_when: false
+      failed_when: diff_root.rc > 1
+      check_mode: false
+
+    - name: Mostrar o que muda nos manifests do root
+      ansible.builtin.debug:
+        var: diff_root.stdout_lines
+      when: diff_root.rc == 1
+
+    - name: Aplicar os manifests do root
+      ansible.builtin.command:
+        cmd: kubectl apply -f -
+        stdin: "{{ argocd_manifests }}"
+      environment:
+        KUBECONFIG: "{{ argocd_kubeconfig }}"
+      when: diff_root.rc == 1
+      changed_when: true

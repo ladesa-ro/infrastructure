@@ -1,0 +1,111 @@
+---
+- name: Instalar o firewalld
+  ansible.builtin.package:
+    name: firewalld
+    state: present
+
+- name: Garantir que o firewalld está ativo e habilitado
+  ansible.builtin.systemd:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Conferir se o firewalld está de fato ativo
+  ansible.builtin.command:
+    cmd: firewall-cmd --state
+  register: firewalld_estado
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: ansible_check_mode
+
+- name: Conferir se a configuração das zonas e regras pode rodar
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/tasks/gate-check-mode-prereq.yml"
+  vars:
+    gate_fact_name: firewalld_configurar_gate
+    gate_prereq_ok: "{{ (firewalld_estado.rc | default(0)) == 0 }}"
+    gate_message: >-
+      Modo --check numa primeira execução: o firewalld ainda não está
+      ativo de verdade, porque só seria instalado e iniciado numa execução
+      real. Nada neste role pode ser conferido ainda.
+
+- name: Configurar as zonas e regras do firewalld
+  when: firewalld_configurar_gate
+  block:
+    - name: Garantir que a porta do SSH está na lista de portas públicas
+      ansible.builtin.assert:
+        that: (firewalld_porta_ssh ~ '/tcp') in firewalld_portas_publicas
+        fail_msg: >-
+          firewalld_portas_publicas não inclui {{ firewalld_porta_ssh }}/tcp.
+          Este role remove os serviços padrão de fábrica da zona pública
+          (incluindo `ssh`), então sem essa porta explícita a próxima
+          task deixaria o SSH bloqueado depois do reload.
+
+    - name: Zona padrão pública, negar por padrão
+      ansible.builtin.command:
+        cmd: firewall-cmd --set-default-zone=public
+      changed_when: true
+
+    - name: Conferir quais serviços a zona pública libera por padrão de fábrica
+      ansible.builtin.command:
+        cmd: firewall-cmd --zone=public --list-services --permanent
+      register: firewalld_servicos_padrao
+      changed_when: false
+      check_mode: false
+
+    - name: Remover os serviços que a zona pública libera por padrão de fábrica
+      ansible.builtin.command:
+        cmd: "firewall-cmd --zone=public --remove-service={{ item }} --permanent"
+      loop: "{{ firewalld_servicos_padrao.stdout.split() }}"
+      changed_when: true
+
+    - name: Conferir quais portas públicas já estão abertas
+      ansible.builtin.command:
+        cmd: "firewall-cmd --zone=public --query-port={{ item }}"
+      loop: "{{ firewalld_portas_publicas }}"
+      register: firewalld_portas_atuais
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Abrir as portas públicas que ainda não estão liberadas
+      ansible.builtin.command:
+        cmd: "firewall-cmd --zone=public --add-port={{ item.item }} --permanent"
+      loop: "{{ firewalld_portas_atuais.results }}"
+      when: item.rc != 0
+      changed_when: true
+
+    - name: Conferir se a interface de administração já está na zona certa
+      ansible.builtin.command:
+        cmd: "firewall-cmd --zone={{ firewalld_zona_admin }} --query-interface={{ firewalld_interface_admin }}"
+      register: firewalld_interface_atual
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Colocar a interface da malha ZeroTier na zona de administração
+      ansible.builtin.command:
+        cmd: "firewall-cmd --zone={{ firewalld_zona_admin }} --add-interface={{ firewalld_interface_admin }} --permanent"
+      when: firewalld_interface_atual.rc != 0
+      changed_when: true
+
+    - name: Conferir quais redes internas do k3s já estão na zona confiável
+      ansible.builtin.command:
+        cmd: "firewall-cmd --zone={{ firewalld_zona_k3s }} --query-source={{ item }}"
+      loop: "{{ firewalld_redes_k3s }}"
+      register: firewalld_redes_atuais
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Colocar as redes internas do k3s que ainda faltam na zona confiável
+      ansible.builtin.command:
+        cmd: "firewall-cmd --zone={{ firewalld_zona_k3s }} --add-source={{ item.item }} --permanent"
+      loop: "{{ firewalld_redes_atuais.results }}"
+      when: item.rc != 0
+      changed_when: true
+
+    - name: Recarregar o firewalld pra aplicar as regras permanentes
+      ansible.builtin.command:
+        cmd: firewall-cmd --reload
+      changed_when: true

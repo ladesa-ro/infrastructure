@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: foundation-infisical
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: ladesa
+  source:
+    repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
+    chart: infisical-standalone
+    targetRevision: 1.4.0
+    helm:
+      values: |
+        fullnameOverride: infisical
+        nameOverride: infisical
+        infisical:
+          enabled: true
+          fullnameOverride: ""
+          name: infisical
+          autoDatabaseSchemaMigration: true
+          kubeSecretRef: infisical-secrets
+          replicaCount: 1
+          image:
+            repository: infisical/infisical
+            tag: v0.99.0-postgres
+            pullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          service:
+            type: ClusterIP
+        postgresql:
+          enabled: false
+        redis:
+          enabled: false
+        ingress:
+          enabled: true
+          ingressClassName: traefik
+          hostName: infisical.ladesa.com.br
+          nginx:
+            enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infisical
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: foundation-portainer
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: ladesa
+  source:
+    repoURL: https://portainer.github.io/k8s/
+    chart: portainer
+    targetRevision: 1.0.59
+    helm:
+      values: |
+        image:
+          tag: 2.21.5
+        service:
+          type: ClusterIP
+        ingress:
+          enabled: true
+          hosts:
+            - host: portainer.ladesa.com.br
+              paths:
+                - path: /
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: portainer
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

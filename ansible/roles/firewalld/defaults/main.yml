@@ -1,0 +1,15 @@
+---
+firewalld_porta_ssh: "22"
+
+firewalld_portas_publicas:
+  - "{{ firewalld_porta_ssh }}/tcp"
+  - "80/tcp"
+  - "443/tcp"
+
+firewalld_interface_admin: ztmjfdiesp
+firewalld_zona_admin: trusted
+
+firewalld_redes_k3s:
+  - 10.42.0.0/16
+  - 10.43.0.0/16
+firewalld_zona_k3s: trusted

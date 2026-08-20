@@ -1,0 +1,75 @@
+---
+- name: Conferir a versão do k3s instalada, se houver
+  ansible.builtin.command:
+    cmd: k3s --version
+  register: k3s_versao_atual
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Instalar/atualizar o k3s fixado e verificado
+  when: not (k3s_versao_atual.rc == 0 and (k3s_versao | regex_escape) in (k3s_versao_atual.stdout | default('')))
+  block:
+    - name: Baixar o binário do k3s fixado e verificado
+      ansible.builtin.get_url:
+        url: "{{ k3s_download_url }}"
+        dest: /tmp/k3s-novo
+        checksum: "sha256:{{ k3s_binary_sha256 }}"
+        mode: "0755"
+
+    - name: Baixar o instalador oficial (só o script, não o binário)
+      ansible.builtin.get_url:
+        url: https://get.k3s.io
+        dest: /tmp/install-k3s.sh
+        mode: "0755"
+
+    - name: Colocar o binário verificado onde o instalador espera
+      ansible.builtin.copy:
+        src: /tmp/k3s-novo
+        dest: /usr/local/bin/k3s
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Rodar o instalador (systemd unit, symlinks), sem baixar binário de novo
+      ansible.builtin.command:
+        cmd: /tmp/install-k3s.sh
+      environment:
+        INSTALL_K3S_SKIP_DOWNLOAD: "true"
+        INSTALL_K3S_VERSION: "{{ k3s_versao }}"
+      changed_when: true
+  always:
+    - name: Limpar arquivos temporários
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/k3s-novo
+        - /tmp/install-k3s.sh
+
+- name: Garantir o diretório de configuração do k3s
+  ansible.builtin.file:
+    path: /etc/rancher/k3s
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Declarar a configuração do k3s
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/rancher/k3s/config.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  notify: reiniciar o k3s
+
+- name: Garantir que o k3s está ativo e habilitado
+  ansible.builtin.systemd:
+    name: k3s
+    state: started
+    enabled: true
+
+- name: Aplicar o reinício do k3s agora, se a configuração mudou
+  ansible.builtin.meta: flush_handlers
