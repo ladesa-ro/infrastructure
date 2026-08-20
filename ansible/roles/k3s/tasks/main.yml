@@ -8,7 +8,7 @@
   check_mode: false
 
 - name: Instalar/atualizar o k3s fixado e verificado
-  when: not (k3s_versao_atual.rc == 0 and (k3s_versao | regex_escape) in (k3s_versao_atual.stdout | default('')))
+  when: not (k3s_versao_atual.rc == 0 and k3s_versao in (k3s_versao_atual.stdout | default('')))
   block:
     - name: Baixar o binário do k3s fixado e verificado
       ansible.builtin.get_url:
