@@ -12,6 +12,7 @@ spec:
     chart: infisical-standalone
     targetRevision: 1.4.0
     helm:
+      releaseName: infisical
       values: |
         fullnameOverride: infisical
         nameOverride: infisical
