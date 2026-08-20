@@ -31,6 +31,7 @@
         owner: root
         group: root
         mode: "0755"
+      when: not ansible_check_mode
 
     - name: Rodar o instalador (systemd unit, symlinks), sem baixar binário de novo
       ansible.builtin.command:
