@@ -1,0 +1,164 @@
+---
+# CR do CloudNativePG. Bootstrap via import "monolith" a partir da instância
+# antiga (docker.io/postgres:18, ainda rodando em paralelo até o cutover, ver
+# externalClusters abaixo), preservando os roles e databases reais sem tocar
+# em nenhuma senha.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+  namespace: dados
+spec:
+  instances: 1
+
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.0-standard-trixie@sha256:e56be4982b17aa701b1263dbfc2fa95741177bbd3fe55d487a981e134d08625c
+
+  storage:
+    storageClass: local-path
+    size: 1Gi
+
+  superuserSecret:
+    name: postgres-superuser-bootstrap
+
+  bootstrap:
+    initdb:
+      import:
+        type: monolith
+        databases:
+          - api-dev-v1
+          - api-dev-v2
+          - infisical
+          - sso-production
+          - management-service-v3
+        roles:
+          - ladesa
+          - infisical
+          - api-dev
+          - sso-production
+        source:
+          externalCluster: db-postgres-antigo
+
+  externalClusters:
+    - name: db-postgres-antigo
+      connectionParameters:
+        host: db-postgres.dados.svc.cluster.local
+        port: "5432"
+        user: ladesa
+        dbname: postgres
+      password:
+        name: pg-env
+        key: POSTGRES_PASSWORD
+
+  # Roles adotadas (já existiam no Postgres antigo, capturadas ao vivo via
+  # \du+ antes de escrever este arquivo). Sem passwordSecret em nenhuma: o
+  # operador só roda ALTER ROLE em cima do que o import trouxe, nunca
+  # sobrescreve a senha vinda da instância antiga. ladesa entra sem
+  # SUPERUSER porque o CNPG remove esse atributo de toda role importada de
+  # qualquer forma (o próprio operador tem seu superusuário separado, via
+  # superuserSecret acima).
+  managed:
+    roles:
+      - name: ladesa
+        ensure: present
+        login: true
+        inherit: true
+      - name: infisical
+        ensure: present
+        login: true
+        inherit: true
+      - name: api-dev
+        ensure: present
+        login: true
+        inherit: true
+      - name: sso-production
+        ensure: present
+        login: true
+        inherit: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+---
+# databaseReclaimPolicy: retain em todos, explícito: apagar o recurso do
+# Kubernetes (kubectl delete, prune do Argo CD) nunca dropa o database de
+# verdade, só o Delete faria isso, e nunca vamos declarar isso aqui.
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: api-dev-v1
+  namespace: dados
+spec:
+  cluster:
+    name: postgres
+  name: api-dev-v1
+  owner: api-dev
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: api-dev-v2
+  namespace: dados
+spec:
+  cluster:
+    name: postgres
+  name: api-dev-v2
+  owner: api-dev
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: infisical
+  namespace: dados
+spec:
+  cluster:
+    name: postgres
+  name: infisical
+  owner: infisical
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: sso-production
+  namespace: dados
+spec:
+  cluster:
+    name: postgres
+  name: sso-production
+  owner: sso-production
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: management-service-v3
+  namespace: dados
+spec:
+  cluster:
+    name: postgres
+  name: management-service-v3
+  owner: api-dev
+  databaseReclaimPolicy: retain
+---
+# Reaproveita o nome exato "db-postgres": nenhuma aplicação (management-service,
+# Keycloak, Infisical) precisa editar connection string nenhuma, o hostname
+# db-postgres.dados.svc.cluster.local:5432 continua o mesmo depois do cutover
+# (ver docs/arquitetura/roles/postgres-cluster.md).
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-postgres
+  namespace: dados
+spec:
+  type: ClusterIP
+  selector:
+    cnpg.io/cluster: postgres
+    cnpg.io/instanceRole: primary
+  ports:
+    - port: 5432
+      targetPort: 5432

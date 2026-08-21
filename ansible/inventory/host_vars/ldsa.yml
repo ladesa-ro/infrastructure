@@ -19,3 +19,4 @@ argocd_bootstrap_kubernetes_manifests_vault:
   - "{{ vault_repo_dir }}/secrets/k8s/redis-server/redis-secret.yaml"
   - "{{ vault_repo_dir }}/secrets/k8s/default/universal-auth-credentials.yaml"
   - "{{ vault_repo_dir }}/secrets/k8s/infisical/infisical-secrets.yaml"
+  - "{{ vault_repo_dir }}/secrets/k8s/dados/postgres-superuser-bootstrap.yaml"

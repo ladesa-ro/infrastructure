@@ -1,0 +1,29 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: foundation-dados-postgres-cluster
+  namespace: argocd
+  annotations:
+    # Depois do operador CNPG (foundation-cnpg, sync-wave "0"), cujas CRDs
+    # este Cluster CR precisa que já existam.
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: ladesa
+  source:
+    repoURL: https://github.com/ladesa-ro/infrastructure.git
+    targetRevision: main
+    path: argocd/foundation/dados-postgres-cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dados
+  syncPolicy:
+    # NÃO automatizado de propósito: o Service deste chart reaproveita o
+    # nome "db-postgres", que colide com o Service do Deployment antigo
+    # (argocd/foundation/dados/postgres.yaml) até o cutover deliberado
+    # remover o antigo primeiro. Sincronizar automaticamente aqui sem isso
+    # falharia ou aplicaria pela metade. Trocar pra automated só depois do
+    # cutover confirmado (ver docs/arquitetura/licoes-do-bootstrap.md).
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
