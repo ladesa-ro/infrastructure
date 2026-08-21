@@ -22,7 +22,7 @@ flowchart LR
     SelfPullTimer -->|mantém sincronizado| Timer
 ```
 
-Executado de verdade em produção em 2026-08-21, como [passo 9 do bootstrap](../../operacao/bootstrap.md#9-ligar-a-reconciliacao-automatica): `ansible-pull.timer` ficou `active (waiting)`, `enabled`, com o primeiro disparo em até 5 minutos e depois a cada 30 minutos (± 5 de jitter). Uma segunda execução real confirmou idempotência (`changed=0`). A partir daqui o node reconcilia este repositório sozinho, sem depender de ninguém rodando `ansible-playbook` na mão.
+Executado de verdade em produção em 2026-08-21, como [passo 9 do bootstrap](../../operacao/bootstrap.md#9-ligar-a-reconciliacao-automatica): `ansible-pull.timer` ficou `active (waiting)`, `enabled`, com o primeiro disparo em até 5 minutos e depois a cada 30 minutos (+/- 5 de jitter). Uma segunda execução real confirmou idempotência (`changed=0`). A partir daqui o node reconcilia este repositório sozinho, sem depender de ninguém rodando `ansible-playbook` na mão.
 
 ## O mesmo bug de `--check` do role firewalld
 

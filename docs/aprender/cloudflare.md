@@ -14,13 +14,13 @@ flowchart LR
     Borda -->|nova conexão, IP da própria Cloudflare| Origem[servidor de origem real]
 ```
 
-## O modo SSL decide o que acontece na perna Cloudflare → origem
+## O modo SSL decide o que acontece na perna Cloudflare -> origem
 
-A perna cliente → Cloudflare é sempre criptografada quando "Always Use HTTPS"/certificado da borda está ativo, mas a perna Cloudflare → origem depende do **modo SSL** configurado no painel:
+A perna cliente -> Cloudflare é sempre criptografada quando "Always Use HTTPS"/certificado da borda está ativo, mas a perna Cloudflare -> origem depende do **modo SSL** configurado no painel:
 
-- **Flexible**: Cloudflare → origem em HTTP puro, mesmo que cliente → Cloudflare seja HTTPS. A origem nem precisa ter certificado.
-- **Full**: Cloudflare → origem em HTTPS, mas aceita qualquer certificado da origem, mesmo autoassinado ou expirado.
-- **Full (Strict)**: Cloudflare → origem em HTTPS, exigindo certificado válido e confiável na origem (o mais parecido com "TLS de verdade ponta a ponta").
+- **Flexible**: Cloudflare -> origem em HTTP puro, mesmo que cliente -> Cloudflare seja HTTPS. A origem nem precisa ter certificado.
+- **Full**: Cloudflare -> origem em HTTPS, mas aceita qualquer certificado da origem, mesmo autoassinado ou expirado.
+- **Full (Strict)**: Cloudflare -> origem em HTTPS, exigindo certificado válido e confiável na origem (o mais parecido com "TLS de verdade ponta a ponta").
 
 Isso importa pra decidir se a origem *precisa* de certificado próprio: em Flexible, não precisa (mas também não tem proteção nenhuma na segunda perna); em Full/Full Strict, precisa.
 

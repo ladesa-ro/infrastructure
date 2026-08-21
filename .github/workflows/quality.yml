@@ -61,10 +61,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Sem travessão em nenhuma doc (regra de estilo deste repositório)
+      - name: Sem travessão nem seta em nenhuma doc (regra de estilo deste repositório)
         run: |
-          if grep -rn "—" docs/ README.md; then
-            echo "Achei travessão (—) num arquivo de documentação. Reescreva com vírgula, ponto, ou frase separada."
+          if grep -rnP "[—–→←↔⇒⇐]" docs/ README.md; then
+            echo "Achei travessão, meia-risca ou seta (—, –, →, ←, ↔, ⇒, ⇐) num arquivo de documentação."
+            echo "Nenhum desses caracteres está num teclado padrão. Reescreva: travessão vira vírgula/ponto/frase separada, seta vira '->'/'<->' ou uma palavra (\"pra\", \"vira\")."
             exit 1
           fi
 

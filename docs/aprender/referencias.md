@@ -63,7 +63,7 @@ Não são pré-requisito pra trabalhar com infraestrutura, mas são um jeito est
 - **LFCS** (Linux Foundation Certified System Administrator) e **LFCA** (nível introdutório): administração de sistemas Linux em geral, base pra praticamente toda a área.
 - **CKA** (Certified Kubernetes Administrator), **CKAD** (Certified Kubernetes Application Developer) e **CKS** (Certified Kubernetes Security Specialist), da Linux Foundation/CNCF: as três certificações de Kubernetes mais reconhecidas, cada uma com foco diferente (operar o cluster, desenvolver pra ele, segurança). **KCNA** (Kubernetes and Cloud Native Associate) é a entrada, sem pré-requisito.
 - **HashiCorp Certified: Terraform Associate**: fundamentos de infrastructure as code com Terraform, os conceitos (state, plan/apply, provider) atravessam a categoria inteira de ferramentas, mesmo quem usa uma ferramenta diferente.
-- **AWS Certified Solutions Architect – Associate**, e os equivalentes de Google Cloud e Azure: o caminho mais comum pra quem quer migrar de "administra um node só" pra "administra infraestrutura em escala".
+- **AWS Certified Solutions Architect - Associate**, e os equivalentes de Google Cloud e Azure: o caminho mais comum pra quem quer migrar de "administra um node só" pra "administra infraestrutura em escala".
 
 ## Comunidades e discussão contínua
 

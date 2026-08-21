@@ -44,7 +44,7 @@ Conceitos que aparecem o tempo todo em qualquer pipeline de CI/CD:
 
 **Tag**: um rótulo que aponta pra uma versão específica de uma imagem num registry (`v1.2.3`, `latest`, o SHA do commit). `latest` é conveniente mas ambíguo, o mesmo nome aponta pra coisas diferentes ao longo do tempo; fixar por SHA ou versão semântica é o que garante que "a versão que rodou em staging é exatamente a mesma que vai pra produção".
 
-**Promoção entre ambientes**: mover a mesma imagem, já testada, de um ambiente pro próximo (dev → staging → produção), em vez de reconstruir a imagem em cada ambiente. Em GitOps, isso normalmente significa atualizar a referência de tag num arquivo de manifest (o que abre um PR, ou é feito automaticamente por uma ferramenta como o Argo CD Image Updater), não rodar um comando de deploy diferente por ambiente.
+**Promoção entre ambientes**: mover a mesma imagem, já testada, de um ambiente pro próximo (dev -> staging -> produção), em vez de reconstruir a imagem em cada ambiente. Em GitOps, isso normalmente significa atualizar a referência de tag num arquivo de manifest (o que abre um PR, ou é feito automaticamente por uma ferramenta como o Argo CD Image Updater), não rodar um comando de deploy diferente por ambiente.
 
 ```mermaid
 flowchart LR
