@@ -57,6 +57,7 @@ nav:
       - Operators: aprender/kubernetes-operators.md
       - Rede interna do cluster: aprender/rede-interna-do-cluster.md
       - DNS e DHCP: aprender/dns-e-dhcp.md
+      - Cloudflare: aprender/cloudflare.md
       - Dados no cluster: aprender/dados-no-cluster.md
       - TLS automático: aprender/tls-automatico.md
       - Papéis: aprender/papeis.md

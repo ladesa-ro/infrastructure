@@ -28,3 +28,5 @@ Dentro de um cluster Kubernetes, o papel de servidor web/reverse proxy geralment
 A antítese de um servidor web dedicado é a própria aplicação escutar a porta HTTP diretamente, sem nenhuma camada na frente (comum em desenvolvimento local, ou em linguagem/framework cujo servidor embutido já é robusto o bastante pra produção). Funciona pra tráfego pequeno, mas perde recursos que um servidor web dedicado dá de graça: servir arquivo estático de forma mais eficiente que a maioria dos frameworks de aplicação, terminação de TLS centralizada, e um ponto único pra aplicar limite de taxa ou cabeçalho de segurança antes da requisição chegar na aplicação.
 
 Onde aprofundar: a [comparação independente entre Nginx, Apache e Caddy](https://www.digitalocean.com/community/tutorials/apache-vs-nginx-practical-considerations) cobre o histórico e o modelo de concorrência de cada um com mais profundidade técnica do que cabe aqui.
+
+Um reverse proxy também pode ser um serviço terceiro inteiro, não um processo que se administra: ver [Cloudflare](cloudflare.md), que faz esse papel (mais CDN e WAF) na frente do domínio público deste cluster, antes até do Traefik interno entrar em cena.

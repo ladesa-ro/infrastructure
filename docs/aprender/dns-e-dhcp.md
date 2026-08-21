@@ -51,3 +51,5 @@ flowchart TD
 A antítese de DHCP é IP estático configurado manualmente: mais previsível (o endereço nunca muda sozinho), mas não escala pra rede com centenas de dispositivo entrando e saindo, o caso comum que motivou o DHCP existir. mDNS/Bonjour (usado por Chromecast, impressora de rede, e outros dispositivos "plug and play" domésticos) resolve descoberta de nome sem depender de servidor DNS central nenhum, útil numa rede local pequena, mas não pensado pra escalar além disso.
 
 Onde aprofundar: [ldap.com](https://ldap.com) tem uma seção introdutória sobre protocolos de diretório e rede que, apesar do nome, cobre bem o contexto histórico de LDAP/DNS/DHCP juntos, útil pra ver como as peças se encaixam, não só cada uma isolada.
+
+Uma variação real deste cluster: `*.ladesa.com.br` não resolve direto pro IP da origem, resolve pro IP de um proxy-as-a-service ([Cloudflare](cloudflare.md)), que só depois abre uma segunda conexão até a origem de verdade. DNS aqui não é só "nome vira IP", é "nome vira IP de uma borda que decide o que fazer em seguida".
