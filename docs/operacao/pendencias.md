@@ -14,6 +14,14 @@ Esta página existe pelo mesmo motivo de [Estado fora do git](estado-fora-do-git
 
 - [ ] **Este repositório não tem `LICENSE`**, discutido em 2026-08-21. Decisão preliminar: MIT, mesmo padrão já em uso no [`management-service`](https://github.com/ladesa-ro/management-service/blob/main/LICENSE) (`Copyright (c) 2024-present LADESA e Colaboradores`), pra manter consistência entre repositórios da organização. Falta só criar o arquivo e linkar no `README.md`, adiado a pedido do usuário, sem urgência definida.
 
+## Segurança do próprio Argo CD
+
+Achados da auditoria de 2026-08-21 (ver [Aprender: Argo CD](../aprender/argocd.md#auditoria-do-proprio-argo-cd-2026-08-21)), corrigidos em parte, dois itens deliberadamente deixados pra decisão do usuário:
+
+- [ ] **HTTP puro sem redirect pra HTTPS, achado em vários `Ingress` do cluster, não só o Argo CD** (`sso.ladesa.com.br`/Keycloak, `infisical.ladesa.com.br`, `portainer.ladesa.com.br`, `adminer.ladesa.com.br`, `docs.ladesa.com.br`): confirmado ao vivo com `curl` direto na porta 80, `HTTP 200`/`302` completo, sem nenhum redirect. O Argo CD já foi corrigido (`server.ingress.tls: true` + `cert-manager.io/cluster-issuer`). Os outros hosts continuam expostos em texto puro, incluindo o Keycloak (SSO de toda a plataforma) e o Infisical (gerenciador de segredo). Correção recomendada: mesmo padrão já usado em `management-service`/`web`/`rabbitmq` (`tls:` + annotation do `ladesa-ro-issuer-production`) em cada `Ingress` restante, ou um redirect global no Traefik (`--entrypoints.web.http.redirections.entrypoint.to=websecure`) via `HelmChartConfig`, mais abrangente mas nunca testado neste cluster.
+- [ ] **`argocd-initial-admin-secret` ainda existe no cluster**, com a senha original de bootstrap. Antes de apagar (reduzir quem consegue ler a senha original via `get secret`), confirmar que a senha atual do usuário `admin` foi trocada e está salva em algum gerenciador de senha; apagar sem confirmar isso arrisca lockout do próprio Argo CD.
+- [ ] **`AppProject` `ladesa`/`ladesa-satellites` com `destinations: namespace: "*"`**, sem escopo. Prática recomendada é restringir a uma lista explícita, mas exige mapear todo namespace de destino real primeiro, inclusive dos repositórios satélite (management-service, web, docs, timetable-generator, authentication-service), fora da visibilidade completa deste repositório.
+
 ## Débito técnico: `securityContext` ausente
 
 Acompanha o item acima. Um item por serviço, porque a correção de cada um é independente (UID diferente, risco de quebrar não é o mesmo):

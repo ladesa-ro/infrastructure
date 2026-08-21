@@ -2,9 +2,57 @@
 configs:
   params:
     server.insecure: "true"
+  cm:
+    url: https://argocd.ladesa.com.br
 
 server:
   ingress:
     enabled: true
     ingressClassName: traefik
     hostname: argocd.ladesa.com.br
+    annotations:
+      cert-manager.io/cluster-issuer: ladesa-ro-issuer-production
+    tls: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 384Mi
+    limits:
+      cpu: 1000m
+      memory: 768Mi
+
+repoServer:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+redis:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi
+
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+applicationSet:
+  replicas: 0
