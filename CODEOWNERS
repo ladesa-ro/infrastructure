@@ -1,0 +1,12 @@
+.github/**/* @ladesa-ro/security
+ansible/**/* @ladesa-ro/security @ladesa-ro/devops
+argocd/**/* @ladesa-ro/security @ladesa-ro/devops
+tools/quality/**/* @ladesa-ro/security
+.config/hermit/**/* @ladesa-ro/security
+CODEOWNERS @ladesa-ro/security
+**/*.sh @ladesa-ro/security
+.ansible-lint @ladesa-ro/security
+.yamllint @ladesa-ro/security
+.cspell.config.yaml @ladesa-ro/security
+.lychee.toml @ladesa-ro/security
+.dockerignore @ladesa-ro/security @ladesa-ro/devops
