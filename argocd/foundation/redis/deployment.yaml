@@ -15,12 +15,23 @@ spec:
         app: redis-server
         name: redis-server
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 0
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: redis-server
           image: bitnami/redis
           ports:
             - containerPort: 6379
               name: redis-server
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: ALLOW_EMPTY_PASSWORD
               value: "no"
