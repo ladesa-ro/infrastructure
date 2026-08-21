@@ -118,6 +118,121 @@
       changed_when: true
       register: firewalld_portas_abertas
 
+    - name: Conferir se a porta pública liberada pra qualquer origem (80/443) ainda existe
+      ansible.builtin.command:
+        cmd: "firewall-cmd --zone=public --query-port={{ item }}"
+      loop: "{{ firewalld_portas_cloudflare }}"
+      register: firewalld_portas_amplas_atuais
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Remover 80/443 liberados pra qualquer origem, substituídos pelas rich rules do Cloudflare abaixo
+      ansible.builtin.command:
+        cmd: "firewall-cmd --zone=public --remove-port={{ item.item }} --permanent"
+      loop: "{{ firewalld_portas_amplas_atuais.results }}"
+      when: item.rc == 0
+      changed_when: true
+      register: firewalld_portas_amplas_removidas
+
+    - name: Conferir se o ipset do Cloudflare IPv4 já existe
+      ansible.builtin.command:
+        cmd: firewall-cmd --permanent --get-ipsets
+      register: firewalld_ipsets_existentes
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Criar o ipset do Cloudflare IPv4
+      ansible.builtin.command:
+        cmd: firewall-cmd --permanent --new-ipset=cloudflare4 --type=hash:net --family=inet
+      when: "'cloudflare4' not in firewalld_ipsets_existentes.stdout.split()"
+      changed_when: true
+      register: firewalld_ipset4_criado
+
+    - name: Criar o ipset do Cloudflare IPv6
+      ansible.builtin.command:
+        cmd: firewall-cmd --permanent --new-ipset=cloudflare6 --type=hash:net --family=inet6
+      when: "'cloudflare6' not in firewalld_ipsets_existentes.stdout.split()"
+      changed_when: true
+      register: firewalld_ipset6_criado
+
+    - name: Conferir quais faixas IPv4 do Cloudflare já estão no ipset
+      ansible.builtin.command:
+        cmd: "firewall-cmd --permanent --ipset=cloudflare4 --query-entry={{ item }}"
+      loop: "{{ firewalld_cloudflare_ipv4 }}"
+      register: firewalld_ipv4_atuais
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Adicionar as faixas IPv4 do Cloudflare que ainda faltam no ipset
+      ansible.builtin.command:
+        cmd: "firewall-cmd --permanent --ipset=cloudflare4 --add-entry={{ item.item }}"
+      loop: "{{ firewalld_ipv4_atuais.results }}"
+      when: item.rc != 0
+      changed_when: true
+      register: firewalld_ipv4_adicionadas
+
+    - name: Conferir quais faixas IPv6 do Cloudflare já estão no ipset
+      ansible.builtin.command:
+        cmd: "firewall-cmd --permanent --ipset=cloudflare6 --query-entry={{ item }}"
+      loop: "{{ firewalld_cloudflare_ipv6 }}"
+      register: firewalld_ipv6_atuais
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Adicionar as faixas IPv6 do Cloudflare que ainda faltam no ipset
+      ansible.builtin.command:
+        cmd: "firewall-cmd --permanent --ipset=cloudflare6 --add-entry={{ item.item }}"
+      loop: "{{ firewalld_ipv6_atuais.results }}"
+      when: item.rc != 0
+      changed_when: true
+      register: firewalld_ipv6_adicionadas
+
+    - name: Conferir se as rich rules do Cloudflare (IPv4) já existem
+      ansible.builtin.command:
+        cmd: >-
+          firewall-cmd --permanent --zone=public --query-rich-rule=
+          rule family="ipv4" source ipset="cloudflare4" port port="{{ item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
+      loop: "{{ firewalld_portas_cloudflare }}"
+      register: firewalld_rich_v4_atuais
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Adicionar as rich rules do Cloudflare (IPv4) que ainda faltam
+      ansible.builtin.command:
+        cmd: >-
+          firewall-cmd --permanent --zone=public --add-rich-rule=
+          rule family="ipv4" source ipset="cloudflare4" port port="{{ item.item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
+      loop: "{{ firewalld_rich_v4_atuais.results }}"
+      when: item.rc != 0
+      changed_when: true
+      register: firewalld_rich_v4_adicionadas
+
+    - name: Conferir se as rich rules do Cloudflare (IPv6) já existem
+      ansible.builtin.command:
+        cmd: >-
+          firewall-cmd --permanent --zone=public --query-rich-rule=
+          rule family="ipv6" source ipset="cloudflare6" port port="{{ item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
+      loop: "{{ firewalld_portas_cloudflare }}"
+      register: firewalld_rich_v6_atuais
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Adicionar as rich rules do Cloudflare (IPv6) que ainda faltam
+      ansible.builtin.command:
+        cmd: >-
+          firewall-cmd --permanent --zone=public --add-rich-rule=
+          rule family="ipv6" source ipset="cloudflare6" port port="{{ item.item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
+      loop: "{{ firewalld_rich_v6_atuais.results }}"
+      when: item.rc != 0
+      changed_when: true
+      register: firewalld_rich_v6_adicionadas
+
     - name: Conferir se a interface de administração já está na zona certa
       ansible.builtin.command:
         cmd: "firewall-cmd --zone={{ firewalld_zona_admin }} --query-interface={{ firewalld_interface_admin }}"
@@ -160,6 +275,18 @@
              or (firewalld_servicos_removidos | default({})).results
                 | default([]) | selectattr('changed') | list | length > 0
              or (firewalld_portas_abertas | default({})).results
+                | default([]) | selectattr('changed') | list | length > 0
+             or (firewalld_portas_amplas_removidas | default({})).results
+                | default([]) | selectattr('changed') | list | length > 0
+             or (firewalld_ipset4_criado | default({})) is changed
+             or (firewalld_ipset6_criado | default({})) is changed
+             or (firewalld_ipv4_adicionadas | default({})).results
+                | default([]) | selectattr('changed') | list | length > 0
+             or (firewalld_ipv6_adicionadas | default({})).results
+                | default([]) | selectattr('changed') | list | length > 0
+             or (firewalld_rich_v4_adicionadas | default({})).results
+                | default([]) | selectattr('changed') | list | length > 0
+             or (firewalld_rich_v6_adicionadas | default({})).results
                 | default([]) | selectattr('changed') | list | length > 0
              or (firewalld_interface_mudou | default({})) is changed
              or (firewalld_redes_mudaram | default({})).results
