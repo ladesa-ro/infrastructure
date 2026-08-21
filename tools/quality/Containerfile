@@ -11,20 +11,26 @@ ENV PATH=/workspace/.config/hermit/bin:$PATH
 
 FROM base AS actionlint
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install actionlint-1.7.12" /dev/null
+USER 1000:1000
 
 FROM base AS shellcheck
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install shellcheck-0.11.0" /dev/null
+USER 1000:1000
 
 FROM base AS zizmor
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install zizmor-1.29.0" /dev/null
+USER 1000:1000
 
 FROM base AS python-lint
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install uv-0.12.1" /dev/null
+USER 1000:1000
 
 FROM base AS kubeconform
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install kubeconform-0.8.0" /dev/null
+USER 1000:1000
 
 FROM base AS node-tools
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install node-24.18.0" /dev/null
 ENV PATH=/opt/hermit-cache/pkg/node-24.18.0/bin:$PATH
 RUN npm install --global jscpd@5.0.14 cspell@10.0.1 @cspell/dict-pt-br@2.4.2
+USER 1000:1000

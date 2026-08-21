@@ -107,6 +107,7 @@ nav:
   - Operação:
       - Checklist: operacao/checklist.md
       - Bootstrap na VM: operacao/bootstrap.md
+      - Pendências: operacao/pendencias.md
       - Scripts: operacao/scripts.md
       - Estado fora do git: operacao/estado-fora-do-git.md
       - Desenvolvimento: operacao/desenvolvimento.md
