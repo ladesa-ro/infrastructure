@@ -28,6 +28,10 @@ Pra editar a documentação localmente:
 docker run --rm -it -p 8000:8000 -v "$PWD":/docs squidfunk/mkdocs-material:9.7.7
 ```
 
+## Licença
+
+[MIT](LICENSE)
+
 [action-quality-src]: https://img.shields.io/github/actions/workflow/status/ladesa-ro/infrastructure/quality.yml?style=flat&logo=github&logoColor=white&label=Quality&branch=main&labelColor=18181B
 [action-quality-href]: https://github.com/ladesa-ro/infrastructure/actions/workflows/quality.yml?query=branch%3Amain
 [action-security-src]: https://img.shields.io/github/actions/workflow/status/ladesa-ro/infrastructure/security.yml?style=flat&logo=github&logoColor=white&label=Security&branch=main&labelColor=18181B
