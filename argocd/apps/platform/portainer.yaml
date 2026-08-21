@@ -37,10 +37,6 @@ spec:
     namespace: portainer
   revisionHistoryLimit: 3
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-      allowEmpty: false
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
