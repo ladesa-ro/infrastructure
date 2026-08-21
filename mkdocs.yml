@@ -111,6 +111,7 @@ nav:
           - self-pull-timer: arquitetura/roles/self-pull-timer.md
       - Segredos: arquitetura/segredos.md
       - Foundation: arquitetura/foundation.md
+      - Repositórios satélite: arquitetura/satelites.md
       - Gate de drift zero: arquitetura/gate-de-drift-zero.md
       - Lições do bootstrap: arquitetura/licoes-do-bootstrap.md
   - Operação:

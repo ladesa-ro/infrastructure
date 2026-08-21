@@ -369,3 +369,4 @@ escopado
 Conffile
 sysstat
 zram
+stakater
