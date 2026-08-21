@@ -18,12 +18,15 @@ spec:
     server: https://kubernetes.default.svc
     namespace: dados
   syncPolicy:
-    # NÃO automatizado de propósito: o Service deste chart reaproveita o
-    # nome "db-postgres", que colide com o Service do Deployment antigo
-    # (argocd/foundation/dados/postgres.yaml) até o cutover deliberado
-    # remover o antigo primeiro. Sincronizar automaticamente aqui sem isso
-    # falharia ou aplicaria pela metade. Trocar pra automated só depois do
-    # cutover confirmado (ver docs/arquitetura/licoes-do-bootstrap.md).
+    # Automatizado a partir de 2026-08-21, depois do cutover confirmado: o
+    # Deployment/Service antigos (argocd/foundation/dados/postgres.yaml)
+    # foram removidos do git e do cluster, então não há mais colisão de
+    # nome nenhuma pra sync automático reintroduzir. databaseReclaimPolicy
+    # retain (ver postgres-cluster.yaml) garante que prune aqui nunca
+    # dropa um database de verdade, só para de gerenciar o recurso.
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
