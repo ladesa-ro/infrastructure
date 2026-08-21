@@ -12,6 +12,7 @@ spec:
     - https://portainer.github.io/k8s/
     - https://helm.mariadb.com/mariadb-operator
     - https://charts.jetstack.io
+    - https://cloudnative-pg.github.io/charts
   destinations:
     - server: https://kubernetes.default.svc
       namespace: "*"
