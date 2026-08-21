@@ -154,7 +154,7 @@ Só então roda o `--check` e a execução real:
 ansible-playbook -i ansible/inventory/hosts.yml ansible/site.yml --tags firewalld --vault-password-file /root/infrastructure-vault-pass --check
 ```
 
-Se `firewalld` nunca foi instalado neste node, esse `--check` mostra `ignored=1` ou `2` nas tasks que habilitam/ativam a unit systemd, um erro esperado, não um problema real (ver [o bug de `--check` que só apareceu contra o node real](../arquitetura/roles/firewalld.md#o-bug-de-check-que-só-apareceu-contra-o-node-real)). O que importa conferir é `failed=0` no resumo final.
+Se `firewalld` nunca foi instalado neste node, esse `--check` mostra `ignored=1` ou `2` nas tasks que habilitam/ativam a unit systemd, um erro esperado, não um problema real (ver [o bug de `--check` que só apareceu contra o node real](../arquitetura/roles/firewalld.md#o-bug-de-check-que-so-apareceu-contra-o-node-real)). O que importa conferir é `failed=0` no resumo final.
 
 ```bash
 ansible-playbook -i ansible/inventory/hosts.yml ansible/site.yml --tags firewalld --vault-password-file /root/infrastructure-vault-pass

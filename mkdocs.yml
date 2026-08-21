@@ -1,3 +1,4 @@
+---
 site_name: infrastructure
 site_description: Bootstrap declarativo e setup GitOps de um cluster k3s de node único
 site_url: https://ladesa-ro.github.io/infrastructure/
