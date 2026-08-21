@@ -56,6 +56,14 @@ spec:
     server: https://kubernetes.default.svc
     namespace: infisical
   revisionHistoryLimit: 3
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: infisical-infisical
+      namespace: infisical
+      jsonPointers:
+        - /metadata/annotations/updatedAt
+        - /spec/template/metadata/annotations/updatedAt
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
