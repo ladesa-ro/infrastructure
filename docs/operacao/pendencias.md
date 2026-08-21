@@ -14,7 +14,7 @@ Esta página existe pelo mesmo motivo de [Estado fora do git](estado-fora-do-git
 
 Acompanha o item acima. Um item por serviço, porque a correção de cada um é independente (UID diferente, risco de quebrar não é o mesmo):
 
-- [ ] `argocd/foundation/dados/postgres.yaml`: fica resolvido pela migração pro CloudNativePG (o operador roda com usuário fixo não-root por padrão), não precisa de correção manual separada se o cutover acontecer antes.
+- [x] `argocd/foundation/dados/postgres.yaml`: resolvido pela migração pro CloudNativePG em 2026-08-21 (o operador roda com usuário fixo não-root por padrão), arquivo removido do repositório, ver [Foundation](../arquitetura/foundation.md).
 - [ ] `argocd/foundation/dados/mariadb.yaml`
 - [ ] `argocd/foundation/dados/minio.yaml`
 - [ ] `argocd/foundation/dados/adminer.yaml`
