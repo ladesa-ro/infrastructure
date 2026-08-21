@@ -24,6 +24,10 @@ spec:
     namespace: cert-manager
   revisionHistoryLimit: 3
   syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+      allowEmpty: false
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
