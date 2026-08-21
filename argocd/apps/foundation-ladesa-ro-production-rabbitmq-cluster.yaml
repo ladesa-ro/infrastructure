@@ -1,0 +1,21 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: foundation-ladesa-ro-production-rabbitmq-cluster
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: ladesa
+  source:
+    repoURL: https://github.com/ladesa-ro/infrastructure.git
+    targetRevision: main
+    path: argocd/foundation/ladesa-ro-production-rabbitmq-cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ladesa-ro-production
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

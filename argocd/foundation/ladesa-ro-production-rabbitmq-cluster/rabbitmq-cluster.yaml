@@ -1,0 +1,32 @@
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq
+  namespace: ladesa-ro-production
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  replicas: 1
+  image: rabbitmq:3.12.14-management@sha256:c601bbed8c3138c74d13439d1db867c106ec76029c3c9e458c11e18c3de25b2e
+  persistence:
+    storageClassName: local-path
+    storage: 3Gi
+  rabbitmq:
+    additionalConfig: |
+      load_definitions = /etc/rabbitmq/definitions.json
+  override:
+    statefulSet:
+      spec:
+        template:
+          spec:
+            containers:
+              - name: rabbitmq
+                volumeMounts:
+                  - mountPath: /etc/rabbitmq/definitions.json
+                    subPath: definitions.json
+                    name: definitions
+            volumes:
+              - name: definitions
+                secret:
+                  secretName: rabbitmq-definitions
