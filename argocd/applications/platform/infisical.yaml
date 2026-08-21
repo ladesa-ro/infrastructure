@@ -31,9 +31,9 @@ spec:
           resources:
             requests:
               cpu: 200m
-              memory: 1Gi
+              memory: 512Mi
             limits:
-              memory: 2Gi
+              memory: 1536Mi
           service:
             type: ClusterIP
         postgresql:

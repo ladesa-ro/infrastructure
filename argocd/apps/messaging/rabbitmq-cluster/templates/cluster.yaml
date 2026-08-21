@@ -10,6 +10,8 @@ metadata:
 spec:
   replicas: {{ .Values.replicas }}
   image: {{ .Values.image }}
+  resources:
+{{ toYaml .Values.resources | indent 4 }}
   persistence:
     storageClassName: {{ .Values.persistence.storageClassName }}
     storage: {{ .Values.persistence.storage }}
