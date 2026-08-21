@@ -8,6 +8,16 @@ kind: Cluster
 metadata:
   name: postgres
   namespace: dados
+  annotations:
+    # A Application está com automated.prune: true, seguro pros Database
+    # CRs (databaseReclaimPolicy: retain protege o dado) e pra Service,
+    # mas não pro Cluster: o StorageClass local-path tem ReclaimPolicy
+    # Delete, então se este recurso sumir do git por engano (merge ruim,
+    # PR malfeito), prune apagaria o Cluster, o que derrubaria o
+    # StatefulSet/PVC e apagaria o dado de verdade no disco, sem revisão
+    # humana nenhuma no meio. Prune=false aqui faz o Argo CD só avisar
+    # (OutOfSync), nunca apagar sozinho.
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   instances: 1
 
