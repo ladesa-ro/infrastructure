@@ -9,12 +9,14 @@
     name: firewalld
     enabled: true
   register: firewalld_habilitacao
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Garantir que o firewalld está ativo
   ansible.builtin.systemd:
     name: firewalld
     state: started
   register: firewalld_ativacao
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Conferir se o firewalld está de fato ativo
   ansible.builtin.command:
