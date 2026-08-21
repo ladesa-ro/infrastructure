@@ -6,6 +6,7 @@
 |---|---|
 | Modo e voz por seção | [Estrutura de conteúdo](#estrutura-de-conteudo-modo-e-voz-por-secao) |
 | Regras de redação adotadas | [Linha editorial](#linha-editorial) |
+| Por que nenhum arquivo de código tem comentário | [Comentários em código](#comentarios-em-codigo) |
 | Lint de Ansible/YAML | [Lint](#lint) |
 | Gates de CI da documentação | [Qualidade da documentação](#qualidade-da-documentacao) |
 | Duplicação, schema, shellcheck e lint dos próprios workflows | [Qualidade de código e infraestrutura](#qualidade-de-codigo-e-infraestrutura) |
@@ -101,6 +102,21 @@ mindmap
 - Travessão permitido com espaço (posição do Docker) ou sem espaço (posição do Google), as duas descartadas em favor da proibição total do GitLab, único dos sete a proibir por completo.
 - Vírgula de Oxford, regra do Docker: não existe em português (a língua não tem essa ambiguidade de lista que a vírgula de Oxford resolve em inglês).
 - Heading limitado a 3-11 palavras (Red Hat) ou 8 palavras (Docker): não adotado como regra rígida, títulos desta documentação priorizam ser descritivos sobre caber num limite de palavra, mesmo quando passam de oito.
+
+## Comentários em código
+
+**TLDR**: zero comentário em qualquer arquivo de código deste repositório, `.yaml`, `.hcl`, `.yml` de workflow, shell script, task de Ansible, unit de systemd, tudo. Contexto que justificaria um comentário vai pra um `.md`, nunca inline.
+
+Regra do mantenedor, não de nenhum dos sete style guides acima (que são só sobre prosa em Markdown, não sobre código): nenhum arquivo de código deste repositório leva comentário explicativo, nem `#` em YAML/HCL/shell, nem justificativa de decisão de versão, nem aviso de risco operacional embutido na task. Isso vale pra todo o inventário de formatos usado aqui: `.yml`/`.yaml` (Ansible, Argo CD, GitHub Actions), `.hcl` (Hermit, Docker Bake), `Containerfile`, shell script em `scripts/`.
+
+Duas exceções, ambas mecânicas, não narrativas: a diretiva de supressão de linter que o próprio ansible-lint exige inline (`# noqa: regra`, quando funciona, ver [Qualidade de código e infraestrutura](#qualidade-de-codigo-e-infraestrutura) pro caso em que não funciona), e o cabeçalho de licença de arquivo vendorizado de terceiro (o `cert-manager`/`cnpg` trazem o próprio comentário de copyright, que não é deste repositório pra remover). Fora essas duas, todo contexto que pareceria justificar um comentário (por que essa versão está pinada, por que essa exclusão existe, o raciocínio por trás de uma decisão) vai pra este mesmo arquivo, pra `estrutura.md`, ou pra outra página de Arquitetura/Operação, nunca inline no código.
+
+```mermaid
+flowchart LR
+    Contexto[contexto pareceria justificar um comentário] --> Onde{onde documentar?}
+    Onde -->|SEMPRE| Doc[.md em Arquitetura ou Operação]
+    Onde -.->|NUNCA| Inline[comentário inline no código]
+```
 
 ## Lint
 
@@ -247,7 +263,7 @@ flowchart TD
 
 ## Segurança
 
-**TLDR**: `security.yml` roda gitleaks (segredo commitado) e trivy (misconfig de IaC), os dois bloqueantes, em três gatilhos diferentes (push, PR, e um cron semanal de rede de segurança).
+**TLDR**: `security.yml` roda gitleaks (segredo commitado, bloqueante) e trivy (misconfig de IaC, hoje consultivo) em três gatilhos diferentes (push, PR, e um cron semanal de rede de segurança).
 
 ```mermaid
 timeline
@@ -257,10 +273,10 @@ timeline
     Segunda 06:00 UTC : roda gitleaks + trivy, sem mudança de código
 ```
 
-`security.yml` roda em todo push pra `main`, todo PR, e semanalmente às segundas-feiras às 06:00 UTC como rede de segurança, sem filtro de `paths`: segredo vazado ou misconfig importa mesmo sem mudança de código naquele push. Os dois gates são bloqueantes, mesmo padrão de segurança usado no `bondspot-server` desde o início do projeto (mesmo em fase MVP, quando outros checks foram desligados por velocidade de iteração):
+`security.yml` roda em todo push pra `main`, todo PR, e semanalmente às segundas-feiras às 06:00 UTC como rede de segurança, sem filtro de `paths`: segredo vazado ou misconfig importa mesmo sem mudança de código naquele push.
 
-- [Gitleaks](https://github.com/gitleaks/gitleaks) varre o histórico inteiro de commit (equivalente a `git log -p`, não só o estado atual do checkout) atrás de credencial commitada, usando um conjunto de regras regex prontas pra formato conhecido de segredo (chave da AWS, chave privada PEM, padrão genérico de API key) mais detecção por entropia pra string que parece segredo mesmo sem bater um padrão nomeado.
-- [Trivy](https://trivy.dev) roda com `scan-type: fs` e `scanners: misconfig`, avaliando Dockerfile, manifesto Kubernetes, Terraform e CloudFormation (os quatro formatos que o scanner de misconfig do Trivy entende) contra um conjunto de políticas prontas (porta exposta sem necessidade, container sem limite de recurso, permissão excessiva), severidade `HIGH` ou `CRITICAL` pra cima.
+- [Gitleaks](https://github.com/gitleaks/gitleaks) varre o histórico inteiro de commit (equivalente a `git log -p`, não só o estado atual do checkout) atrás de credencial commitada, usando um conjunto de regras regex prontas pra formato conhecido de segredo (chave da AWS, chave privada PEM, padrão genérico de API key) mais detecção por entropia pra string que parece segredo mesmo sem bater um padrão nomeado. Bloqueante, mesmo padrão de segurança usado no `bondspot-server` desde o início do projeto (mesmo em fase MVP, quando outros checks foram desligados por velocidade de iteração). Roda direto via `docker run zricethezav/gitleaks`, não pelo `gitleaks/gitleaks-action` (o wrapper oficial da Action passou a exigir licença paga pra conta de organização a partir da v2, a CLI `gitleaks` em si continua livre).
+- [Trivy](https://trivy.dev) roda com `scan-type: fs` e `scanners: misconfig`, avaliando Dockerfile, manifesto Kubernetes, Terraform e CloudFormation (os quatro formatos que o scanner de misconfig do Trivy entende) contra um conjunto de políticas prontas (porta exposta sem necessidade, container sem limite de recurso, permissão excessiva), severidade `HIGH` ou `CRITICAL` pra cima. Consultivo por enquanto (`continue-on-error: true`): os achados reais que já apareceram (`securityContext` ausente nas Deployments de `dados`/`rabbitmq`/`redis`, ver [débito técnico conhecido](../arquitetura/foundation.md#debito-tecnico-conhecido-securitycontext-ausente)) exigem uma varredura dedicada, UID por UID, pra não quebrar nenhum serviço de produção antes de virar bloqueante. `skip-dirs` exclui `argocd/foundation/cert-manager` e `argocd/foundation/cnpg`, os dois manifestos vendorizados sem modificação: o RBAC amplo que o Trivy reclama neles é exigido pelo próprio operador pra funcionar, não é código deste repositório pra ajustar, o mesmo tratamento que `jscpd`/`yamllint` já dão a esses dois caminhos.
 
 ```mermaid
 sequenceDiagram
@@ -271,9 +287,9 @@ sequenceDiagram
     Gatilho->>Secrets: checkout com histórico completo
     Secrets->>Secrets: gitleaks varre todo o git log
     Gatilho->>Misconfig: checkout raso
-    Misconfig->>Misconfig: trivy varre Dockerfile, K8s, Terraform, CloudFormation
+    Misconfig->>Misconfig: trivy varre Dockerfile, K8s, Terraform, CloudFormation (menos cert-manager e cnpg)
     Secrets-->>Gatilho: falha o build se achar segredo
-    Misconfig-->>Gatilho: falha o build se achar misconfig HIGH/CRITICAL
+    Misconfig-->>Gatilho: reporta misconfig HIGH/CRITICAL, não bloqueia o build ainda
 ```
 
 Ver [Vulnerability scanning](../aprender/vulnerability-scanning.md) pra entender secret scanning e SCA/misconfig como categoria, sem depender deste cluster específico.

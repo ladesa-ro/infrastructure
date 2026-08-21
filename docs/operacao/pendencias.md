@@ -8,7 +8,7 @@ Esta página existe pelo mesmo motivo de [Estado fora do git](estado-fora-do-git
 
 - [ ] **`misconfig` (trivy) em `security.yml` está `continue-on-error: true`** desde 2026-08-21. Motivo: a primeira varredura real achou `securityContext` ausente em `postgres`, `mariadb`, `minio`, `adminer` (namespace `dados`), `rabbitmq` e `redis-server`, achado real, mas cada imagem tem UID/GID próprio, corrigir errado quebra o container. Condição pra reverter pra bloqueante: cada Deployment listado abaixo, em "Débito técnico: `securityContext`", corrigido e validado contra o serviço real.
 - [ ] **Todos os checks de `codigo-e-infra` em `quality.yml`** (`yamllint`, `ansible-lint`, `jscpd`, `kubeconform`, `shellcheck`, `actionlint`, `zizmor`, `cspell`) são `continue-on-error: true` desde que o job foi criado, nunca foram bloqueantes. Condição pra promover cada um: revisar o baseline de achados daquele check especificamente, zerar o que for real, só então tirar o `continue-on-error` (ver [Qualidade de código e infraestrutura](desenvolvimento.md#qualidade-de-codigo-e-infraestrutura)).
-- [ ] **`skip-dirs` de `argocd/foundation/cert-manager` e `argocd/foundation/cnpg` no trivy** não é bem um bypass a desfazer, é permanente por natureza (RBAC exigido pelo próprio operador vendorizado, ver [Foundation](../arquitetura/foundation.md#débito-técnico-conhecido-securitycontext-ausente)). Mantido aqui só pra registro, não some sozinho de uma auditoria futura sem essa nota.
+- [ ] **`skip-dirs` de `argocd/foundation/cert-manager` e `argocd/foundation/cnpg` no trivy** não é bem um bypass a desfazer, é permanente por natureza (RBAC exigido pelo próprio operador vendorizado, ver [Foundation](../arquitetura/foundation.md#debito-tecnico-conhecido-securitycontext-ausente)). Mantido aqui só pra registro, não some sozinho de uma auditoria futura sem essa nota.
 
 ## Débito técnico: `securityContext` ausente
 
@@ -23,11 +23,11 @@ Acompanha o item acima. Um item por serviço, porque a correção de cada um é 
 
 ## Rotação de senha planejada
 
-Ver [Estado fora do git, rotação preventiva](estado-fora-do-git.md#rotação-preventiva) pro procedimento de cada item. Itens específicos que valem rotação assim que a condição bater, não só "algum dia":
+Ver [Estado fora do git, rotação preventiva](estado-fora-do-git.md#rotacao-preventiva) pro procedimento de cada item. Itens específicos que valem rotação assim que a condição bater, não só "algum dia":
 
 - [ ] **As 4 roles do Postgres** (`ladesa`, `infisical`, `api-dev`, `sso-production`): depois que a migração pro CloudNativePG estiver concluída e confirmada (o processo de import descriptografa a senha de cada role em memória volátil no node, mesmo nunca gravando em disco ou git, defesa em profundidade justifica rotacionar depois, não só confiar que não vazou).
 - [ ] **Senha do Ansible Vault**: sem condição de gatilho específica ainda, cadência a definir pela equipe (ver rotação preventiva).
-- [ ] **As duas deploy keys** (`infrastructure`, `infrastructure-vault`): mesma cadência a definir, ou imediatamente se alguém que teve acesso ao node sair da equipe (ver [ciclo de vida de acesso](estado-fora-do-git.md#ciclo-de-vida-de-acesso)).
+- [ ] **As duas deploy keys** (`infrastructure`, `infrastructure-vault`): mesma cadência a definir, ou imediatamente se alguém que teve acesso ao node sair da equipe (ver [ciclo de vida de acesso](estado-fora-do-git.md#d-ciclo-de-vida-de-acesso)).
 
 ## Rotina de operação contínua a criar
 

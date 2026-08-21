@@ -304,3 +304,12 @@ pyflakes
 artipacked
 commitado
 indentação
+cutover
+cloudnative
+trixie
+dbname
+dropa
+manutencao
+noqa
+zricethezav
+vendorizados

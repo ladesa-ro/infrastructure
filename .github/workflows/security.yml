@@ -22,10 +22,6 @@ jobs:
           persist-credentials: false
 
       - name: Segredo commitado no histórico (gitleaks)
-        # gitleaks/gitleaks-action (o wrapper) passou a exigir licença paga
-        # pra conta de organização a partir da v2. A ferramenta em si
-        # (gitleaks CLI) continua livre, rodando direto via Docker em vez
-        # do Action evita a licença sem perder a checagem real.
         run: |
           docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
             zricethezav/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
@@ -39,21 +35,12 @@ jobs:
           persist-credentials: false
 
       - name: Misconfig de IaC e Kubernetes (trivy)
-        # Não bloqueante por enquanto: os achados reais (securityContext
-        # ausente nas Deployments de dados/rabbitmq/redis) exigem uma
-        # varredura dedicada, UID por UID, pra não quebrar nenhum serviço
-        # de produção. Fica consultivo até essa varredura acontecer, não
-        # travando push nenhum enquanto isso.
         continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
           scanners: misconfig
           scan-ref: .
-          # Manifestos vendorizados sem modificação (release oficial do
-          # cert-manager e do CNPG): o RBAC amplo que o trivy reclama é
-          # exigido pelo próprio operador pra funcionar, não é nosso código
-          # pra ajustar, mesmo tratamento que jscpd/yamllint já dão a eles.
           skip-dirs: argocd/foundation/cert-manager,argocd/foundation/cnpg
           severity: HIGH,CRITICAL
           exit-code: 1
