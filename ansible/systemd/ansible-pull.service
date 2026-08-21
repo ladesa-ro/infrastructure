@@ -9,6 +9,8 @@ Environment="GIT_SSH_COMMAND=ssh -i /root/.ssh/infrastructure-deploy-key -o Iden
 ExecStart=/usr/bin/ansible-pull \
   -U git@github.com:ladesa-ro/infrastructure.git \
   -C main \
+  -i ansible/inventory/hosts.yml \
+  -l ldsa \
   --vault-password-file /root/infrastructure-vault-pass \
   --skip-tags firewalld \
   ansible/local.yml
