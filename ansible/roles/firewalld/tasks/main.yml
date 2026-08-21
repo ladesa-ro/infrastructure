@@ -4,11 +4,17 @@
     name: firewalld
     state: present
 
-- name: Garantir que o firewalld está ativo e habilitado
+- name: Garantir que o firewalld está habilitado no boot
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: true
+  register: firewalld_habilitacao
+
+- name: Garantir que o firewalld está ativo
   ansible.builtin.systemd:
     name: firewalld
     state: started
-    enabled: true
+  register: firewalld_ativacao
 
 - name: Conferir se o firewalld está de fato ativo
   ansible.builtin.command:
@@ -17,13 +23,15 @@
   changed_when: false
   failed_when: false
   check_mode: false
-  when: ansible_check_mode
+  retries: 15
+  delay: 2
+  until: (firewalld_estado.rc | default(-1)) == 0
 
 - name: Conferir se a configuração das zonas e regras pode rodar
   ansible.builtin.include_tasks: "{{ playbook_dir }}/tasks/gate-check-mode-prereq.yml"
   vars:
     gate_fact_name: firewalld_configurar_gate
-    gate_prereq_ok: "{{ (firewalld_estado.rc | default(0)) == 0 }}"
+    gate_prereq_ok: "{{ (firewalld_estado.rc | default(-1)) == 0 }}"
     gate_message: >-
       Modo --check numa primeira execução: o firewalld ainda não está
       ativo de verdade, porque só seria instalado e iniciado numa execução
@@ -38,19 +46,49 @@
         fail_msg: >-
           firewalld_portas_publicas não inclui {{ firewalld_porta_ssh }}/tcp.
           Este role remove os serviços padrão de fábrica da zona pública
-          (incluindo `ssh`), então sem essa porta explícita a próxima
-          task deixaria o SSH bloqueado depois do reload.
+          (incluindo `ssh`), então sem essa porta explícita o reload
+          deixaria o SSH bloqueado.
+
+    - name: Garantir que cada porta pública declarada está no formato número/protocolo
+      ansible.builtin.assert:
+        that: item is match('^[0-9]+/(tcp|udp)$')
+        fail_msg: >-
+          "{{ item }}" em firewalld_portas_publicas não está no formato
+          esperado (ex.: "22/tcp"). Uma entrada malformada faz o
+          firewall-cmd falhar de um jeito que este role confundiria com
+          "porta ainda não liberada", em vez de um erro de configuração.
+      loop: "{{ firewalld_portas_publicas }}"
+
+    - name: Garantir que cada rede interna do k3s declarada é uma faixa CIDR válida
+      ansible.builtin.assert:
+        that: item is match('^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$')
+        fail_msg: >-
+          "{{ item }}" em firewalld_redes_k3s não parece uma faixa CIDR
+          válida (ex.: "10.42.0.0/16").
+      loop: "{{ firewalld_redes_k3s }}"
+
+    - name: Conferir a zona padrão atual
+      ansible.builtin.command:
+        cmd: firewall-cmd --get-default-zone
+      register: firewalld_zona_atual
+      changed_when: false
+      failed_when: false
+      check_mode: false
 
     - name: Zona padrão pública, negar por padrão
       ansible.builtin.command:
         cmd: firewall-cmd --set-default-zone=public
+      when: >-
+        (firewalld_zona_atual.stdout_lines[-1] if firewalld_zona_atual.stdout_lines else '') != 'public'
       changed_when: true
+      register: firewalld_zona_mudou
 
     - name: Conferir quais serviços a zona pública libera por padrão de fábrica
       ansible.builtin.command:
-        cmd: firewall-cmd --zone=public --list-services --permanent
+        cmd: firewall-cmd --zone=public --list-services
       register: firewalld_servicos_padrao
       changed_when: false
+      failed_when: false
       check_mode: false
 
     - name: Remover os serviços que a zona pública libera por padrão de fábrica
@@ -58,6 +96,7 @@
         cmd: "firewall-cmd --zone=public --remove-service={{ item }} --permanent"
       loop: "{{ firewalld_servicos_padrao.stdout.split() }}"
       changed_when: true
+      register: firewalld_servicos_removidos
 
     - name: Conferir quais portas públicas já estão abertas
       ansible.builtin.command:
@@ -74,6 +113,7 @@
       loop: "{{ firewalld_portas_atuais.results }}"
       when: item.rc != 0
       changed_when: true
+      register: firewalld_portas_abertas
 
     - name: Conferir se a interface de administração já está na zona certa
       ansible.builtin.command:
@@ -85,9 +125,12 @@
 
     - name: Colocar a interface da malha ZeroTier na zona de administração
       ansible.builtin.command:
-        cmd: "firewall-cmd --zone={{ firewalld_zona_admin }} --add-interface={{ firewalld_interface_admin }} --permanent"
+        cmd: >-
+          firewall-cmd --zone={{ firewalld_zona_admin }}
+          --add-interface={{ firewalld_interface_admin }} --permanent
       when: firewalld_interface_atual.rc != 0
       changed_when: true
+      register: firewalld_interface_mudou
 
     - name: Conferir quais redes internas do k3s já estão na zona confiável
       ansible.builtin.command:
@@ -104,8 +147,27 @@
       loop: "{{ firewalld_redes_atuais.results }}"
       when: item.rc != 0
       changed_when: true
+      register: firewalld_redes_mudaram
+
+    - name: Decidir se alguma configuração de firewall realmente mudou
+      ansible.builtin.set_fact:
+        firewalld_teve_mudanca_real: >-
+          {{ firewalld_ativacao is changed
+             or (firewalld_zona_mudou | default({})) is changed
+             or (firewalld_servicos_removidos | default({})).results
+                | default([]) | selectattr('changed') | list | length > 0
+             or (firewalld_portas_abertas | default({})).results
+                | default([]) | selectattr('changed') | list | length > 0
+             or (firewalld_interface_mudou | default({})) is changed
+             or (firewalld_redes_mudaram | default({})).results
+                | default([]) | selectattr('changed') | list | length > 0 }}
 
     - name: Recarregar o firewalld pra aplicar as regras permanentes
       ansible.builtin.command:
         cmd: firewall-cmd --reload
+      when: firewalld_teve_mudanca_real
       changed_when: true
+      notify: reiniciar o k3s
+
+    - name: Aplicar o reinício do k3s agora, se o firewalld recarregou
+      ansible.builtin.meta: flush_handlers
