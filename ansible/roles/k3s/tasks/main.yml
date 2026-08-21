@@ -64,7 +64,7 @@
     owner: root
     group: root
     mode: "0600"
-  notify: reiniciar o k3s
+  notify: Reiniciar o k3s
 
 - name: Garantir que o k3s está ativo e habilitado
   ansible.builtin.systemd:

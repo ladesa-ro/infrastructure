@@ -61,6 +61,7 @@
       ansible.builtin.git:
         repo: git@github.com:ladesa-ro/infrastructure.git
         dest: "{{ infrastructure_dir }}"
+        version: main
       environment:
         GIT_SSH_COMMAND: "ssh -i {{ infrastructure_deploy_key }} -o IdentitiesOnly=yes"
       tags: [clone]

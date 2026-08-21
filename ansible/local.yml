@@ -1,2 +1,3 @@
 ---
-- ansible.builtin.import_playbook: site.yml
+- name: Executa o site completo a partir do checkout local
+  ansible.builtin.import_playbook: site.yml
