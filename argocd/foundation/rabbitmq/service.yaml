@@ -4,8 +4,6 @@ kind: Service
 metadata:
   name: rabbitmq-amqp
   namespace: ladesa-ro-production
-  labels:
-    app: rabbitmq
 spec:
   type: LoadBalancer
   ports:
@@ -13,20 +11,18 @@ spec:
       port: 5672
       targetPort: amqp
   selector:
-    app: rabbitmq
+    app.kubernetes.io/name: rabbitmq
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: rabbitmq-web
   namespace: ladesa-ro-production
-  labels:
-    app: rabbitmq
 spec:
   type: NodePort
   ports:
     - name: web
       port: 80
-      targetPort: web
+      targetPort: management
   selector:
-    app: rabbitmq
+    app.kubernetes.io/name: rabbitmq
