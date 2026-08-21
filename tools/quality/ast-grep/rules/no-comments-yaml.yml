@@ -10,5 +10,3 @@ rule:
 files:
   - "**/*.yml"
   - "**/*.yaml"
-ignores:
-  - "argocd/foundation/operators/cert-manager/**"

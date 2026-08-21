@@ -8,7 +8,7 @@
 --8<-- "arquitetura/topologia-declarada.mermaid"
 ```
 
-`cert-manager` e `cnpg` ficam de fora, mesmo motivo já registrado nos outros seis checks que excluem esses dois diretórios (ver [Pendências](../operacao/pendencias.md)): conteúdo vendorizado do próprio operador, não código deste repositório pra representar.
+`cnpg` fica de fora, mesmo motivo já registrado nos outros checks que excluem esse diretório (ver [Pendências](../operacao/pendencias.md)): conteúdo vendorizado do próprio operador, não código deste repositório pra representar. `cert-manager` não precisa mais dessa exclusão desde a migração pro chart oficial em 2026-08-21 (`argocd/foundation/operators/cert-manager/` não existe mais, o gerador já não encontra nada ali pra excluir).
 
 ## Por que não é ao vivo
 
@@ -31,7 +31,7 @@ Rodar a mesma geração duas vezes seguidas, sem nenhuma mudança em `argocd/`, 
 docker buildx bake --file tools/quality/docker-bake.hcl kube-diagrams --load
 
 docker run --rm -v "$PWD:/repo" -w /repo infra-quality/kube-diagrams:local sh -c \
-  "kube-diagrams \$(find argocd -name '*.yaml' -not -path 'argocd/foundation/operators/cert-manager/*' -not -path 'argocd/foundation/operators/cnpg/*') \
+  "kube-diagrams \$(find argocd -name '*.yaml' -not -path 'argocd/foundation/operators/cnpg/*') \
     -o docs/arquitetura/topologia-declarada.mermaid -f mermaid"
 ```
 

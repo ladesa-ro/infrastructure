@@ -115,7 +115,7 @@ jobs:
           docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
             infra-quality/node-tools:local jscpd --min-tokens 65 --min-lines 5 \
             --format yaml --reporters console --threshold 0.7 --exit-code 1 \
-            --ignore "argocd/foundation/operators/cert-manager/**,argocd/foundation/operators/cnpg/**" ansible argocd
+            --ignore "argocd/foundation/operators/cnpg/**" ansible argocd
 
       - name: Validar manifests do Argo CD contra o schema do Kubernetes (kubeconform)
         continue-on-error: true
@@ -159,4 +159,4 @@ jobs:
         run: |
           docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
             infra-quality/kubescape:local kubescape scan argocd/ \
-            --exclude-namespaces cert-manager,cnpg-system
+            --exclude-namespaces cnpg-system

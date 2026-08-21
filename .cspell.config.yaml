@@ -21,7 +21,6 @@ ignorePaths:
   - '_site/**'
   - 'site/**'
   - 'tools/quality/cspell-dictionary.txt'
-  - 'argocd/foundation/operators/cert-manager/**'
   - 'argocd/foundation/operators/cnpg/**'
 overrides:
   - filename: '**/*.md'

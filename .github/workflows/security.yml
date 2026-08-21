@@ -41,6 +41,6 @@ jobs:
           scan-type: fs
           scanners: misconfig
           scan-ref: .
-          skip-dirs: argocd/foundation/operators/cert-manager,argocd/foundation/operators/cnpg
+          skip-dirs: argocd/foundation/operators/cnpg
           severity: HIGH,CRITICAL
           exit-code: 1
