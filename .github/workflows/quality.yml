@@ -140,3 +140,10 @@ jobs:
         run: |
           docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
             infra-quality/ast-grep:local ast-grep scan --config tools/quality/ast-grep/sgconfig.yml
+
+      - name: Postura de segurança dos manifestos do Argo CD (kubescape)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            infra-quality/kubescape:local kubescape scan argocd/ \
+            --exclude-namespaces cert-manager,cnpg-system

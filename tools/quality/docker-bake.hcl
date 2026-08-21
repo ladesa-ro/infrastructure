@@ -1,5 +1,5 @@
 group "default" {
-  targets = ["actionlint", "shellcheck", "zizmor", "python-lint", "kubeconform", "node-tools", "ast-grep"]
+  targets = ["actionlint", "shellcheck", "zizmor", "python-lint", "kubeconform", "node-tools", "ast-grep", "kubescape"]
 }
 
 target "base" {
@@ -62,4 +62,12 @@ target "ast-grep" {
   tags       = ["infra-quality/ast-grep:local"]
   cache-from = ["type=gha,scope=infra-quality-ast-grep"]
   cache-to   = ["type=gha,scope=infra-quality-ast-grep,mode=max"]
+}
+
+target "kubescape" {
+  inherits   = ["base"]
+  target     = "kubescape"
+  tags       = ["infra-quality/kubescape:local"]
+  cache-from = ["type=gha,scope=infra-quality-kubescape"]
+  cache-to   = ["type=gha,scope=infra-quality-kubescape,mode=max"]
 }
