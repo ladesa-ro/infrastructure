@@ -9,22 +9,13 @@ metadata:
 spec:
   project: ladesa
   source:
-    repoURL: https://cloudnative-pg.github.io/charts
-    chart: cloudnative-pg
-    targetRevision: 0.29.0
+    repoURL: https://github.com/ladesa-ro/infrastructure.git
+    targetRevision: main
+    path: argocd/apps/operators/cnpg
     helm:
       releaseName: cnpg
-      values: |
-        fullnameOverride: cnpg
-        image:
-          pullPolicy: Always
-        resources:
-          limits:
-            cpu: 100m
-            memory: 200Mi
-          requests:
-            cpu: 100m
-            memory: 100Mi
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: cnpg-system
