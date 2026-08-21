@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: foundation-dados-postgres-cluster
+  name: foundation-ladesa-ro-production-rabbitmq-cluster
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
@@ -11,10 +11,13 @@ spec:
   source:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
-    path: argocd/foundation/dados-postgres-cluster
+    path: argocd/foundation/messaging/rabbitmq-cluster
+    helm:
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: dados
+    namespace: ladesa-ro-production
   revisionHistoryLimit: 3
   syncPolicy:
     syncOptions:

@@ -8,11 +8,11 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false
     rabbitmq.com/legacy-startup-probe: "true"
 spec:
-  replicas: 1
-  image: rabbitmq:3.13.7-management@sha256:e582c0bc7766f3342496d8485efb5a1df782b5ce3886ad017e2eaae442311f69
+  replicas: {{ .Values.replicas }}
+  image: {{ .Values.image }}
   persistence:
-    storageClassName: local-path
-    storage: 3Gi
+    storageClassName: {{ .Values.persistence.storageClassName }}
+    storage: {{ .Values.persistence.storage }}
   rabbitmq:
     additionalConfig: |
       load_definitions = /etc/rabbitmq/definitions.json

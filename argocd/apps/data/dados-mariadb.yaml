@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
-    path: argocd/foundation/dados-mariadb
+    path: argocd/foundation/data/dados-mariadb
   destination:
     server: https://kubernetes.default.svc
     namespace: dados

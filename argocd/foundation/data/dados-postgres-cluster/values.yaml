@@ -1,0 +1,14 @@
+image: ghcr.io/cloudnative-pg/postgresql:18.0-standard-trixie@sha256:e56be4982b17aa701b1263dbfc2fa95741177bbd3fe55d487a981e134d08625c
+
+instances: 1
+
+storage:
+  storageClass: local-path
+  size: 1Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 1Gi

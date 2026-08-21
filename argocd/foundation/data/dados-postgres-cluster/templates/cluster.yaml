@@ -7,13 +7,13 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
 spec:
-  instances: 1
+  instances: {{ .Values.instances }}
 
-  imageName: ghcr.io/cloudnative-pg/postgresql:18.0-standard-trixie@sha256:e56be4982b17aa701b1263dbfc2fa95741177bbd3fe55d487a981e134d08625c
+  imageName: {{ .Values.image }}
 
   storage:
-    storageClass: local-path
-    size: 1Gi
+    storageClass: {{ .Values.storage.storageClass }}
+    size: {{ .Values.storage.size }}
 
   superuserSecret:
     name: postgres-superuser-bootstrap
@@ -70,10 +70,10 @@ spec:
 
   resources:
     requests:
-      cpu: 100m
-      memory: 512Mi
+      cpu: {{ .Values.resources.requests.cpu }}
+      memory: {{ .Values.resources.requests.memory }}
     limits:
-      memory: 1Gi
+      memory: {{ .Values.resources.limits.memory }}
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
