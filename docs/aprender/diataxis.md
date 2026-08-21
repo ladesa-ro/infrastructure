@@ -1,6 +1,6 @@
 # Diátaxis
 
-**TLDR**: quatro tipos de documentação técnica, um por combinação de estudo/trabalho × prático/teórico (tutorial, how-to, reference, explanation), cada um num lugar próprio em vez de tudo misturado na mesma página.
+**TLDR**: quatro tipos de documentação técnica, um por combinação de estudo/trabalho e prático/teórico (tutorial, how-to, reference, explanation), cada um num lugar próprio em vez de tudo misturado na mesma página.
 
 | Termo | Vá pra |
 |---|---|
@@ -16,18 +16,21 @@ O framework nasce de cruzar dois eixos independentes. O primeiro é sobre o mome
 
 Cruzando os dois: **tutorial** é estudo mais prático, uma lição guiada, passo a passo, pra quem nunca fez aquilo antes e precisa de uma vitória concreta no fim. **How-to guide** é trabalho mais prático, uma receita pra uma tarefa específica, escrita assumindo que quem lê já sabe o básico e só quer o caminho mais direto. **Reference** é trabalho mais teórico, fato puro, sem opinião nem narrativa, organizado pra busca rápida, não pra leitura do início ao fim. **Explanation** é estudo mais teórico, contexto e raciocínio, o porquê por trás de uma decisão ou de como algo funciona, sem instrução nenhuma misturada.
 
+Os dois eixos são contínuos e independentes, não uma árvore de decisão, o motivo pelo qual um `quadrantChart` (mermaid) representa a ideia com mais fidelidade que um `flowchart` com `subgraph` (a aproximação mais comum em diagrama de processo, usada no resto deste site, ver [Diagramas](../operacao/desenvolvimento.md#diagramas-qual-tipo-mermaid-pra-qual-proposito)):
+
 ```mermaid
-flowchart TB
-    subgraph Estudo["Estudo (adquirindo conhecimento)"]
-        Tutorial["Tutorial: prático, lição guiada"]
-        Explanation["Explanation: teórico, contexto e porquê"]
-    end
-    subgraph Trabalho["Trabalho (aplicando conhecimento)"]
-        HowTo["How-to guide: prático, receita direta"]
-        Reference["Reference: teórico, fato puro"]
-    end
-    Tutorial -.->|mesmo eixo prático| HowTo
-    Explanation -.->|mesmo eixo teórico| Reference
+quadrantChart
+    title Diátaxis: dois eixos, quatro modos
+    x-axis Teórico --> Prático
+    y-axis Trabalho --> Estudo
+    quadrant-1 Tutorial
+    quadrant-2 Explanation
+    quadrant-3 Reference
+    quadrant-4 How-to guide
+    Tutorial: [0.8, 0.8]
+    Explanation: [0.2, 0.8]
+    Reference: [0.2, 0.2]
+    How-to guide: [0.8, 0.2]
 ```
 
 ## O erro mais comum que o framework nomeia

@@ -1,11 +1,13 @@
 # Desenvolvimento
 
-**TLDR**: três modos, três vozes (Aprender impessoal, Arquitetura fatual, Operação imperativa). Linha editorial consolidada de sete style guides externos mais a ISO 24495-1 de linguagem clara, com a regra exata de cada um, não só o link. Zero comentário em código, enforçado por `ast-grep`. Dois gates de CI da documentação (lychee + travessão), dez checks de código e infraestrutura não bloqueantes rodando numa imagem thin com hermit, e dois gates de segurança (gitleaks bloqueante, trivy consultivo). Commits Conventional Commits só no título, enforçado por `commit-lint.yml`.
+**TLDR**: três modos, três vozes (Aprender impessoal, Arquitetura fatual, Operação imperativa). Linha editorial consolidada de sete style guides externos mais a ISO 24495-1 de linguagem clara, com a regra exata de cada um, não só o link, incluindo por que travessão/seta/meia-risca não aparecem em texto corrido. Padrão estrutural repetido (TLDR, tabela de navegação, "Pra ir além", cheatsheet, diagrama mermaid do tipo certo pro conteúdo certo) documentado com a referência de escrita técnica por trás de cada peça. Zero comentário em código, enforçado por `ast-grep`. Três gates de CI da documentação (lychee, travessão/seta, `mkdocs build --strict`), dez checks de código e infraestrutura não bloqueantes rodando numa imagem thin com hermit, e dois gates de segurança (gitleaks bloqueante, trivy consultivo). Commits Conventional Commits só no título, enforçado por `commit-lint.yml`.
 
 | Termo | Vá pra |
 |---|---|
 | Modo e voz por seção | [Estrutura de conteúdo](#estrutura-de-conteudo-modo-e-voz-por-secao) |
 | Regras de redação adotadas | [Linha editorial](#linha-editorial) |
+| TLDR, tabela de navegação, "Pra ir além", cheatsheet, admonition | [Seções especiais](#secoes-especiais-padrao-estrutural-repetido-de-proposito) |
+| Qual diagrama mermaid pra qual conteúdo | [Diagramas](#diagramas-qual-tipo-mermaid-pra-qual-proposito) |
 | Por que nenhum arquivo de código tem comentário | [Comentários em código](#comentarios-em-codigo) |
 | Lint de Ansible/YAML | [Lint](#lint) |
 | Gates de CI da documentação | [Qualidade da documentação](#qualidade-da-documentacao) |
@@ -90,6 +92,7 @@ mindmap
 - Estrutura por tarefa e análise de audiência, princípio geral da **IEC/IEEE 82079-1** (a norma de instrução de uso mais abrangente do campo), por trás da divisão em três modos já descrita em [Estrutura de conteúdo](#estrutura-de-conteudo-modo-e-voz-por-secao): Aprender pra quem não conhece o conceito, Arquitetura pra quem quer o fato, Operação pra quem vai executar o passo, a mesma lógica de "informação certa pro estágio certo de quem lê" que a norma formaliza pra manual de produto físico.
 - Título em sentence case, nunca Title Case: convenção idêntica em Google, GitHub, GitLab, Red Hat, MDN e Docker (seis dos sete concordam), já natural em português, onde Title Case nem é gramatical.
 - Sem travessão em texto corrido, regra do GitLab, apesar de Google recomendar o oposto e Docker permitir com espaço: poluição visual sem ganho de clareza foi o critério decisivo, não o consenso entre os guias (que não existe aqui).
+- Sem seta Unicode (reta, dupla, ou de implicação, code points U+2192/U+2190/U+2194/U+21D2/U+21D0) nem meia-risca/en dash (U+2013) em texto corrido, extensão da regra acima sobre o mesmo critério, não uma regra de nenhum dos sete guias: nenhum desses caracteres existe num teclado padrão (ABNT2 ou US), então quem escreve precisa copiar de algum lugar ou usar atalho de composição, o mesmo motivo prático por trás de evitar travessão. Fluxo de UI ("Settings, seta, Deploy keys") vira `>` (`Settings > Deploy keys`, o próprio caractere que separa breadcrumb em muita documentação de produto). Direção/transição em prosa ("de X pra Y", "X vira Y") ou, quando o par é curto e o contexto já é técnico (mermaid, trecho de shell), a seta ASCII `->`/`<->`, composta só de hífen e maior-que, ambos no teclado. Achado real, 2026-08-21: uma varredura em toda a documentação existente achou 19 setas e 2 meias-riscas acumuladas em 8 arquivos diferentes ao longo de várias sessões, nenhuma colocada de propósito, todas resultado de copiar um jeito natural de pensar ("A leva a B") sem parar pra notar que o caractere não é comum. Gate de CI estendido pra cobrir os dois de uma vez, ver [Qualidade da documentação](#qualidade-da-documentacao) abaixo. Esta própria frase evita reproduzir os caracteres banidos, nem entre crases, porque o `grep` do gate não distingue código de prosa, citar o caractere aqui faria o próprio parágrafo falhar o check que ele descreve.
 - Sem ponto e vírgula, regra de GitLab e Docker: duas frases separadas em vez de uma frase composta. Revisado em 2026-08-20, depois de ter ficado do lado de "considerado e descartado" logo abaixo, quando a legibilidade de frase curta passou a valer mais que a densidade de prosa já estabelecida.
 - Sem abuso de crase (`` ` ``) marcando termo como código: cada nome de arquivo, comando ou identificador continua entre crases, mas frase que vira uma sequência de termos crasados um atrás do outro deve ser reescrita, prosa não é lista de código.
 - Texto de link sempre descritivo (`ver [Argo CD](argocd.md)`), nunca genérico (`clique aqui`), regra idêntica em Google, GitHub e GitLab, os três mais explícitos nisso.
@@ -107,6 +110,52 @@ mindmap
 - Numeração progressiva de seção estilo ABNT NBR 6024 (`1`, `1.1`, `1.1.2`). Não pelo motivo óbvio ("é norma acadêmica"), o escopo declarado da norma é mesmo trabalho acadêmico, mas o motivo real é conflito de ferramenta: o gerador de site desta doc já produz sumário por âncora de heading, numeração decimal manual duplicaria esse trabalho sem reforçar organização nenhuma (ver [Normas de redação técnica](../aprender/normas-de-redacao-tecnica.md) pro resto da família ABNT, nenhuma adotada pelo mesmo motivo de escopo).
 - Vírgula de Oxford, regra do Docker: não existe em português (a língua não tem essa ambiguidade de lista que a vírgula de Oxford resolve em inglês).
 - Heading limitado a 3-11 palavras (Red Hat) ou 8 palavras (Docker): não adotado como regra rígida, títulos desta documentação priorizam ser descritivos sobre caber num limite de palavra, mesmo quando passam de oito.
+
+## Seções especiais: padrão estrutural repetido de propósito
+
+**TLDR**: TLDR, tabela "Termo | Vá pra", "Pra ir além" e "Cheatsheet" não são um capricho de formatação, cada um implementa um princípio de escrita técnica com nome e referência própria, e aparecem nesta ordem, sempre que cabem, em praticamente toda página deste site.
+
+Nenhum dos sete style guides consolidados em [Linha editorial](#linha-editorial) prescreve essas quatro seções especiais como formato obrigatório (são mais sobre frase e palavra que sobre estrutura de página inteira), mas a decisão editorial de usá-las de forma consistente vem de um princípio mais antigo que qualquer um dos sete: **BLUF** (*Bottom Line Up Front*), doutrina de escrita militar americana adotada depois por jornalismo (a "pirâmide invertida") e por escrita técnica em geral, resumida como "a informação mais importante primeiro, detalhe depois, nunca o contrário". O [Google Developer Documentation Style Guide](https://developers.google.com/style/tone) reforça o mesmo princípio sob o nome "front-load the important information". A pesquisa mais citada sobre *por que* isso importa na prática é do [Nielsen Norman Group sobre como as pessoas leem na web](https://www.nngroup.com/articles/how-users-read-on-the-web/): a maioria não lê palavra por palavra, escaneia em padrão F, então o que está no topo é lido por muito mais gente do que o que está embaixo, mesmo numa página curta.
+
+- **TLDR** (1-3 frases, logo abaixo do título): aplica BLUF de forma literal, resume o que a página inteira diz antes de qualquer detalhe. Quem só precisa confirmar um fato rápido para na primeira frase; quem quer o raciocínio completo continua lendo. Vem antes até da tabela de navegação, porque decidir "vale a pena ler esta página?" é anterior a decidir "pra qual seção eu vou".
+- **Tabela "Termo \| Vá pra"** (logo após o TLDR): um sumário local que funciona como *findability* de segundo nível, complementando o sumário automático por heading que o [tema Material do mkdocs já gera na barra lateral](https://squidfunk.github.io/mkdocs-material/) (a ferramenta de navegação já citada em [Documentação como código](../aprender/documentacao-como-codigo.md)). A diferença: o sumário automático lista título de seção, essa tabela lista *pergunta* ou *termo* que o leitor provavelmente já tem na cabeça antes de saber qual seção responde. É o mesmo raciocínio por trás de índice remissivo de livro técnico (organizado pelo que o leitor procura, não pela ordem em que o autor escreveu).
+- **"Pra ir além"** (perto do fim, antes ou depois do cheatsheet): implementa *progressive disclosure*, termo de design de interface (originalmente de Jakob Nielsen, o mesmo NN/g citado acima) adaptado pra prosa: mostrar só o essencial primeiro, e deixar o aprofundamento opcional visível mas separado, pra quem quer ir mais fundo sem forçar todo mundo a ler antes de chegar no que precisa. Nesta documentação, quase sempre aponta pra uma fonte externa mais funda que o escopo da própria página (livro, RFC, documentação oficial da ferramenta).
+- **Cheatsheet** (tabela final, quando a página tem conteúdo bom o bastante pra resumir em linha): um hack estrutural específico deste site, não um termo emprestado, um jeito de espremer conteúdo de **Explanation** (Aprender, ver [Diátaxis](../aprender/diataxis.md)) e produzir um resumo no formato de **Reference** (fato puro, busca rápida) dentro da mesma página, sem duplicar a página inteira numa trilha separada. Só existe quando o conteúdo realmente cabe numa tabela sem perder nuance, não é um requisito de toda página.
+
+```mermaid
+flowchart TD
+    Titulo[título da página] --> TLDR["TLDR: BLUF, resumo em 1-3 frases"]
+    TLDR --> Nav["Tabela Termo/Vá pra: findability por pergunta"]
+    Nav --> Corpo[corpo da página, prosa completa]
+    Corpo --> Alem["Pra ir além: progressive disclosure, fonte externa"]
+    Corpo -.->|quando cabe| Cheat["Cheatsheet: resumo tipo Reference"]
+```
+
+### Admonition: usado no CSS, quase nunca no conteúdo
+
+O tema Material do mkdocs habilita a extensão `admonition` (ver `mkdocs.yml`, `markdown_extensions`), que renderiza blocos `!!! nota`/`!!! aviso`/`!!! perigo` com destaque visual e ícone, mas até 2026-08-21 nenhuma página deste site usava a sintaxe, apesar de configurada. Uma descoberta sem função nenhuma até virar prática: o caso de uso mais claro pra essa extensão não é "nota lateral qualquer", é sinalizar **especificamente** o tipo de passo que a [Metodologia de mudança](metodologia-de-mudanca.md) trata como alto risco (`--prune` explícito, `git reset --hard`, remoção de recurso com dado real), onde o destaque visual chama atenção de verdade antes de quem lê copiar e colar um comando. Adotado a partir de agora pra esse caso específico (ver exemplo aplicado em [Metodologia de mudança](metodologia-de-mudanca.md#6-armar-o-dead-mans-switch-antes-do-primeiro-comando-real) e em [Bootstrap na VM, passo 8](bootstrap.md#8-ligar-o-firewalld)), não pra nota genérica, que continua em texto corrido normal, pra não diluir o sinal com uso demais.
+
+```
+!!! warning "Título curto"
+    Corpo do aviso, mesma prosa normal, markdown funciona dentro do bloco.
+```
+
+## Diagramas: qual tipo mermaid pra qual propósito
+
+**TLDR**: [mermaid](https://mermaid.js.org) é a única ferramenta de diagrama usada neste site (64 das páginas de `docs/` têm pelo menos um), porque é texto puro versionável no mesmo PR do conteúdo que descreve, a prática que a comunidade chama de **Diagrams as Code**, o mesmo princípio de [Documentação como código](../aprender/documentacao-como-codigo.md) aplicado a desenho, não só a prosa. Um diagrama em PNG/binário exportado de uma ferramenta gráfica não entra em `docs/` deste repositório: não tem diff legível, não é editável por outra pessoa sem a mesma ferramenta proprietária, e apodrece silenciosamente (ninguém atualiza uma imagem que precisa reabrir um app externo pra editar).
+
+Levantamento de 2026-08-21 sobre o que já está em uso: `flowchart` domina disparado (142 ocorrências), `sequenceDiagram` em segundo lugar (18), `mindmap` (5), `stateDiagram-v2` (3), `timeline` (1). Isso não é acidente de quem escreveu cada página, é o tipo certo de diagrama pro tipo certo de conteúdo, o mesmo raciocínio central do [C4 model](https://c4model.com), de Simon Brown, referência mais citada da indústria sobre por que "diagrama genérico de caixinha e seta" comunica pior que um vocabulário visual consistente por propósito:
+
+| Tipo mermaid | Quando usar | Exemplo neste site |
+|---|---|---|
+| `flowchart` | Processo, decisão, hierarquia, dependência entre partes | Sequência de sync do Argo CD, árvore de papéis em [Papéis](../aprender/papeis.md) |
+| `sequenceDiagram` | Interação entre partes ao longo do tempo, quem chama quem, em que ordem | Handshake TLS, fluxo de autenticação, dead man's switch dis­parando |
+| `mindmap` | Taxonomia sem ordem temporal nem hierarquia de decisão, só "isto se divide nisto" | Os oito atributos da ISO/IEC 25010, o resumo de cada style guide em [Linha editorial](#linha-editorial) |
+| `stateDiagram-v2` | Máquina de estado de verdade, onde o objeto muda de fase e a transição importa mais que o fluxo de dados | Fase de um `Certificate` do cert-manager, ciclo de vida de uma `Application` do Argo CD |
+| `timeline` | Sequência cronológica sem decisão nem ramificação, só "isto aconteceu, depois isto" | Histórico de versão de uma ferramenta |
+| `quadrantChart` | Dois eixos independentes e contínuos decidindo posição, não um fluxo | Adicionado em 2026-08-21, primeiro uso deste tipo no site: os quatro modos de [Diátaxis](../aprender/diataxis.md#duas-perguntas-quatro-modos) (estudo/trabalho cruzado com prático/teórico), antes só aproximado com `flowchart`+`subgraph` |
+
+Critério prático de qual usar, quando não é óbvio: perguntar se o diagrama está tentando mostrar **ordem no tempo** (sequenceDiagram/timeline), **decisão/ramificação** (flowchart), **classificação sem hierarquia** (mindmap), **mudança de fase de um mesmo objeto** (stateDiagram) ou **posição em dois eixos contínuos** (quadrantChart). Usar `flowchart` pra tudo (a escolha mais fácil, e a mais comum neste site) funciona quase sempre, mas perde precisão exatamente nos casos em que outro tipo existe de propósito.
 
 ## Comentários em código
 
@@ -156,18 +205,21 @@ O repositório monta em `/repo`, não em `/workspace`: `/workspace` é onde a pr
 
 ## Qualidade da documentação
 
-**TLDR**: dois gates bloqueantes só pra `docs/`/`README.md`, lychee (link quebrado) e um grep de travessão (estilo), os dois rodando desde bem antes deste registro existir.
+**TLDR**: três gates bloqueantes pra `docs/`/`README.md`, lychee (link quebrado), um grep de caractere fora do teclado (travessão, meia-risca, seta, o escopo estendido de "só travessão" em 2026-08-21) e `mkdocs build --strict` (nav/anchor quebrado), todos já existentes antes deste registro, exceto a extensão do grep.
 
-O workflow `quality.yml` roda em todo push e PR que toca `docs/` ou o `README.md`, com dois gates: [lychee](https://lychee.cli.rs), um link checker assíncrono escrito em Rust, resolve cada link markdown, HTML e `mailto:` da página (link interno é resolvido contra o arquivo real no repositório, não só sintaxe), faz a requisição HTTP de verdade contra link externo, e cacheia o resultado entre execuções (`cache = true`, `max_cache_age = "1d"` em `.lychee.toml`) pra não martelar o mesmo host a cada push. Aceita `403`/`429` como resposta válida de bot-blocking, não link quebrado de verdade. Um segundo job falha se encontrar o caractere de travessão em qualquer arquivo `.md`, a regra de estilo deste repositório (ver [Referências](../aprender/referencias.md) e o restante da seção Aprender pra exemplo do tom esperado). O princípio por trás dos dois gates é o mesmo que a [documentação da Stripe](https://docs.stripe.com), citada como referência de qualidade em documentação de API, aplica: link quebrado ou inconsistência de estilo falha o build, não aparece publicado pra quem lê. Rodar localmente antes de propor mudança grande:
+O workflow `quality.yml` roda em todo push e PR que toca `docs/` ou o `README.md`, com dois gates de conteúdo: [lychee](https://lychee.cli.rs), um link checker assíncrono escrito em Rust, resolve cada link markdown, HTML e `mailto:` da página (link interno é resolvido contra o arquivo real no repositório, não só sintaxe), faz a requisição HTTP de verdade contra link externo, e cacheia o resultado entre execuções (`cache = true`, `max_cache_age = "1d"` em `.lychee.toml`) pra não martelar o mesmo host a cada push. Aceita `403`/`429` como resposta válida de bot-blocking, não link quebrado de verdade. Um segundo job falha se encontrar travessão, meia-risca ou seta Unicode (code points U+2014, U+2013, U+2192, U+2190, U+2194, U+21D2, U+21D0) em qualquer arquivo `.md`, a regra de estilo deste repositório (ver ["Sem seta Unicode nem meia-risca"](#linha-editorial) acima). Um terceiro gate, no workflow separado `docs.yml`, roda `mkdocs build --strict --site-dir _site`: falha o build se algum link relativo ou âncora (`#secao`) apontar pra algo que não existe, não só sintaxe malformada, prova de verdade de que nenhum link interno quebrou com uma reorganização de heading. O princípio por trás dos três gates é o mesmo que a [documentação da Stripe](https://docs.stripe.com), citada como referência de qualidade em documentação de API, aplica: link quebrado ou inconsistência de estilo falha o build, não aparece publicado pra quem lê. Rodar localmente antes de propor mudança grande:
 
 ```mermaid
 flowchart LR
     Push[push ou PR toca docs/] --> Lychee[gate: lychee, links quebrados]
-    Push --> Travessao[gate: grep de travessão]
+    Push --> Estilo[gate: grep de travessão/meia-risca/seta]
+    Push --> MkDocs[gate: mkdocs build --strict, nav/anchor]
     Lychee --> Falha1{falhou?}
-    Travessao --> Falha2{falhou?}
+    Estilo --> Falha2{falhou?}
+    MkDocs --> Falha3{falhou?}
     Falha1 -->|sim| Bloqueia[build falha, não publica]
     Falha2 -->|sim| Bloqueia
+    Falha3 -->|sim| Bloqueia
 ```
 
 ```bash

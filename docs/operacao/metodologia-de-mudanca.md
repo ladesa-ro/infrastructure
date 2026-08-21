@@ -47,7 +47,8 @@ Antes de colar um script/heredoc pensado pra `bash` (arrays associativos, `[[ ]]
 
 Pra qualquer mudança que não seja trivialmente reversível num único `kubectl apply` do backup: `systemd-run --unit=<nome> --on-active=<janela> <comando de rollback>` armado **antes** do primeiro comando real, cancelado **só depois** da checagem da etapa 7 confirmar sucesso de verdade. Ver [Dead man's switch e blast radius](../aprender/execucao-segura-e-qualidade.md#dead-mans-switch-e-blast-radius), incluindo o achado real de que `kubectl patch`/`kubectl edit` no meio da janela armada quebra silenciosamente um switch baseado em `kubectl apply -f`; preferir `kubectl replace --force` se outra coisa vai continuar tocando o mesmo recurso durante a janela.
 
-Se a mudança envolve `--prune` explícito: conferir no `diff` se algum recurso "só ao vivo" que não deveria ser apagado (ex.: um `Namespace` que o chart não declara) está misturado com o que a pessoa quer apagar de propósito. `--prune` não distingue os dois.
+!!! warning "`--prune` explícito não distingue intenção"
+    Se a mudança envolve `--prune` explícito: conferir no `diff` se algum recurso "só ao vivo" que não deveria ser apagado (ex.: um `Namespace` que o chart não declara) está misturado com o que a pessoa quer apagar de propósito. `--prune` apaga tudo que está nessa categoria de uma vez, sem perguntar, foi exatamente o que causou o incidente real do `Namespace cnpg-system` documentado em [Aprender: Argo CD](../aprender/argocd.md).
 
 ## 7. Checagem pós-mudança que não se engana
 

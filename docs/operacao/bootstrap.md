@@ -64,7 +64,7 @@ ssh-keygen -t ed25519 -f /root/.ssh/infrastructure-deploy-key -N ""
 cat /root/.ssh/infrastructure-deploy-key.pub
 ```
 
-Copiar a saída do último comando e adicionar em `github.com/ladesa-ro/infrastructure` → Settings → Deploy keys → Add deploy key, sem marcar "Allow write access".
+Copiar a saída do último comando e adicionar em `github.com/ladesa-ro/infrastructure` > Settings > Deploy keys > Add deploy key, sem marcar "Allow write access".
 
 ## 4. Gerar e registrar a deploy key SSH do infrastructure-vault
 
@@ -75,7 +75,7 @@ ssh-keygen -t ed25519 -f /root/.ssh/infrastructure-vault-deploy-key -N ""
 cat /root/.ssh/infrastructure-vault-deploy-key.pub
 ```
 
-Copiar a saída do último comando e adicionar em `github.com/ladesa-ro/infrastructure-vault` → Settings → Deploy keys → Add deploy key, sem marcar "Allow write access".
+Copiar a saída do último comando e adicionar em `github.com/ladesa-ro/infrastructure-vault` > Settings > Deploy keys > Add deploy key, sem marcar "Allow write access".
 
 ## 5. Clonar o repositório no node
 
@@ -132,7 +132,8 @@ Só segue pro próximo passo depois que isso rodar limpo, sem diff nenhum, em to
 
 ## 8. Ligar o [firewalld](../aprender/firewalld.md)
 
-Atenção: quem administra acessa o node por uma porta externa não-padrão, mas isso é NAT feito antes de chegar na VM. O `sshd` da própria VM escuta na porta 22 padrão (confira com `ss -tlnp | grep sshd`), e é essa porta, 22, que o firewalld precisa liberar, já comitada como default. Usar a porta externa por engano bloquearia o próprio SSH.
+!!! warning "Porta externa não-padrão é NAT, não é a porta que o firewalld precisa liberar"
+    Quem administra acessa o node por uma porta externa não-padrão, mas isso é NAT feito antes de chegar na VM. O `sshd` da própria VM escuta na porta 22 padrão (confira com `ss -tlnp | grep sshd`), e é essa porta, 22, que o firewalld precisa liberar, já comitada como default. Usar a porta externa por engano bloquearia o próprio SSH.
 
 Essa é a mudança de maior risco de todo o bootstrap: é a primeira vez que o firewalld fica ativo num k3s que já roda há muito tempo sem ele. Antes de rodar de verdade, monta a rede de segurança:
 
