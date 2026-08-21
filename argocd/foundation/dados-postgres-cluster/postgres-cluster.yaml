@@ -50,18 +50,24 @@ spec:
         key: POSTGRES_PASSWORD
 
   # Roles adotadas (já existiam no Postgres antigo, capturadas ao vivo via
-  # \du+ antes de escrever este arquivo). Sem passwordSecret em nenhuma: o
-  # operador só roda ALTER ROLE em cima do que o import trouxe, nunca
-  # sobrescreve a senha vinda da instância antiga. ladesa entra sem
-  # SUPERUSER porque o CNPG remove esse atributo de toda role importada de
-  # qualquer forma (o próprio operador tem seu superusuário separado, via
-  # superuserSecret acima).
+  # \du+ antes de escrever este arquivo). Sem passwordSecret preserva a
+  # senha que o import trouxe, o operador só roda ALTER ROLE em cima do
+  # que já está lá. Validado contra um cluster descartável em 2026-08-21:
+  # infisical/api-dev/sso-production preservaram a senha original (login
+  # de verdade testado), mas ladesa não, o import reseta a senha desse
+  # role especificamente (é ao mesmo tempo o usuário de conexão do import
+  # e o único role que era SUPERUSER na origem, atributo que o CNPG
+  # sempre remove de role importada). Como nenhuma aplicação usa ladesa
+  # pra conectar, passwordSecret aqui é uma senha nova, gerada de
+  # propósito (não a original), exceção deliberada só pra esse role.
   managed:
     roles:
       - name: ladesa
         ensure: present
         login: true
         inherit: true
+        passwordSecret:
+          name: postgres-ladesa-rotated
       - name: infisical
         ensure: present
         login: true
