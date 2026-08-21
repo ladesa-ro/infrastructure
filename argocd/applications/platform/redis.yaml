@@ -12,6 +12,10 @@ spec:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
     path: argocd/apps/platform/redis
+    helm:
+      releaseName: redis-server
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: redis-server

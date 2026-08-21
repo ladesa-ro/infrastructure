@@ -1,0 +1,41 @@
+application:
+  deployment:
+    image:
+      repository: docker.io/bitnami/redis
+      tag: "latest"
+      digest: "sha256:a97a9e3e409d77fe8566d049a337eff53ef2941eb9e40f105dd4ad6ca3417810"
+    ports:
+      - containerPort: 6379
+        name: redis-server
+    env:
+      ALLOW_EMPTY_PASSWORD:
+        value: "no"
+    envFrom:
+      redis-secret:
+        type: secret
+        name: redis-secret
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
+      fsGroup: 0
+      seccompProfile:
+        type: RuntimeDefault
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
+  persistence:
+    enabled: true
+    mountPVC: true
+    mountPath: /bitnami/redis/data
+    name: redis-pvc
+    storageClass: local-path
+    storageSize: 5Gi
+  service:
+    type: ClusterIP
+    ports:
+      - port: 6379
+        name: redis-port
+        targetPort: 6379
