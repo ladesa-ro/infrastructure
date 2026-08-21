@@ -134,3 +134,9 @@ jobs:
         run: |
           docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
             infra-quality/node-tools:local cspell --config .cspell.config.yaml --no-progress .
+
+      - name: Comentário em código não permitido (ast-grep)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            infra-quality/ast-grep:local ast-grep scan --config tools/quality/ast-grep/sgconfig.yml

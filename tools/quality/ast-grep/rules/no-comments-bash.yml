@@ -1,0 +1,11 @@
+---
+id: no-comments-bash
+language: bash
+severity: error
+message: Comentário em shell script não é permitido. Mova o contexto pra um .md em Arquitetura ou Operação, não deixe inline.
+rule:
+  kind: comment
+  not:
+    regex: '^#!|^#\s*shellcheck'
+files:
+  - "**/*.sh"

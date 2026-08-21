@@ -29,6 +29,11 @@ FROM base AS kubeconform
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install kubeconform-0.8.0" /dev/null
 USER 1000:1000
 
+FROM base AS ast-grep
+RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install ast-grep-0.45.1" /dev/null
+RUN chmod -R a+rwX /opt/hermit-cache
+USER 1000:1000
+
 FROM base AS node-tools
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install node-24.18.0" /dev/null
 ENV PATH=/opt/hermit-cache/pkg/node-24.18.0/bin:$PATH

@@ -1,0 +1,9 @@
+---
+id: no-comments-hcl
+language: hcl
+severity: error
+message: Comentário em HCL não é permitido. Mova o contexto pra um .md em Arquitetura ou Operação, não deixe inline.
+rule:
+  kind: comment
+files:
+  - "**/*.hcl"

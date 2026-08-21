@@ -1,5 +1,5 @@
 group "default" {
-  targets = ["actionlint", "shellcheck", "zizmor", "python-lint", "kubeconform", "node-tools"]
+  targets = ["actionlint", "shellcheck", "zizmor", "python-lint", "kubeconform", "node-tools", "ast-grep"]
 }
 
 target "base" {
@@ -54,4 +54,12 @@ target "node-tools" {
   tags       = ["infra-quality/node-tools:local"]
   cache-from = ["type=gha,scope=infra-quality-node-tools"]
   cache-to   = ["type=gha,scope=infra-quality-node-tools,mode=max"]
+}
+
+target "ast-grep" {
+  inherits   = ["base"]
+  target     = "ast-grep"
+  tags       = ["infra-quality/ast-grep:local"]
+  cache-from = ["type=gha,scope=infra-quality-ast-grep"]
+  cache-to   = ["type=gha,scope=infra-quality-ast-grep,mode=max"]
 }

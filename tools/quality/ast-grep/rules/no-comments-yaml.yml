@@ -1,0 +1,14 @@
+---
+id: no-comments-yaml
+language: yaml
+severity: error
+message: Comentário em YAML não é permitido. Mova o contexto pra um .md em Arquitetura ou Operação, não deixe inline.
+rule:
+  kind: comment
+  not:
+    regex: '^#\s*(yamllint|noqa)'
+files:
+  - "**/*.yml"
+  - "**/*.yaml"
+ignores:
+  - "argocd/foundation/cert-manager/**"
