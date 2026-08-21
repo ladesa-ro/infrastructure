@@ -5,7 +5,6 @@ metadata:
   name: foundation-dados-mariadb
   namespace: argocd
   annotations:
-    # Depois do operador (foundation-mariadb-operator, sync-wave "1").
     argocd.argoproj.io/sync-wave: "2"
 spec:
   project: ladesa
@@ -17,8 +16,6 @@ spec:
     server: https://kubernetes.default.svc
     namespace: dados
   syncPolicy:
-    # MariaDB CR protegido com Prune=false (ver mariadb.yaml), mesmo motivo
-    # do Postgres: storageClass local-path tem ReclaimPolicy Delete.
     automated:
       prune: true
       selfHeal: true

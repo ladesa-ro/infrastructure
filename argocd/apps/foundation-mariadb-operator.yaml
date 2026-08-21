@@ -5,8 +5,6 @@ metadata:
   name: foundation-mariadb-operator
   namespace: argocd
   annotations:
-    # Depois das CRDs (foundation-mariadb-operator-crds, sync-wave "0"),
-    # que este chart precisa que já existam.
     argocd.argoproj.io/sync-wave: "1"
 spec:
   project: ladesa

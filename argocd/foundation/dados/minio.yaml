@@ -16,13 +16,6 @@ spec:
     spec:
       containers:
         - name: minio
-          # MinIO Community Edition foi descontinuado (release binário parou
-          # de ser mantido em 2026). Silo (github.com/pgsty/silo) é um fork
-          # comunitário mantido pelo projeto Pigsty, drop-in: mesmo CLI,
-          # mesmas env vars MINIO_*, mesmo formato de dado em disco, mesma
-          # convenção de tag RELEASE.<data>Z. Sem dado real neste volume
-          # (só .minio.sys) e nenhum consumidor encontrado no cluster, então
-          # a troca de imagem foi feita direto, sem validação isolada extra.
           image: docker.io/pgsty/silo:RELEASE.2026-08-06T00-00-00Z@sha256:29a498b24669cae1fed11c1a2fb2b3d73c68829a0a9c0b14e71b386671d38fac
           args:
             - server

@@ -1,22 +1,10 @@
 ---
-# CR do CloudNativePG. Bootstrap via import "monolith" a partir da instância
-# antiga (docker.io/postgres:18, ainda rodando em paralelo até o cutover, ver
-# externalClusters abaixo), preservando os roles e databases reais sem tocar
-# em nenhuma senha.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: postgres
   namespace: dados
   annotations:
-    # A Application está com automated.prune: true, seguro pros Database
-    # CRs (databaseReclaimPolicy: retain protege o dado) e pra Service,
-    # mas não pro Cluster: o StorageClass local-path tem ReclaimPolicy
-    # Delete, então se este recurso sumir do git por engano (merge ruim,
-    # PR malfeito), prune apagaria o Cluster, o que derrubaria o
-    # StatefulSet/PVC e apagaria o dado de verdade no disco, sem revisão
-    # humana nenhuma no meio. Prune=false aqui faz o Argo CD só avisar
-    # (OutOfSync), nunca apagar sozinho.
     argocd.argoproj.io/sync-options: Prune=false
 spec:
   instances: 1
@@ -59,17 +47,6 @@ spec:
         name: pg-env
         key: POSTGRES_PASSWORD
 
-  # Roles adotadas (já existiam no Postgres antigo, capturadas ao vivo via
-  # \du+ antes de escrever este arquivo). Sem passwordSecret preserva a
-  # senha que o import trouxe, o operador só roda ALTER ROLE em cima do
-  # que já está lá. Validado contra um cluster descartável em 2026-08-21:
-  # infisical/api-dev/sso-production preservaram a senha original (login
-  # de verdade testado), mas ladesa não, o import reseta a senha desse
-  # role especificamente (é ao mesmo tempo o usuário de conexão do import
-  # e o único role que era SUPERUSER na origem, atributo que o CNPG
-  # sempre remove de role importada). Como nenhuma aplicação usa ladesa
-  # pra conectar, passwordSecret aqui é uma senha nova, gerada de
-  # propósito (não a original), exceção deliberada só pra esse role.
   managed:
     roles:
       - name: ladesa
@@ -98,9 +75,6 @@ spec:
     limits:
       memory: 1Gi
 ---
-# databaseReclaimPolicy: retain em todos, explícito: apagar o recurso do
-# Kubernetes (kubectl delete, prune do Argo CD) nunca dropa o database de
-# verdade, só o Delete faria isso, e nunca vamos declarar isso aqui.
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
@@ -161,10 +135,6 @@ spec:
   owner: api-dev
   databaseReclaimPolicy: retain
 ---
-# Reaproveita o nome exato "db-postgres": nenhuma aplicação (management-service,
-# Keycloak, Infisical) precisa editar connection string nenhuma, o hostname
-# db-postgres.dados.svc.cluster.local:5432 continua o mesmo depois do cutover
-# (ver docs/arquitetura/roles/postgres-cluster.md).
 apiVersion: v1
 kind: Service
 metadata:

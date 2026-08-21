@@ -5,8 +5,6 @@ metadata:
   name: foundation-dados-postgres-cluster
   namespace: argocd
   annotations:
-    # Depois do operador CNPG (foundation-cnpg, sync-wave "0"), cujas CRDs
-    # este Cluster CR precisa que já existam.
     argocd.argoproj.io/sync-wave: "1"
 spec:
   project: ladesa
@@ -18,12 +16,6 @@ spec:
     server: https://kubernetes.default.svc
     namespace: dados
   syncPolicy:
-    # Automatizado a partir de 2026-08-21, depois do cutover confirmado: o
-    # Deployment/Service antigos (argocd/foundation/dados/postgres.yaml)
-    # foram removidos do git e do cluster, então não há mais colisão de
-    # nome nenhuma pra sync automático reintroduzir. databaseReclaimPolicy
-    # retain (ver postgres-cluster.yaml) garante que prune aqui nunca
-    # dropa um database de verdade, só para de gerenciar o recurso.
     automated:
       prune: true
       selfHeal: true
