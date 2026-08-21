@@ -1,3 +1,4 @@
+---
 k3s_versao: v1.33.3+k3s1
 k3s_binary_sha256: f03cad6610cf5b2903d8a9ac3d6716690e53dab461b09c07b0c913a262166abc
 
@@ -13,7 +14,7 @@ argocd_helm_repo_url: https://argoproj.github.io/argo-helm
 argocd_chart: argo/argo-cd
 argocd_kubeconfig: /etc/rancher/k3s/k3s.yaml
 
-argocd_kubernetes_manifests_vault:
+argocd_bootstrap_kubernetes_manifests_vault:
   - "{{ vault_repo_dir }}/secrets/k8s/dados/pg-env.yaml"
   - "{{ vault_repo_dir }}/secrets/k8s/redis-server/redis-secret.yaml"
   - "{{ vault_repo_dir }}/secrets/k8s/default/universal-auth-credentials.yaml"

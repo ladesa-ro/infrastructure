@@ -8,10 +8,11 @@ ansible/
   roles/
     k3s/                      instala o k3s
     firewalld/                liga o firewall (tag separada, não roda pelo ansible-pull sem supervisão)
-    vault-repo/                clona o infrastructure-vault no node
-    argocd-bootstrap/         release do Argo CD e o apply do root.yaml
+    vault_repo/               clona o infrastructure-vault no node (tag vault-repo)
+    argocd_bootstrap/         release do Argo CD e o apply do root.yaml (tag argocd-bootstrap)
       files/                  values do Helm que o role consome
-    self-pull-timer/          instala e habilita o timer do ansible-pull (tag separada, roda por último)
+    self_pull_timer/          instala e habilita o timer do ansible-pull (tag self-pull-timer, roda por último)
+    gate_check_mode_prereq/   task compartilhada: decide se um preview sob --check tem o que comparar
   systemd/                    unit e timer do ansible-pull
 
 argocd/
@@ -26,7 +27,7 @@ As Applications `foundation-*.yaml` já estão mapeadas a partir do que roda de 
 
 ```mermaid
 flowchart TB
-    Ansible[ansible/] --> Roles[roles/: k3s, firewalld, vault-repo, argocd-bootstrap, self-pull-timer]
+    Ansible[ansible/] --> Roles[roles/: k3s, firewalld, vault_repo, argocd_bootstrap, self_pull_timer, gate_check_mode_prereq]
     ArgoCD[argocd/] --> Root[root/: AppProjects + Application root]
     ArgoCD --> Apps[apps/: uma Application por peça]
     ArgoCD --> Foundation[foundation/: manifests dos core services]

@@ -7,9 +7,9 @@
       tags: [k3s]
     - role: firewalld
       tags: [firewalld]
-    - role: vault-repo
+    - role: vault_repo
       tags: [vault-repo]
-    - role: argocd-bootstrap
+    - role: argocd_bootstrap
       tags: [argocd-bootstrap]
-    - role: self-pull-timer
+    - role: self_pull_timer
       tags: [self-pull-timer]

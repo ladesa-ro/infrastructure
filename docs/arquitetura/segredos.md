@@ -32,7 +32,7 @@ flowchart LR
 
 Os quatro primeiros foram capturados direto do cluster já rodando com `scripts/create-from-cluster`, dentro do `infrastructure-vault`, que busca o `Secret` e o `Namespace`, limpa campos de runtime, e cifra o resultado com `ansible-vault`, sem nenhum passo intermediário que imprima o valor em texto puro. A senha usada foi gerada no próprio node com [`openssl rand -base64 32`](../aprender/tls-automatico.md#openssl-o-canivete-suico-manual), redirecionada direto pro arquivo, nunca exibida em tela nenhuma.
 
-Formato de cada arquivo: um manifesto Kubernetes normal (`kind: Secret`), cifrado com `ansible-vault`, com o `Namespace` de destino bundlado como um segundo documento no mesmo arquivo, separados por `---`. Isso importa porque na primeira execução `kubectl diff` faz dry-run e pode não encontrar um namespace que ainda não existe, então o `Namespace` precisa ir junto pra a task de reconciliação (`ansible/roles/argocd-bootstrap/tasks/kubernetes-manifest-vault.yml`) aplicar os dois na mesma chamada.
+Formato de cada arquivo: um manifesto Kubernetes normal (`kind: Secret`), cifrado com `ansible-vault`, com o `Namespace` de destino bundlado como um segundo documento no mesmo arquivo, separados por `---`. Isso importa porque na primeira execução `kubectl diff` faz dry-run e pode não encontrar um namespace que ainda não existe, então o `Namespace` precisa ir junto pra a task de reconciliação (`ansible/roles/argocd_bootstrap/tasks/kubernetes-manifest-vault.yml`) aplicar os dois na mesma chamada.
 
 Pra capturar um segredo novo do cluster no mesmo formato, dentro do clone local de `infrastructure-vault`:
 
@@ -41,7 +41,7 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 scripts/create-from-cluster <secret> <namespace> secrets/k8s/<namespace>/<nome>.yaml /root/infrastructure-vault-pass
 ```
 
-Depois, no repositório `infrastructure`, adicionar o caminho em `argocd_kubernetes_manifests_vault` no `host_vars/ldsa.yml`, apontando pra `{{ vault_repo_dir }}/secrets/k8s/<namespace>/<nome>.yaml`.
+Depois, no repositório `infrastructure`, adicionar o caminho em `argocd_bootstrap_kubernetes_manifests_vault` no `host_vars/ldsa.yml`, apontando pra `{{ vault_repo_dir }}/secrets/k8s/<namespace>/<nome>.yaml`.
 
 A senha do vault não fica em nenhum dos dois repositórios. Vive em `/root/infrastructure-vault-pass` no próprio node, `0600`, gerada com `openssl rand`, nunca commitada nem exibida. `ansible/systemd/ansible-pull.service` já referencia esse caminho via `--vault-password-file` (ver [`ansible-pull`](../aprender/ansible.md#ansible-pull-vs-push)).
 

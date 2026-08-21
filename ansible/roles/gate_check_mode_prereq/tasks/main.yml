@@ -1,0 +1,9 @@
+---
+- name: Avisar que --check não consegue prever nada ainda
+  ansible.builtin.debug:
+    msg: "{{ gate_check_mode_prereq_message }}"
+  when: not gate_check_mode_prereq_ok and ansible_check_mode
+
+- name: Decidir se o restante deve rodar
+  ansible.builtin.set_fact:
+    "{{ gate_check_mode_prereq_fact_name }}": "{{ gate_check_mode_prereq_ok or not ansible_check_mode }}"

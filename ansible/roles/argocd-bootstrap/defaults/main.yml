@@ -1,4 +1,0 @@
----
-argocd_valores_arquivo: "{{ role_path }}/files/argocd-values.yaml"
-argocd_raiz_manifests: "{{ playbook_dir }}/../argocd/root"
-argocd_kubernetes_manifests_vault: []

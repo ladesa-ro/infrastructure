@@ -30,11 +30,12 @@
   until: (firewalld_estado.rc | default(-1)) == 0
 
 - name: Conferir se a configuração das zonas e regras pode rodar
-  ansible.builtin.include_tasks: "{{ playbook_dir }}/tasks/gate-check-mode-prereq.yml"
+  ansible.builtin.include_role:
+    name: gate_check_mode_prereq
   vars:
-    gate_fact_name: firewalld_configurar_gate
-    gate_prereq_ok: "{{ (firewalld_estado.rc | default(-1)) == 0 }}"
-    gate_message: >-
+    gate_check_mode_prereq_fact_name: firewalld_configurar_gate
+    gate_check_mode_prereq_ok: "{{ (firewalld_estado.rc | default(-1)) == 0 }}"
+    gate_check_mode_prereq_message: >-
       Modo --check numa primeira execução: o firewalld ainda não está
       ativo de verdade, porque só seria instalado e iniciado numa execução
       real. Nada neste role pode ser conferido ainda.
@@ -169,7 +170,7 @@
         cmd: firewall-cmd --reload
       when: firewalld_teve_mudanca_real
       changed_when: true
-      notify: reiniciar o k3s
+      notify: Reiniciar o k3s
 
     - name: Aplicar o reinício do k3s agora, se o firewalld recarregou
       ansible.builtin.meta: flush_handlers
