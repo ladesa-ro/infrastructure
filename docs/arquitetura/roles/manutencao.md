@@ -1,6 +1,6 @@
 # manutencao
 
-Declara a política de atualização automática do sistema e a coleta de lixo periódica do node. Substitui o repositório `cluster-maintenance`, que fazia isso por [GitHub Actions](../../aprender/ci-cd.md) até parar de funcionar sem ninguém notar.
+Declara a política de atualização automática do sistema e a coleta de lixo periódica do node. Substitui o repositório `arquivado-cluster-maintenance`, que fazia isso por [GitHub Actions](../../aprender/ci-cd.md) até parar de funcionar sem ninguém notar.
 
 ## O que motivou o role
 
