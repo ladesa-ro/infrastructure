@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: foundation-rabbitmq
+  name: foundation-rabbitmq-operator
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "0"
@@ -11,10 +11,10 @@ spec:
   source:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
-    path: argocd/foundation/messaging/rabbitmq
+    path: argocd/apps/operators/rabbitmq-operator
   destination:
     server: https://kubernetes.default.svc
-    namespace: ladesa-ro-production
+    namespace: rabbitmq-system
   revisionHistoryLimit: 3
   syncPolicy:
     syncOptions:

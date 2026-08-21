@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
-    path: argocd/apps
+    path: argocd/applications
     directory:
       recurse: true
   destination:

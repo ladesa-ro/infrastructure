@@ -2,7 +2,7 @@
 
 **TLDR**: 9 passos, do acesso SSH até o timer de reconciliação ativo. Passos 1 e o início do 5 rodam na sua máquina; o resto roda numa sessão SSH no node. Sempre `--check` antes de rodar de verdade.
 
-Passo a passo completo, do zero até o [Ansible](../aprender/ansible.md) e o [Argo CD](../aprender/argocd.md) assumirem sozinhos a reconciliação do que já está em `argocd/foundation`. Isso **não** inclui subir as aplicações (`web`, `docs`, `management-service`, `timetable-generator`, `authentication-service`) via Argo CD, isso depende de cada um desses repositórios ganhar sua própria pasta `gitops`, trabalho que ainda não começou em nenhum deles. Quando começar, vira sua própria documentação, não uma extensão desta.
+Passo a passo completo, do zero até o [Ansible](../aprender/ansible.md) e o [Argo CD](../aprender/argocd.md) assumirem sozinhos a reconciliação do que já está em `argocd/apps`. Isso **não** inclui subir as aplicações (`web`, `docs`, `management-service`, `timetable-generator`, `authentication-service`) via Argo CD, isso depende de cada um desses repositórios ganhar sua própria pasta `gitops`, trabalho que ainda não começou em nenhum deles. Quando começar, vira sua própria documentação, não uma extensão desta.
 
 ```mermaid
 flowchart TD
@@ -190,7 +190,7 @@ Confirmar que o timer ficou ativo:
 systemctl status ansible-pull.timer
 ```
 
-A saída precisa mostrar `active`. A partir daqui o node reaplica este repositório sozinho, num intervalo, e o Argo CD mantém tudo em `argocd/apps` sincronizado sozinho a partir da Application root. É esse o ponto real em que o Ansible e o Argo CD assumem.
+A saída precisa mostrar `active`. A partir daqui o node reaplica este repositório sozinho, num intervalo, e o Argo CD mantém tudo em `argocd/applications` sincronizado sozinho a partir da Application root. É esse o ponto real em que o Ansible e o Argo CD assumem.
 
 ## O que não está aqui
 

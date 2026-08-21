@@ -2,19 +2,23 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: foundation-redis
+  name: foundation-dados-mariadb
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: ladesa
   source:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
-    path: argocd/foundation/platform/redis
+    path: argocd/apps/data/dados-mariadb
+    helm:
+      releaseName: foundation-dados-mariadb
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: redis-server
+    namespace: dados
   revisionHistoryLimit: 3
   syncPolicy:
     syncOptions:

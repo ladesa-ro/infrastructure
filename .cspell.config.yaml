@@ -21,7 +21,7 @@ ignorePaths:
   - '_site/**'
   - 'site/**'
   - 'tools/quality/cspell-dictionary.txt'
-  - 'argocd/foundation/operators/cnpg/**'
+  - 'argocd/apps/operators/cnpg/**'
 overrides:
   - filename: '**/*.md'
     languageId: markdown

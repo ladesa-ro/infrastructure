@@ -1,10 +1,10 @@
 # Gate de drift zero
 
-Este cluster já tem dado real de produção. Nada sincroniza automaticamente, nem pelo [Ansible](../aprender/ansible.md) nem pelo [Argo CD](../aprender/argocd.md), até que todo manifesto em `argocd/foundation` mostre diff vazio contra o cluster ao vivo, conferido app por app com o Argo CD ainda em [modo manual](../aprender/argocd.md#sync-manual-vs-automatico). Isso vale pra esta adoção inicial e pra qualquer mudança futura nesses manifests.
+Este cluster já tem dado real de produção. Nada sincroniza automaticamente, nem pelo [Ansible](../aprender/ansible.md) nem pelo [Argo CD](../aprender/argocd.md), até que todo manifesto em `argocd/apps` mostre diff vazio contra o cluster ao vivo, conferido app por app com o Argo CD ainda em [modo manual](../aprender/argocd.md#sync-manual-vs-automatico). Isso vale pra esta adoção inicial e pra qualquer mudança futura nesses manifests.
 
 ```mermaid
 flowchart TD
-    Manifesto[manifesto em argocd/foundation] --> Diff{diff contra o cluster ao vivo}
+    Manifesto[manifesto em argocd/apps] --> Diff{diff contra o cluster ao vivo}
     Diff -->|vazio| Libera[sync automático liberado pra esse app]
     Diff -->|não vazio| Bloqueia[continua em modo manual, sem sync]
 ```

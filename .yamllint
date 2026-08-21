@@ -2,7 +2,7 @@
 extends: default
 
 ignore: |
-  argocd/foundation/operators/cnpg/
+  argocd/apps/operators/cnpg/
 
 rules:
   line-length:

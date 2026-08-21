@@ -2,16 +2,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: foundation-dados
+  name: foundation-dados-postgres-cluster
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: ladesa
   source:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
-    path: argocd/foundation/data/dados
+    path: argocd/apps/data/dados-postgres-cluster
+    helm:
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: dados

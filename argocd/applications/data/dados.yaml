@@ -2,20 +2,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: foundation-dados-mariadb
+  name: foundation-dados
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: ladesa
   source:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
-    path: argocd/foundation/data/dados-mariadb
-    helm:
-      releaseName: foundation-dados-mariadb
-      valueFiles:
-        - values.yaml
+    path: argocd/apps/data/dados
   destination:
     server: https://kubernetes.default.svc
     namespace: dados

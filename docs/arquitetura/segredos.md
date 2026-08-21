@@ -2,7 +2,7 @@
 
 **TLDR**: a maioria dos segredos passa pelo Infisical; cinco arquivos ficam fora desse caminho, cifrados com Ansible Vault num repositório separado, porque autenticam o próprio Infisical ou quebrariam uma dependência circular se viessem dele.
 
-A maioria dos segredos de aplicação, senha de banco, token de app e assim por diante, passa pelo [Infisical](../aprender/infisical.md) e chega ao cluster via recursos [`InfisicalSecret`](../aprender/infisical.md#como-funciona-dentro-de-um-cluster-kubernetes) (ver os arquivos `infisicalsecret-*.yaml` em `argocd/foundation`). Cada um aponta pro projeto correspondente no Infisical, ambiente `prod`. A identidade de máquina que autentica esses recursos (`universal-auth-credentials`) precisa ter acesso de leitura concedido em cada projeto novo, isso é feito pela própria UI do Infisical, não por este repositório.
+A maioria dos segredos de aplicação, senha de banco, token de app e assim por diante, passa pelo [Infisical](../aprender/infisical.md) e chega ao cluster via recursos [`InfisicalSecret`](../aprender/infisical.md#como-funciona-dentro-de-um-cluster-kubernetes) (ver os arquivos `infisicalsecret-*.yaml` em `argocd/apps`). Cada um aponta pro projeto correspondente no Infisical, ambiente `prod`. A identidade de máquina que autentica esses recursos (`universal-auth-credentials`) precisa ter acesso de leitura concedido em cada projeto novo, isso é feito pela própria UI do Infisical, não por este repositório.
 
 ```mermaid
 flowchart LR
