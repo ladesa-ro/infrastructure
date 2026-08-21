@@ -193,9 +193,11 @@
 
     - name: Conferir se as rich rules do Cloudflare (IPv4) já existem
       ansible.builtin.command:
-        cmd: >-
-          firewall-cmd --permanent --zone=public --query-rich-rule=
-          rule family="ipv4" source ipset="cloudflare4" port port="{{ item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
+        argv:
+          - firewall-cmd
+          - --permanent
+          - --zone=public
+          - --query-rich-rule=rule family="ipv4" source ipset="cloudflare4" port port="{{ item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
       loop: "{{ firewalld_portas_cloudflare }}"
       register: firewalld_rich_v4_atuais
       changed_when: false
@@ -204,9 +206,11 @@
 
     - name: Adicionar as rich rules do Cloudflare (IPv4) que ainda faltam
       ansible.builtin.command:
-        cmd: >-
-          firewall-cmd --permanent --zone=public --add-rich-rule=
-          rule family="ipv4" source ipset="cloudflare4" port port="{{ item.item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
+        argv:
+          - firewall-cmd
+          - --permanent
+          - --zone=public
+          - --add-rich-rule=rule family="ipv4" source ipset="cloudflare4" port port="{{ item.item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
       loop: "{{ firewalld_rich_v4_atuais.results }}"
       when: item.rc != 0
       changed_when: true
@@ -214,9 +218,11 @@
 
     - name: Conferir se as rich rules do Cloudflare (IPv6) já existem
       ansible.builtin.command:
-        cmd: >-
-          firewall-cmd --permanent --zone=public --query-rich-rule=
-          rule family="ipv6" source ipset="cloudflare6" port port="{{ item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
+        argv:
+          - firewall-cmd
+          - --permanent
+          - --zone=public
+          - --query-rich-rule=rule family="ipv6" source ipset="cloudflare6" port port="{{ item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
       loop: "{{ firewalld_portas_cloudflare }}"
       register: firewalld_rich_v6_atuais
       changed_when: false
@@ -225,9 +231,11 @@
 
     - name: Adicionar as rich rules do Cloudflare (IPv6) que ainda faltam
       ansible.builtin.command:
-        cmd: >-
-          firewall-cmd --permanent --zone=public --add-rich-rule=
-          rule family="ipv6" source ipset="cloudflare6" port port="{{ item.item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
+        argv:
+          - firewall-cmd
+          - --permanent
+          - --zone=public
+          - --add-rich-rule=rule family="ipv6" source ipset="cloudflare6" port port="{{ item.item | regex_replace('/tcp$', '') }}" protocol="tcp" accept
       loop: "{{ firewalld_rich_v6_atuais.results }}"
       when: item.rc != 0
       changed_when: true
