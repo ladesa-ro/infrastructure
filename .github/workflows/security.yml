@@ -22,9 +22,14 @@ jobs:
           persist-credentials: false
 
       - name: Segredo commitado no histórico (gitleaks)
-        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # gitleaks/gitleaks-action (o wrapper) passou a exigir licença paga
+        # pra conta de organização a partir da v2. A ferramenta em si
+        # (gitleaks CLI) continua livre, rodando direto via Docker em vez
+        # do Action evita a licença sem perder a checagem real.
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            zricethezav/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            detect --source . --verbose --redact --no-banner
 
   misconfig:
     runs-on: ubuntu-latest
