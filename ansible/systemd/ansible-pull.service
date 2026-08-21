@@ -6,7 +6,7 @@ After=network-online.target
 [Service]
 Type=oneshot
 Environment="GIT_SSH_COMMAND=ssh -i /root/.ssh/infrastructure-deploy-key -o IdentitiesOnly=yes"
-ExecStart=/usr/local/bin/ansible-pull \
+ExecStart=/usr/bin/ansible-pull \
   -U git@github.com:ladesa-ro/infrastructure.git \
   -C main \
   --vault-password-file /root/infrastructure-vault-pass \
