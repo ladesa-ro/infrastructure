@@ -1,0 +1,81 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: foundation-minio
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: ladesa
+  source:
+    repoURL: https://stakater.github.io/stakater-charts
+    chart: application
+    targetRevision: 9.3.1
+    helm:
+      releaseName: minio
+      values: |
+        deployment:
+          image:
+            repository: docker.io/pgsty/silo
+            tag: "RELEASE.2026-08-06T00-00-00Z"
+            digest: "sha256:29a498b24669cae1fed11c1a2fb2b3d73c68829a0a9c0b14e71b386671d38fac"
+          args:
+            - server
+            - /data
+            - --console-address
+            - ":9001"
+          ports:
+            - containerPort: 9000
+              name: s3
+            - containerPort: 9001
+              name: console
+          envFrom:
+            minio-env:
+              type: secret
+              name: minio-env
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containerSecurityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+        persistence:
+          enabled: true
+          mountPVC: true
+          mountPath: /data
+          storageClass: local-path
+          storageSize: 1Gi
+        service:
+          type: NodePort
+          ports:
+            - port: 9000
+              name: s3
+              targetPort: 9000
+              nodePort: 30900
+            - port: 9001
+              name: console
+              targetPort: 9001
+              nodePort: 30901
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dados
+  revisionHistoryLimit: 3
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+      - FailOnSharedResource=true
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

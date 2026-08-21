@@ -13,6 +13,7 @@ spec:
     - https://helm.mariadb.com/mariadb-operator
     - https://charts.jetstack.io
     - https://cloudnative-pg.github.io/charts
+    - https://stakater.github.io/stakater-charts
   destinations:
     - server: https://kubernetes.default.svc
       namespace: "*"
