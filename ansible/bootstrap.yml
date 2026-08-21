@@ -1,10 +1,4 @@
 ---
-# Rodado a partir da máquina de quem administra (não no próprio node),
-# com o alias ldsa como inventário: -i ldsa,
-# Resolve o ovo-e-galinha do ansible-pull: o ansible-core, o jq e o CLI do
-# argocd ainda não existem no node, então não dá pra usar ansible-pull pra
-# instalá-los. O role raw abaixo é o único ponto deste repositório que roda
-# via push em vez de pull, e só nesta primeira vez.
 - name: Preparar o node ldsa antes do ansible-pull assumir
   hosts: all
   become: true
