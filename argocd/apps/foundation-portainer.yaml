@@ -22,10 +22,16 @@ spec:
           type: ClusterIP
         ingress:
           enabled: true
+          annotations:
+            cert-manager.io/cluster-issuer: ladesa-ro-issuer-production
           hosts:
             - host: portainer.ladesa.com.br
               paths:
                 - path: /
+          tls:
+            - hosts:
+                - portainer.ladesa.com.br
+              secretName: portainer-tls
   destination:
     server: https://kubernetes.default.svc
     namespace: portainer

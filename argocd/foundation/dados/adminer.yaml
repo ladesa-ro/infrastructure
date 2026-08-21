@@ -44,3 +44,28 @@ spec:
       nodePort: 30001
   selector:
     app: adminer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: adminer
+  namespace: dados
+  annotations:
+    cert-manager.io/cluster-issuer: ladesa-ro-issuer-production
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: adminer.ladesa.com.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: adminer
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - adminer.ladesa.com.br
+      secretName: adminer-tls
