@@ -31,7 +31,7 @@ Rodar a mesma geração duas vezes seguidas, sem nenhuma mudança em `argocd/`, 
 docker buildx bake --file tools/quality/docker-bake.hcl kube-diagrams --load
 
 docker run --rm -v "$PWD:/repo" -w /repo infra-quality/kube-diagrams:local sh -c \
-  "kube-diagrams \$(find argocd -name '*.yaml' -not -path 'argocd/foundation/cert-manager/*' -not -path 'argocd/foundation/cnpg/*') \
+  "kube-diagrams \$(find argocd -name '*.yaml' -not -path 'argocd/foundation/operators/cert-manager/*' -not -path 'argocd/foundation/operators/cnpg/*') \
     -o docs/arquitetura/topologia-declarada.mermaid -f mermaid"
 ```
 

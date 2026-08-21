@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
-    path: argocd/foundation/cnpg
+    path: argocd/foundation/operators/cnpg
   destination:
     server: https://kubernetes.default.svc
     namespace: cnpg-system

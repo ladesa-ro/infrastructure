@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
-    path: argocd/foundation/redis
+    path: argocd/foundation/platform/redis
   destination:
     server: https://kubernetes.default.svc
     namespace: redis-server

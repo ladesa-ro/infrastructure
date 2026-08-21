@@ -2,8 +2,8 @@
 extends: default
 
 ignore: |
-  argocd/foundation/cert-manager/
-  argocd/foundation/cnpg/
+  argocd/foundation/operators/cert-manager/
+  argocd/foundation/operators/cnpg/
 
 rules:
   line-length:

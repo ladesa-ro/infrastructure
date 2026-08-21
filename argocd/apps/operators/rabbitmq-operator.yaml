@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: foundation-dados
+  name: foundation-rabbitmq-operator
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "0"
@@ -11,16 +11,18 @@ spec:
   source:
     repoURL: https://github.com/ladesa-ro/infrastructure.git
     targetRevision: main
-    path: argocd/foundation/dados
+    path: argocd/foundation/operators/rabbitmq-operator
   destination:
     server: https://kubernetes.default.svc
-    namespace: dados
+    namespace: rabbitmq-system
   revisionHistoryLimit: 3
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
       - FailOnSharedResource=true
+      - PruneLast=true
+      - PrunePropagationPolicy=foreground
     retry:
       limit: 5
       backoff:
