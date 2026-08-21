@@ -9,9 +9,16 @@ metadata:
 spec:
   project: ladesa
   source:
-    repoURL: https://github.com/ladesa-ro/infrastructure.git
-    targetRevision: main
-    path: argocd/foundation/operators/cert-manager
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: 1.21.1
+    helm:
+      releaseName: cert-manager
+      values: |
+        crds:
+          enabled: true
+        startupapicheck:
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
