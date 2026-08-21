@@ -10,6 +10,10 @@ Esta página existe pelo mesmo motivo de [Estado fora do git](estado-fora-do-git
 - [ ] **Todos os checks de `codigo-e-infra` em `quality.yml`** (`yamllint`, `ansible-lint`, `jscpd`, `kubeconform`, `shellcheck`, `actionlint`, `zizmor`, `cspell`, `ast-grep`, `kubescape`) são `continue-on-error: true` desde que o job foi criado, nunca foram bloqueantes. Condição pra promover cada um: revisar o baseline de achados daquele check especificamente, zerar o que for real, só então tirar o `continue-on-error` (ver [Qualidade de código e infraestrutura](desenvolvimento.md#qualidade-de-codigo-e-infraestrutura)).
 - [ ] **`argocd/foundation/cert-manager` e `argocd/foundation/cnpg`, excluídos de seis checks diferentes**, nenhum bem um bypass a desfazer, todos permanentes por natureza (RBAC amplo e conteúdo exigido pelo próprio operador vendorizado, não código deste repositório pra ajustar, ver [Foundation](../arquitetura/foundation.md#debito-tecnico-conhecido-securitycontext-ausente)): `skip-dirs` no trivy (`security.yml`), `--exclude-namespaces cert-manager,cnpg-system` no kubescape (`quality.yml`, desde 2026-08-21), `--ignore` no jscpd, `ignore` no `.yamllint`, `ignorePaths` no `.cspell.config.yaml`, e `ignores` na regra `no-comments-yaml` do ast-grep (só `cert-manager`, o `cnpg-1.30.0.yaml` vendorizado não tem comentário nenhum pra excluir). Mantido aqui só pra registro, não some sozinho de uma auditoria futura sem essa nota.
 
+## Licença do repositório
+
+- [ ] **Este repositório não tem `LICENSE`**, discutido em 2026-08-21. Decisão preliminar: MIT, mesmo padrão já em uso no [`management-service`](https://github.com/ladesa-ro/management-service/blob/main/LICENSE) (`Copyright (c) 2024-present LADESA e Colaboradores`), pra manter consistência entre repositórios da organização. Falta só criar o arquivo e linkar no `README.md`, adiado a pedido do usuário, sem urgência definida.
+
 ## Débito técnico: `securityContext` ausente
 
 Acompanha o item acima. Um item por serviço, porque a correção de cada um é independente (UID diferente, risco de quebrar não é o mesmo):
