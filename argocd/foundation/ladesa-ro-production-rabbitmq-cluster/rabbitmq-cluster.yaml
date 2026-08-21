@@ -6,6 +6,7 @@ metadata:
   namespace: ladesa-ro-production
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
+    rabbitmq.com/legacy-startup-probe: "true"
 spec:
   replicas: 1
   image: rabbitmq:3.13.7-management@sha256:e582c0bc7766f3342496d8485efb5a1df782b5ce3886ad017e2eaae442311f69
