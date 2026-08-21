@@ -11,6 +11,7 @@ spec:
     - https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
     - https://portainer.github.io/k8s/
     - https://helm.mariadb.com/mariadb-operator
+    - https://charts.jetstack.io
   destinations:
     - server: https://kubernetes.default.svc
       namespace: "*"
