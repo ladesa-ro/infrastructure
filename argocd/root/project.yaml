@@ -79,3 +79,5 @@ spec:
       kind: Cluster
     - group: postgresql.cnpg.io
       kind: Database
+    - group: k8s.mariadb.com
+      kind: MariaDB

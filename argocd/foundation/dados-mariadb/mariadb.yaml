@@ -1,0 +1,26 @@
+---
+# CR do mariadb-operator. Sem import de dado (diferente do Postgres/CNPG):
+# investigado ao vivo antes de escrever este arquivo, o MariaDB antigo só
+# tinha os databases de sistema (mysql, information_schema, performance_schema,
+# sys) e usuários padrão da imagem, nenhum database de aplicação, nenhum
+# consumidor real encontrado no cluster. Adoção direta, sem bootstrapFrom.
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
+metadata:
+  name: mariadb
+  namespace: dados
+  annotations:
+    # Mesmo motivo do postgres-cluster.yaml: prune automático é seguro
+    # pros outros recursos desta Application, mas não pra este, que carrega
+    # o volume de dado real.
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  image: docker.io/mariadb:12@sha256:a02fe89cb597d4375812b2eac90cf9d0775d4686daa7f7cc750ebbcad7525bbc
+  rootPasswordSecretKeyRef:
+    name: mariadb-env
+    key: MARIADB_ROOT_PASSWORD
+  replicas: 1
+  port: 3306
+  storage:
+    size: 1Gi
+    storageClassName: local-path
