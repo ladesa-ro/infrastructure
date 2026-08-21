@@ -10,6 +10,7 @@ spec:
     - https://github.com/ladesa-ro/infrastructure.git
     - https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
     - https://portainer.github.io/k8s/
+    - https://helm.mariadb.com/mariadb-operator
   destinations:
     - server: https://kubernetes.default.svc
       namespace: "*"
