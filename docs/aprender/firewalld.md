@@ -71,6 +71,30 @@ flowchart LR
 
 `firewall-cmd --reload` não é tão inofensivo quanto parece quando outro processo já gerencia suas próprias regras de `iptables`/`nftables` no mesmo host, um orquestrador de container como k3s/Kubernetes é o caso mais comum. O reload recarrega a configuração do próprio firewalld, mas o efeito colateral em sistemas mais antigos de nftables é recriar as chains do zero, o que pode flushar regras que outro processo tinha inserido por fora do firewalld (rede de pod via CNI, `hostPort` de um Ingress Controller). A recuperação depende de esse outro processo perceber a mudança e reaplicar sozinho; em alguns casos isso é parcial ou não acontece automaticamente, exigindo reiniciar o serviço afetado (ou, em último caso, reboot) pra normalizar. Ativar firewalld pela primeira vez num host que já roda esse tipo de orquestrador há tempo, em vez de configurar os dois juntos desde o início, é o cenário onde isso mais aparece.
 
+## `firewalld` não protege tráfego roteado pro Kubernetes, achado real em 2026-08-21
+
+Depois de restringir a zona `public` pra só aceitar 80/443 das faixas de IP do Cloudflare (ver [Pendências](../operacao/pendencias.md)), o teste real (conectar direto no IP público do node, sem passar pelo Cloudflare) continuou funcionando, como se a regra não existisse. Não era bug na regra: `iptables -t filter -L FORWARD -n` mostrou que o tráfego destinado a uma `Service` do tipo `LoadBalancer` (o Traefik, via `svclb-traefik`, mecanismo `ServiceLB`/klipper-lb do k3s) nunca passa pela chain `INPUT`, que é a única que o `firewalld` controla por zona.
+
+O motivo é estrutural, não uma configuração errada: `svclb-traefik` expõe a porta 80/443 do host via `hostPort` (não `hostNetwork`), então o `kubelet` programa um DNAT (`nat`/`PREROUTING`) do IP do node pra o IP do pod. Depois do DNAT, o pacote já tem destino diferente do próprio host, então é avaliado pela chain `FORWARD`, não `INPUT`. A `FORWARD`, neste cluster, tem **política padrão `ACCEPT`**, e o primeiro alvo é `KUBE-ROUTER-FORWARD` (o k3s aqui roda com kube-router como network policy controller) — o `firewalld` nem aparece na lista de chains consultadas pra esse tráfego.
+
+```mermaid
+flowchart LR
+    Ext[Cliente externo] -->|porta 80/443| Node[IP do node]
+    Node -->|PREROUTING, DNAT do hostPort| Pod[pod svclb-traefik]
+    Pod -.->|chain FORWARD, kube-router ACCEPT| Pod
+    Node -.->|chain INPUT, zona public do firewalld| SSH[só afeta processos que escutam direto no host, ex. SSH]
+```
+
+Isso **não é peculiaridade deste cluster**: é um problema conhecido e sem solução oficial na comunidade k3s, confirmado numa [discussão aberta e sem resposta no repositório oficial](https://github.com/k3s-io/k3s/discussions/12449), relatando exatamente o mesmo sintoma (kube-proxy/kube-router reposicionam as próprias regras no topo da chain, por cima de qualquer regra customizada). Tentar inserir uma regra manual à frente do `KUBE-ROUTER-FORWARD` não é uma correção estável: o kube-router reconcilia e reposiciona as próprias regras periodicamente, então a regra manual perderia a corrida de novo depois de qualquer resync.
+
+**Caminhos reais pra restringir esse tráfego** (nenhum aplicado ainda, ver [Pendências](../operacao/pendencias.md)):
+
+1. **Firewall externo ao node** (security group da nuvem, ACL de rede do provedor, firewall de um roteador na frente): a única camada garantidamente avaliada antes do pacote sequer chegar nas chains do node, não compete com o kube-router porque nem está no mesmo host. Caminho recomendado, mas depende de saber quem hospeda a VM e se esse recurso existe.
+2. **Kubernetes `NetworkPolicy`**, restringindo a origem aceita pelo Traefik/`svclb-traefik` por `ipBlock`: como o kube-router é ao mesmo tempo quem esmaga as regras do `firewalld` **e** o controller que aplica `NetworkPolicy` neste cluster (confirmado, `KUBE-ROUTER-FORWARD` existe e está ativo), uma `NetworkPolicy` não compete com ele, é implementada pelo próprio kube-router como parte do mecanismo que já vence a corrida. Não testado ainda neste cluster; comportamento de `NetworkPolicy` sobre tráfego que chega via `hostPort` (em vez de endereço de pod normal) varia por CNI/controller e precisa de validação antes de confiar nele.
+3. **Regra manual na chain `FORWARD`, reaplicada a cada resync do kube-router**: tecnicamente possível (um serviço systemd que reinsere a regra), mas frágil por natureza (corrida contra um processo que se reconcilia sozinho), não é a solução recomendada.
+
+A restrição de `firewalld` que foi aplicada (ipset `cloudflare4`/`cloudflare6` + rich rules na zona `public`) continua correta e foi mantida: protege a chain `INPUT`, ou seja, qualquer processo que escute direto no host fora do Kubernetes (hoje só o SSH se encaixa nisso). Só não fecha o problema original (bypass do Cloudflare pra tráfego web, que é `Service` do Kubernetes).
+
 ## Cheatsheet
 
 | Comando | O que faz |
