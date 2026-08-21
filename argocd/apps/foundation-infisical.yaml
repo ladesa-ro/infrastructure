@@ -49,7 +49,15 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: infisical
+  revisionHistoryLimit: 3
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - FailOnSharedResource=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

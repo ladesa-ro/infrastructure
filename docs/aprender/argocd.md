@@ -74,6 +74,16 @@ flowchart TD
 
 Na prática: nunca depender de "vai dar erro de nome duplicado" como rede de segurança entre duas `Applications` do mesmo Argo CD. Se duas precisam, ainda que temporariamente, declarar o mesmo nome de recurso, a proteção real é não sincronizar as duas ao mesmo tempo (sync manual, uma de cada vez, conferindo o resultado antes da próxima), não a expectativa de que o Kubernetes vai recusar a segunda.
 
+## `syncPolicy` padronizado em 2026-08-21
+
+Todas as `Application` de `argocd/apps/` e `argocd/root/application.yaml` ganharam o mesmo bloco de `syncPolicy`, levantado contra o que é hoje recomendado pela própria documentação oficial e por relatos reais de incidente na comunidade, não um "achismo" de boas práticas genéricas:
+
+- **`FailOnSharedResource=true`**: proteção direta contra o incidente descrito acima ("Duas Applications, o mesmo recurso"). Faz o sync falhar explicitamente se detectar que o recurso já é rastreado por outra `Application`, em vez de sobrescrever silenciosamente. Ressalva real, documentada num [issue aberto do próprio Argo CD](https://github.com/argoproj/argo-cd/issues/18166): a proteção não é honrada de forma consistente durante sync automático (`selfHeal`), então continua valendo a regra da seção acima (nunca sincronizar duas `Applications` que disputam o mesmo recurso ao mesmo tempo); esta opção é uma segunda camada de defesa, não substitui a disciplina operacional.
+- **`retry` com backoff exponencial** (`limit: 5`, `duration: 5s`, `factor: 2`, `maxDuration: 3m`): sem isso, uma falha transitória de API (rate limit, timeout de rede) deixa o sync parado até alguém notar e forçar de novo manualmente.
+- **`revisionHistoryLimit: 3`**: o Argo CD guarda o histórico de cada sync no `status` da própria `Application` (usado por `argocd app history`/`rollback`); sem limite explícito o padrão é 10, mais do que este cluster pequeno precisa.
+- **`PruneLast=true` e `PrunePropagationPolicy=foreground`**, só nas `Applications` com `automated.prune: true`: adia a exclusão de recursos removidos do Git pro final do sync (evita apagar algo que outro recurso do mesmo sync ainda depende) e usa a política de propagação mais previsível do Kubernetes (deleta os filhos antes do pai terminar de sumir, em vez de deixar órfão).
+- **`automated.allowEmpty: false`**, explícito nas mesmas `Applications`: rede de segurança contra um `path` do Git ficar vazio por engano (ex.: um `rm -rf` sem querer, um merge malfeito) e o Argo CD interpretar isso como "a intenção é apagar tudo que esse `Application` gerencia".
+
 ## Pra ir além
 
 Argo CD é uma implementação da categoria GitOps, um termo cunhado pela Weaveworks: Git como fonte única da verdade, um agente dentro do cluster que reconcilia continuamente. Flux CD é o sibling mais direto, com filosofia igual mas mecânica diferente (Flux é modular, várias controllers separadas, cada uma cuidando de um pedaço; Argo CD é mais monolítico e vem com UI própria). Jenkins X e Weave GitOps (também da própria Weaveworks) são outras opções na mesma categoria, menos comuns hoje que Argo CD e Flux. [opengitops.dev](https://opengitops.dev) documenta os princípios do GitOps de forma independente de ferramenta.
