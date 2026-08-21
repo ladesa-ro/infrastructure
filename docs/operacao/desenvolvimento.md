@@ -1,6 +1,6 @@
 # Desenvolvimento
 
-**TLDR**: três modos, três vozes (Aprender impessoal, Arquitetura fatual, Operação imperativa). Linha editorial consolidada de sete style guides externos mais a ISO 24495-1 de linguagem clara, com a regra exata de cada um, não só o link. Zero comentário em código, enforçado por `ast-grep`. Dois gates de CI da documentação (lychee + travessão), nove checks de código e infraestrutura não bloqueantes rodando numa imagem thin com hermit, e dois gates de segurança (gitleaks bloqueante, trivy consultivo). Commits Conventional Commits só no título, enforçado por `commit-lint.yml`.
+**TLDR**: três modos, três vozes (Aprender impessoal, Arquitetura fatual, Operação imperativa). Linha editorial consolidada de sete style guides externos mais a ISO 24495-1 de linguagem clara, com a regra exata de cada um, não só o link. Zero comentário em código, enforçado por `ast-grep`. Dois gates de CI da documentação (lychee + travessão), dez checks de código e infraestrutura não bloqueantes rodando numa imagem thin com hermit, e dois gates de segurança (gitleaks bloqueante, trivy consultivo). Commits Conventional Commits só no título, enforçado por `commit-lint.yml`.
 
 | Termo | Vá pra |
 |---|---|
@@ -12,6 +12,8 @@
 | Duplicação, schema, shellcheck e lint dos próprios workflows | [Qualidade de código e infraestrutura](#qualidade-de-codigo-e-infraestrutura) |
 | Quando vale testar um role contra um sistema real, não só lint | [Testar um role com Molecule](#testar-um-role-com-molecule) |
 | Secret scanning e misconfig de IaC | [Segurança](#seguranca) |
+| Por que todo afrouxamento de gate vira registro | [Bypass e afrouxamento de CI](#bypass-e-afrouxamento-de-ci) |
+| Licença de cada ferramenta usada em CI | [Licenças das ferramentas de CI](#licencas-das-ferramentas-de-ci) |
 | CODEOWNERS e cooldown do Dependabot | [Donos de código e atualização de dependências](#donos-de-codigo-e-atualizacao-de-dependencias) |
 | Convenção de commit | [Commits](#commits) |
 
@@ -174,9 +176,9 @@ docker run --rm -v "$PWD":/docs -w /docs lycheeverse/lychee --config .lychee.tom
 
 ## Qualidade de código e infraestrutura
 
-**TLDR**: nove checks não bloqueantes (yamllint, ansible-lint, jscpd, kubeconform, shellcheck, actionlint, zizmor, cspell, ast-grep), cada um rodando na sua própria imagem, todas nascidas de um stage `base` compartilhado via `docker buildx bake`.
+**TLDR**: dez checks não bloqueantes (yamllint, ansible-lint, jscpd, kubeconform, shellcheck, actionlint, zizmor, cspell, ast-grep, kubescape), cada um rodando na sua própria imagem, todas nascidas de um stage `base` compartilhado via `docker buildx bake`.
 
-O job `codigo-e-infra` de `quality.yml` roda em todo push e PR que toca `docs/`, `ansible/`, `argocd/`, `scripts/`, `.ansible-lint`, `.yamllint`, `.cspell.config.yaml`, `tools/quality/` ou `.github/workflows/`. Todos os seus nove checks são não bloqueantes por enquanto (`continue-on-error: true`), até o time revisar o baseline de cada um e decidir quando promover a bloqueante:
+O job `codigo-e-infra` de `quality.yml` roda em todo push e PR que toca `docs/`, `ansible/`, `argocd/`, `scripts/`, `.ansible-lint`, `.yamllint`, `.cspell.config.yaml`, `tools/quality/` ou `.github/workflows/`. Todos os seus dez checks são não bloqueantes por enquanto (`continue-on-error: true`), até o time revisar o baseline de cada um e decidir quando promover a bloqueante:
 
 - `yamllint` e `ansible-lint`: os dois lints já descritos em [Lint](#lint).
 - `jscpd`: duplicação de bloco entre roles do Ansible e manifests do `argocd/`, mesmo padrão do task `infra-duplication` do portfólio (formato yaml, limiar de 65 tokens ou 5 linhas). Por baixo, tokeniza cada arquivo e usa Rabin-Karp (um algoritmo de hash de janela deslizante, o mesmo usado por ferramenta de detecção de plágio) pra achar trecho tokenizado igual em lugares diferentes, rápido o suficiente pra rodar em todo push mesmo num repositório grande. O manifesto vendorizado do cert-manager já passa hoje de 60% de duplicação sozinho, por isso este check começa não bloqueante.
@@ -185,8 +187,9 @@ O job `codigo-e-infra` de `quality.yml` roda em todo push e PR que toca `docs/`,
 - `actionlint` e `zizmor`: lint e análise de segurança dos próprios arquivos em `.github/workflows/`. `actionlint` faz checagem de tipo de verdade nas expressões `${{ }}` (acessar propriedade que não existe, comparar tipo incompatível), confere que os `with:`/`outputs:` batem com o que a action de terceiro realmente declara, e roda `shellcheck`/`pyflakes` dentro de todo bloco `run:`. `zizmor` foca no lado de segurança: ação sem pin por hash (`unpinned-uses`, o achado que motivou a política de pin deste repositório), `checkout` sem `persist-credentials: false` que deixa credencial de push disponível pra um step seguinte não confiável (`artipacked`), e permissão declarada mais ampla que o job precisa (`excessive-permissions`).
 - `cspell`: ortografia de `docs/`, `README.md` e dos nomes de step dos workflows. Entende identificador de código (separa `camelCase`/`snake_case` em palavras antes de checar cada uma), o que evita falso positivo em nome de variável mas também é o motivo de identificador sem acento em diagrama mermaid (`Seguranca`, `Operacao`) precisar entrar no dicionário próprio de `tools/quality/cspell-dictionary.txt`, junto com dicionário pt-BR e nome de ferramenta/sigla.
 - `ast-grep`: enforça a regra de [Comentários em código](#comentarios-em-codigo), estruturalmente, não com grep de texto. Usa o parser de verdade de cada linguagem (tree-sitter) pra achar todo nó `comment` em `.yml`/`.yaml`, `.hcl` e `.sh`, com uma exceção por regex pra pragma funcional de ferramenta (`# noqa`, `# yamllint`, `# shellcheck disable`) e pro shebang, mais um `ignores` pro manifesto vendorizado do cert-manager na regra de yaml, mesmo tratamento que `jscpd`/`yamllint` já dão a ele. Config em `tools/quality/ast-grep/sgconfig.yml`, uma regra por linguagem em `tools/quality/ast-grep/rules/`.
+- `kubescape`: postura de segurança dos manifestos em `argocd/`, sem precisar de cluster vivo (`kubescape scan argocd/`). Cobre um ângulo que o `trivy` de [Segurança](#seguranca) não cobre: mapeia achado contra framework de compliance nomeado (NSA-CISA Kubernetes Hardening Guide, MITRE ATT&CK for Containers, CIS Kubernetes Benchmark) e faz análise de RBAC de verdade (permissão sem escopo, HostPath mount gravável). `--exclude-namespaces cert-manager,cnpg-system` exclui os dois operadores vendorizados, mesmo motivo do `skip-dirs` do trivy (ver [Pendências](pendencias.md)). Da família de scanner de postura Kubernetes (kube-bench, kube-hunter, Polaris, KubeLinter, Checkov), só este entrou: os dois primeiros exigem cluster vivo, os três últimos encontram essencialmente o mesmo tipo de achado que o `trivy` já cobre.
 
-Os nove não rodam numa imagem só: `tools/quality/Containerfile` é multi-stage, com um stage `base` (bootstrap mínimo de apt, mais `.config/hermit/` copiado) e um stage final por ferramenta (`actionlint`, `shellcheck`, `zizmor`, `python-lint`, `kubeconform`, `node-tools`, `ast-grep`), cada um só com o `hermit install` da sua própria ferramenta. `tools/quality/docker-bake.hcl` declara um target por stage, e um `docker buildx bake` só builda as sete imagens em paralelo, reaproveitando a camada `base` entre todas (o bootstrap de apt não repete por ferramenta, só o download de cada binário). O job `codigo-e-infra` builda tudo de uma vez com `docker/bake-action` e depois roda cada check contra a imagem certa: `python-lint` pro `uvx`/`yamllint`/`ansible-lint`, `node-tools` pro `jscpd`/`cspell`, uma imagem dedicada pra `kubeconform`, `shellcheck`, `actionlint`, `zizmor` e `ast-grep`.
+Os dez não rodam numa imagem só: `tools/quality/Containerfile` é multi-stage, com um stage `base` (bootstrap mínimo de apt, mais `.config/hermit/` copiado) e um stage final por ferramenta (`actionlint`, `shellcheck`, `zizmor`, `python-lint`, `kubeconform`, `node-tools`, `ast-grep`, `kubescape`), cada um só com o `hermit install` da sua própria ferramenta. `tools/quality/docker-bake.hcl` declara um target por stage, e um `docker buildx bake` só builda as oito imagens em paralelo, reaproveitando a camada `base` entre todas (o bootstrap de apt não repete por ferramenta, só o download de cada binário). O job `codigo-e-infra` builda tudo de uma vez com `docker/bake-action` e depois roda cada check contra a imagem certa: `python-lint` pro `uvx`/`yamllint`/`ansible-lint`, `node-tools` pro `jscpd`/`cspell`, uma imagem dedicada pra `kubeconform`, `shellcheck`, `actionlint`, `zizmor`, `ast-grep` e `kubescape`.
 
 Os sete stages finais compartilham o mesmo `base` (mesma relação de um `FROM base AS <stage>` no Dockerfile), o que um diagrama de classe representa melhor que um flowchart, porque a relação entre eles é literalmente herança de imagem, não sequência de passo:
 
@@ -218,6 +221,9 @@ classDiagram
     class astGrep["ast-grep"] {
         +hermitInstall ast_grep_0_45_1
     }
+    class kubescape {
+        +hermitInstall kubescape_4_0_12
+    }
     base <|-- actionlint
     base <|-- shellcheck
     base <|-- zizmor
@@ -225,13 +231,14 @@ classDiagram
     base <|-- kubeconform
     base <|-- nodeTools
     base <|-- astGrep
+    base <|-- kubescape
 ```
 
-`actionlint`, `shellcheck`, `zizmor`, `uv`, `kubeconform` e `ast-grep` vêm do [Hermit](https://cashapp.github.io/hermit/) em versão pinada (pacotes `.hcl` em `.config/hermit/hermit-packages/`, os três primeiros copiados do portfólio, `kubeconform.hcl`, `node.hcl` e `ast-grep.hcl` escritos no mesmo formato). O release do `ast-grep` traz dois binários no mesmo zip, `sg` (um wrapper fino, hoje deprecado a favor do outro) e `ast-grep` (o binário real, ~53 MB, com o parser de toda linguagem suportada embutido): o `.hcl` declara só `ast-grep`, e é esse nome que os checks usam, não `sg`. `uv`/`uvx` por sua vez materializa `yamllint` e `ansible-lint` como ferramentas Python isoladas. `jscpd` e `cspell` são os dois únicos que só existem no registro do npm, sem binário solto pra virar pacote hermit: por isso o stage `node-tools` hermitiza só o `node`, e usa o `npm` dele pra instalar os dois. Cada `hermit install` roda dentro de `script -qefc "..." /dev/null`: sem isso, o prompt de confirmação de plataforma do próprio hermit trava o build com `sync /dev/stdout: invalid argument` num `RUN` sem TTY. Cada stage também roda como usuário `1000:1000` no runtime, não root. O stage `ast-grep` precisou de um `chmod -R a+rwX /opt/hermit-cache` logo depois do `hermit install`, porque o binário do próprio hermit saiu instalado sem permissão de execução pra quem não é root, e ao ser invocado como UID 1000 ele tenta se autorreparar (`chown`) e falha, já que `chown` exige privilégio que esse usuário não tem. Os outros seis stages não precisaram do mesmo `chmod` na prática (testado individualmente), mas o risco é o mesmo em todos: se algum uso futuro de qualquer ferramenta aqui disparar essa mesma tentativa de autorreparo do hermit, o sintoma vai ser idêntico.
+`actionlint`, `shellcheck`, `zizmor`, `uv`, `kubeconform`, `ast-grep` e `kubescape` vêm do [Hermit](https://cashapp.github.io/hermit/) em versão pinada (pacotes `.hcl` em `.config/hermit/hermit-packages/`, os três primeiros copiados do portfólio, `kubeconform.hcl`, `node.hcl`, `ast-grep.hcl` e `kubescape.hcl` escritos no mesmo formato). O release do `ast-grep` traz dois binários no mesmo zip, `sg` (um wrapper fino, hoje deprecado a favor do outro) e `ast-grep` (o binário real, ~53 MB, com o parser de toda linguagem suportada embutido): o `.hcl` declara só `ast-grep`, e é esse nome que os checks usam, não `sg`. `uv`/`uvx` por sua vez materializa `yamllint` e `ansible-lint` como ferramentas Python isoladas. `jscpd` e `cspell` são os dois únicos que só existem no registro do npm, sem binário solto pra virar pacote hermit: por isso o stage `node-tools` hermitiza só o `node`, e usa o `npm` dele pra instalar os dois. Cada `hermit install` roda dentro de `script -qefc "..." /dev/null`: sem isso, o prompt de confirmação de plataforma do próprio hermit trava o build com `sync /dev/stdout: invalid argument` num `RUN` sem TTY. Cada stage também roda como usuário `1000:1000` no runtime, não root. Os stages `ast-grep` e `kubescape` precisaram de um `chmod -R a+rwX /opt/hermit-cache` logo depois do `hermit install`, porque o binário do próprio hermit saiu instalado sem permissão de execução pra quem não é root, e ao ser invocado como UID 1000 ele tenta se autorreparar (`chown`) e falha, já que `chown` exige privilégio que esse usuário não tem. Os outros seis stages não precisaram do mesmo `chmod` na prática (testado individualmente), mas o risco é o mesmo em todos: se algum uso futuro de qualquer ferramenta aqui disparar essa mesma tentativa de autorreparo do hermit, o sintoma vai ser idêntico.
 
 ```mermaid
 flowchart LR
-    Push[push ou PR toca docs, ansible, argocd, scripts, workflows] --> Bake[docker buildx bake: base compartilhada + 6 imagens]
+    Push[push ou PR toca docs, ansible, argocd, scripts, workflows] --> Bake[docker buildx bake: base compartilhada + 8 imagens]
     Bake --> YamlLint[python-lint: yamllint]
     Bake --> AnsibleLint[python-lint: ansible-lint]
     Bake --> Jscpd[node-tools: jscpd]
@@ -241,6 +248,7 @@ flowchart LR
     Bake --> Actionlint[actionlint: sintaxe dos workflows]
     Bake --> Zizmor[zizmor: segurança dos workflows]
     Bake --> AstGrep[ast-grep: zero comentário em código]
+    Bake --> Kubescape[kubescape: postura de segurança do argocd]
 ```
 
 Toda ação de terceiro nos três workflows (`quality.yml`, `security.yml`, `docs.yml`) é referenciada por hash de commit, nunca por tag (`@v4`), e o hash escolhido é sempre de um release com pelo menos 7 dias publicado, não o mais recente disponível: um release comprometido costuma ser detectado e removido nesse intervalo, então esperar a janela reduz a chance de fixar exatamente a versão maliciosa. `zizmor` é quem verifica a primeira parte (hash, não tag). A janela de 7 dias é checada manualmente contra a data de publicação de cada release antes de trocar o pin.
@@ -304,6 +312,47 @@ sequenceDiagram
 ```
 
 Ver [Vulnerability scanning](../aprender/vulnerability-scanning.md) pra entender secret scanning e SCA/misconfig como categoria, sem depender deste cluster específico.
+
+## Bypass e afrouxamento de CI
+
+**TLDR**: todo `continue-on-error`, `skip-dirs`, `--exclude-namespaces`, `warn_list`, ou qualquer outra forma de afrouxar um gate de CI entra em [Pendências](pendencias.md) junto com a justificativa, no mesmo commit que introduz o afrouxamento, não depois. A revisão de rotina do cluster (ver [Rotina de operação contínua](pendencias.md#rotina-de-operacao-continua-a-criar)) inclui reler essa lista pra achar o que já deveria ter voltado a ser bloqueante.
+
+Regra simples, consequência de dois hábitos que já valiam mesmo antes de virar regra escrita: o próprio ciclo de vida documentado em [Qualidade de código e infraestrutura](#qualidade-de-codigo-e-infraestrutura) (todo check nasce não bloqueante, só é promovido depois de revisão) e as várias exclusões vendorizadas espalhadas por seis checks diferentes (ver [Pendências](pendencias.md)). O problema que a regra evita: um afrouxamento que faz sentido no dia em que foi introduzido, mas cuja justificativa nunca fica escrita em lugar nenhum, é indistinguível de esquecimento um ano depois, ninguém revisita algo que não sabe que existe.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Introduzido: afrouxamento criado (continue-on-error, skip-dirs, exclude, warn_list)
+    Introduzido --> Registrado: entra em pendencias.md, mesmo commit, com justificativa
+    Registrado --> Revisado: rotina de operação relê a lista
+    Revisado --> Resolvido: condição de reversão bateu, volta a ser bloqueante
+    Revisado --> Registrado: condição ainda não bateu, continua registrado
+    Resolvido --> [*]
+```
+
+Isso não é regra nova de verdade, é a formalização por escrito de dois hábitos já em prática nesta seção inteira: [Segurança](#seguranca) já registrou o `continue-on-error` do trivy em `pendencias.md` no mesmo commit que o introduziu, e cada exclusão vendorizada (`skip-dirs`, `--exclude-namespaces`, `--ignore`, `ignorePaths`, `ignore` do yamllint) também já foi anotada lá com o motivo. A regra só torna explícito que isso vale sempre, não só quando alguém lembra.
+
+## Licenças das ferramentas de CI
+
+**TLDR**: toda ferramenta usada em CI tem a licença conferida antes de entrar, não depois. A maioria aqui é MIT ou Apache-2.0 (uso livre, sem obrigação de repassar código). Uma é GPLv3 (`shellcheck`), usada só como binário invocado via linha de comando, não linkada nem redistribuída, o que não aciona obrigação de copyleft. Um caso real já apareceu de um wrapper de ferramenta livre virar licença restrita numa major version (`gitleaks-action` v2), resolvido usando a CLI original direto.
+
+| Ferramenta | Licença | Observação |
+|---|---|---|
+| Hermit | Apache-2.0 | |
+| `actionlint` | MIT | |
+| `shellcheck` | GPLv3 | Só invocado como CLI, sem linkar/redistribuir, sem obrigação de copyleft. |
+| `zizmor` | MIT | |
+| `uv` | MIT OR Apache-2.0 | Dupla licença, escolha de quem usa. |
+| `kubeconform` | Apache-2.0 | |
+| `node` | MIT | |
+| `jscpd` | MIT | |
+| `cspell` | MIT | |
+| `ast-grep` | MIT | |
+| `kubescape` | Apache-2.0 | Projeto incubating da CNCF. |
+| `gitleaks` (CLI) | MIT | |
+| `gitleaks-action` (Action, v2+) | Licença própria, não MIT | Por isso `security.yml` roda a imagem `zricethezav/gitleaks` direto via `docker run`, não a Action, ver [Segurança](#seguranca). |
+| `trivy` | Apache-2.0 | Trocou de AGPL pra Apache-2.0 de propósito, pra reduzir barreira de integração. |
+
+O caso do `gitleaks-action` é o exemplo concreto do porquê essa checagem não é formalidade: a ferramenta em si (`gitleaks`, a CLI) continua MIT, livre, sem custo, mas o wrapper oficial que a maioria dos tutoriais indica (`gitleaks/gitleaks-action`) mudou de licença numa major version, e passou a exigir licença paga pra conta de organização. Rodar a imagem Docker da CLI direto, sem o wrapper, contorna isso sem perder a checagem real. Conferir isso de novo faz parte da rotina de revisão de versão (ver [Bypass e afrouxamento de CI](#bypass-e-afrouxamento-de-ci) acima e [Pendências](pendencias.md)): licença pode mudar numa atualização de versão, não só na adoção inicial.
 
 ## Donos de código e atualização de dependências
 

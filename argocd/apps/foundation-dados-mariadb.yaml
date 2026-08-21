@@ -17,6 +17,11 @@ spec:
     server: https://kubernetes.default.svc
     namespace: dados
   syncPolicy:
+    # MariaDB CR protegido com Prune=false (ver mariadb.yaml), mesmo motivo
+    # do Postgres: storageClass local-path tem ReclaimPolicy Delete.
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
