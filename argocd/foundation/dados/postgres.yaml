@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,18 +15,18 @@ spec:
         app: db-postgres
     spec:
       containers:
-      - name: db-postgres
-        image: docker.io/postgres:18
-        ports:
-          - containerPort: 5432
-        envFrom:
-          - secretRef:
-              name: pg-env
-        volumeMounts:
-          - name: pgdata
-            mountPath: /var/lib/postgresql
-          - name: backups
-            mountPath: /backups
+        - name: db-postgres
+          image: docker.io/postgres:18
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: pg-env
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql
+            - name: backups
+              mountPath: /backups
       volumes:
         - name: pgdata
           hostPath:
@@ -49,4 +50,3 @@ spec:
       nodePort: 30989
   selector:
     app: db-postgres
-

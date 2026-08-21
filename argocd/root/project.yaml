@@ -1,3 +1,4 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
@@ -74,3 +75,7 @@ spec:
       kind: InfisicalSecret
     - group: secrets.infisical.com
       kind: InfisicalPushSecret
+    - group: postgresql.cnpg.io
+      kind: Cluster
+    - group: postgresql.cnpg.io
+      kind: Database

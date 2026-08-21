@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,10 +15,10 @@ spec:
         app: adminer
     spec:
       containers:
-      - name: adminer
-        image: docker.io/adminer:latest
-        ports:
-          - containerPort: 8080
+        - name: adminer
+          image: docker.io/adminer:latest
+          ports:
+            - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
@@ -32,4 +33,3 @@ spec:
       nodePort: 30001
   selector:
     app: adminer
-

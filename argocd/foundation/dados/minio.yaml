@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,22 +15,22 @@ spec:
         app: minio
     spec:
       containers:
-      - name: minio
-        image: docker.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
-        args:
-          - server
-          - /data
-          - --console-address
-          - ":9001"
-        ports:
-          - containerPort: 9000
-          - containerPort: 9001
-        envFrom:
-          - secretRef:
-              name: minio-env
-        volumeMounts:
-          - name: minio-data
-            mountPath: /data
+        - name: minio
+          image: docker.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+          args:
+            - server
+            - /data
+            - --console-address
+            - ":9001"
+          ports:
+            - containerPort: 9000
+            - containerPort: 9001
+          envFrom:
+            - secretRef:
+                name: minio-env
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
       volumes:
         - name: minio-data
           hostPath:
@@ -54,4 +55,3 @@ spec:
       nodePort: 30901
   selector:
     app: minio
-

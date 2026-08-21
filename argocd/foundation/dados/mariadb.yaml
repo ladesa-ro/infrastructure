@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,18 +15,18 @@ spec:
         app: db-mariadb
     spec:
       containers:
-      - name: db-mariadb
-        image: docker.io/mariadb:12
-        ports:
-          - containerPort: 3306
-        envFrom:
-          - secretRef:
-              name: mariadb-env
-        volumeMounts:
-          - name: mariadbdata
-            mountPath: /var/lib/mysql
-          - name: backups
-            mountPath: /backups
+        - name: db-mariadb
+          image: docker.io/mariadb:12
+          ports:
+            - containerPort: 3306
+          envFrom:
+            - secretRef:
+                name: mariadb-env
+          volumeMounts:
+            - name: mariadbdata
+              mountPath: /var/lib/mysql
+            - name: backups
+              mountPath: /backups
       volumes:
         - name: mariadbdata
           hostPath:
@@ -49,4 +50,3 @@ spec:
       nodePort: 30996
   selector:
     app: db-mariadb
-
