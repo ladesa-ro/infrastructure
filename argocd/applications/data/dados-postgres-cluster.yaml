@@ -19,6 +19,37 @@ spec:
     server: https://kubernetes.default.svc
     namespace: dados
   revisionHistoryLimit: 3
+  ignoreDifferences:
+    - group: postgresql.cnpg.io
+      kind: Cluster
+      name: postgres
+      namespace: dados
+      jsonPointers:
+        - /spec/affinity
+        - /spec/bootstrap/initdb/encoding
+        - /spec/bootstrap/initdb/localeCType
+        - /spec/bootstrap/initdb/localeCollate
+        - /spec/enablePDB
+        - /spec/enableSuperuserAccess
+        - /spec/failoverDelay
+        - /spec/logLevel
+        - /spec/maxSyncReplicas
+        - /spec/minSyncReplicas
+        - /spec/monitoring
+        - /spec/postgresGID
+        - /spec/postgresUID
+        - /spec/postgresql
+        - /spec/primaryUpdateMethod
+        - /spec/primaryUpdateStrategy
+        - /spec/probes
+        - /spec/replicationSlots
+        - /spec/smartShutdownTimeout
+        - /spec/startDelay
+        - /spec/stopDelay
+        - /spec/storage/resizeInUseVolumes
+        - /spec/switchoverDelay
+      jqPathExpressions:
+        - .spec.managed.roles[].connectionLimit
   syncPolicy:
     automated:
       prune: true
