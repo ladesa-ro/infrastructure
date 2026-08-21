@@ -1,6 +1,6 @@
 # Cloudflare
 
-**TLDR**: Cloudflare fica na frente do domínio via DNS proxy (o "orange cloud"), funcionando como CDN, WAF e reverse proxy-as-a-service ao mesmo tempo. A proteção só vale enquanto o cliente é obrigado a passar por ela. Se o IP de origem for descoberto e aceitar conexão direta, o Cloudflare inteiro é contornável. Achado real confirmado neste cluster (ver [firewalld](firewalld.md#firewalld-nao-protege-trafego-roteado-pro-kubernetes-achado-real-em-2026-08-21)).
+**TLDR**: Cloudflare fica na frente do domínio via DNS proxy (o "orange cloud"), funcionando como CDN, WAF e reverse proxy-as-a-service ao mesmo tempo. A proteção só vale enquanto o cliente é obrigado a passar por ela. Se o IP de origem for descoberto e aceitar conexão direta, o Cloudflare inteiro é contornável. Achado real confirmado neste cluster (ver [firewalld](firewalld.md#firewalld-nao-protege-trafego-roteado-pro-kubernetes)).
 
 Cloudflare é um serviço de rede que fica entre o cliente e a origem (o servidor de verdade), cumprindo três papéis ao mesmo tempo quando o DNS de um domínio é "proxied" através dele (o ícone de nuvem laranja no painel, em oposição ao cinza, "DNS only"):
 
@@ -35,7 +35,9 @@ flowchart LR
     ClienteQueSabeOIP[cliente que descobriu o IP real] -.->|conecta direto, contorna tudo| Origem
 ```
 
-**Achado real e confirmado neste cluster** (2026-08-21): `curl -H 'Host: argocd.ladesa.com.br' http://<IP-da-origem>/` retornou `HTTP 200` completo, em texto puro, sem passar pela Cloudflare nenhuma vez. A correção recomendada (documentada oficialmente pela própria Cloudflare) é **restringir o firewall da origem pra só aceitar conexão das [faixas de IP publicadas da Cloudflare](https://www.cloudflare.com/ips/)** (`https://www.cloudflare.com/ips-v4` e `-v6`), rejeitando qualquer outra fonte. Só assim a garantia "só passa pela Cloudflare" deixa de ser uma esperança e vira uma regra de fato aplicada. Neste cluster, essa restrição foi aplicada no `firewalld` (ver [Pendências](../operacao/pendencias.md#revisao-de-seguranca-portas-ingress-e-service-expostos)), mas **não fechou o problema completamente**: o tráfego que chega no Traefik via Kubernetes passa pela chain `FORWARD` do `iptables`, que o `firewalld` não controla neste cluster específico (achado técnico completo em [firewalld](firewalld.md#firewalld-nao-protege-trafego-roteado-pro-kubernetes-achado-real-em-2026-08-21)). A lição é que "restringir por IP de origem" só vale se a camada que aplica a restrição realmente vê e filtra o tráfego em questão, não basta a regra existir em algum lugar do sistema.
+A correção recomendada, documentada oficialmente pela própria Cloudflare, é **restringir o firewall da origem pra só aceitar conexão das [faixas de IP publicadas da Cloudflare](https://www.cloudflare.com/ips/)** (`https://www.cloudflare.com/ips-v4` e `-v6`), rejeitando qualquer outra fonte. Só assim a garantia "só passa pela Cloudflare" deixa de ser uma esperança e vira uma regra de fato aplicada. A pegadinha é que restringir por IP de origem só vale se a camada que aplica a restrição realmente vê e filtra o tráfego em questão, e num cluster Kubernetes boa parte do tráfego web não passa pela chain que o firewall do host controla, ver [firewalld](firewalld.md). Não basta a regra existir em algum lugar do sistema.
+
+Este cluster foi auditado contra esse cenário em 2026-08-21. O resultado e o estado atual ficam no inventário privado apontado por [Estado fora do git](../operacao/estado-fora-do-git.md), e não aqui, porque descrever a exposição de uma origem específica num site público é publicá-la.
 
 ## O caminho completo de uma requisição neste cluster
 

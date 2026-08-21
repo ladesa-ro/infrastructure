@@ -14,6 +14,10 @@ Esta página cobre dois tipos bem diferentes de segredo fora do git, e a distin�
 - **Segredo de sistema**: vive num arquivo, num node, num cofre. Uma pessoa recria ou revoga executando um comando.
 - **Acesso pessoal**: vive na cabeça e no laptop de alguém, uma chave SSH, uma sessão logada num painel. Uma pessoa só consegue revogar o acesso de outra pessoa, a própria pessoa não "recria" isso sozinha.
 
+Um terceiro tipo não cabe em nenhuma das duas tabelas abaixo: detalhe de estado do node e achado de revisão de segurança que segue em aberto. Não é segredo nem acesso pessoal, é descrição, mas descrever num site público o estado corrente de um servidor real é entregar um mapa. Esse conteúdo vive em [`infrastructure-vault/docs/inventario-do-node.md`](https://github.com/ladesa-ro/infrastructure-vault/blob/main/docs/inventario-do-node.md), que é privado, e quem for trabalhar em qualquer item aberto de segurança consulta lá.
+
+A regra que separa os dois lados: enquanto um item está aberto, esta página registra só que ele existe e que a descrição está no inventário. Quando ele for corrigido, a descrição completa volta pra cá, porque problema resolvido pode ser documentado por inteiro sem servir de mapa pra ninguém.
+
 ## A. Segredos de sistema (node, cofres, CI)
 
 | O quê | Onde | Arquivo ou local exato | Por que não pode estar no git | Como recriar se perder |

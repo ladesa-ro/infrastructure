@@ -14,7 +14,7 @@
 
 A árvore de recursos que o Argo CD mostra na própria interface parece o mesmo tipo de diagrama, mas nasce de um jeito completamente diferente: o `argocd-server` calcula ela em memória, toda vez que a tela abre, cruzando o manifest já hidratado (depois de `helm template` ou `kustomize build` resolvido) com os objetos de fato existentes no cluster, via `ownerReferences`. Esse resultado nunca é persistido em arquivo, nem em Git, some quando a aba fecha.
 
-Reproduzir isso de verdade exigiria alguém (CI ou um script) com acesso de rede ao `kube-apiserver`, algo que não existe hoje (o cluster fica numa VM isolada, sem rota dos runners do GitHub Actions até lá). Abrir esse acesso é uma decisão de infraestrutura própria, com superfície de ataque nova pra avaliar, não algo que a documentação decide sozinha.
+Reproduzir isso de verdade exigiria alguém (CI ou um script) alcançando o `kube-apiserver` a cada build, e dar a um passo de CI acesso de leitura ao cluster é uma decisão de infraestrutura própria, com superfície de ataque pra avaliar, não algo que a documentação decide sozinha. Quem for avaliar precisa partir do que já existe hoje no node, registrado em [Estado fora do git](../operacao/estado-fora-do-git.md), e não da suposição de que nada alcança o cluster.
 
 Quem precisa do estado real agora tem dois caminhos, nenhum deles esta página:
 

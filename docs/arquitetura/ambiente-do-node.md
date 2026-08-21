@@ -44,7 +44,7 @@ Os quatro daemons do Performance Co-Pilot (`pmcd`, `pmie`, `pmlogger` e `pmproxy
 
 Ficam exatamente como estão, por decisão registrada em 2026-08-21. O Ansible não declara, não desabilita e não remove.
 
-Um fato justifica revisitar essa decisão mais pra frente, e por isso fica anotado aqui em vez de só na cabeça de alguém: o `pmlogger` escreve arquivo de métrica continuamente em `/var/log/pcp`, o que participa do consumo de disco que o role [`sistema`](roles/sistema.md) passou a limitar do lado do journal.
+Dois fatos justificam revisitar essa decisão mais pra frente, e por isso ficam anotados em vez de só na cabeça de alguém. O primeiro é que o `pmlogger` escreve arquivo de métrica continuamente em `/var/log/pcp`, o que participa do consumo de disco que o role [`sistema`](roles/sistema.md) passou a limitar do lado do journal. O segundo está registrado no inventário privado apontado por [Estado fora do git](../operacao/estado-fora-do-git.md).
 
 O ponto de decisão é este: hoje o Performance Co-Pilot é o único coletor de métrica do node, num cluster que ainda faz [observabilidade](../aprender/observabilidade.md) por inspeção manual. Adotar de verdade ou remover são as duas saídas coerentes. Continuar de pé por acidente é a única que não é.
 
