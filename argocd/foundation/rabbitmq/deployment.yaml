@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: rabbitmq
-          image: bitnami/rabbitmq:3.12
+          image: docker.io/bitnamilegacy/rabbitmq:3.12@sha256:8d6e76bd0d38c2578d1088d9c7067e0da4a76835dd750fa81c0e966ac75a6005
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:
