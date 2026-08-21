@@ -26,10 +26,6 @@ spec:
     namespace: dados
   revisionHistoryLimit: 3
   syncPolicy:
-    automated:
-      prune: false
-      selfHeal: true
-      allowEmpty: false
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
