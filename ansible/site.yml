@@ -7,6 +7,8 @@
       tags: [pacotes-base]
     - role: sistema
       tags: [sistema]
+    - role: manutencao
+      tags: [manutencao]
     - role: k3s
       tags: [k3s]
     - role: firewalld

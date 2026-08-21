@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export KUBECONFIG={{ manutencao_kubeconfig }}
+
+echo "coleta de lixo do node, inicio $(date --iso-8601=seconds)"
+
+for ns in {{ manutencao_namespaces_projeto | join(' ') }}; do
+  orfaos=$(kubectl get replicaset -n "$ns" -o jsonpath='{.items[?(@.spec.replicas==0)].metadata.name}' 2>/dev/null || true)
+  if [ -n "$orfaos" ]; then
+    read -ra nomes <<< "$orfaos"
+    echo "replicasets zerados em $ns: ${nomes[*]}"
+    kubectl delete replicaset -n "$ns" "${nomes[@]}" || true
+  else
+    echo "replicasets zerados em $ns: nenhum"
+  fi
+done
+
+{% if manutencao_podar_imagens %}
+antes=$(k3s crictl images -q 2>/dev/null | wc -l)
+k3s crictl rmi --prune >/dev/null 2>&1 || true
+depois=$(k3s crictl images -q 2>/dev/null | wc -l)
+echo "imagens em cache: $antes antes, $depois depois"
+{% endif %}
+
+echo "disco em / : $(df -h / | awk 'NR==2 {print $5" usado, "$4" livre"}')"
+echo "coleta de lixo do node, fim $(date --iso-8601=seconds)"

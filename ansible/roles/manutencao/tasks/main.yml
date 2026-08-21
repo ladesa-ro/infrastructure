@@ -1,0 +1,65 @@
+---
+- name: Declarar a política do unattended-upgrades
+  ansible.builtin.template:
+    src: 50unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Declarar a periodicidade do apt
+  ansible.builtin.template:
+    src: 20auto-upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Garantir que o unattended-upgrades está habilitado
+  ansible.builtin.systemd:
+    name: unattended-upgrades
+    enabled: true
+    state: started
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Instalar o script de coleta de lixo do node
+  ansible.builtin.template:
+    src: ladesa-gc.j2
+    dest: "{{ manutencao_script }}"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Instalar o unit da coleta de lixo
+  ansible.builtin.template:
+    src: ladesa-gc.service.j2
+    dest: /etc/systemd/system/ladesa-gc.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Recarregar o systemd
+
+- name: Instalar o timer da coleta de lixo
+  ansible.builtin.template:
+    src: ladesa-gc.timer.j2
+    dest: /etc/systemd/system/ladesa-gc.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Recarregar o systemd
+
+- name: Aplicar o recarregamento do systemd agora, se algum unit mudou
+  ansible.builtin.meta: flush_handlers
+
+- name: Habilitar e iniciar o timer da coleta de lixo
+  ansible.builtin.systemd:
+    name: ladesa-gc.timer
+    enabled: true
+    state: started
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Remover os resíduos do topgrade
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ manutencao_topgrade_residuos }}"

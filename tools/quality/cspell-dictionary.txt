@@ -365,3 +365,7 @@ bpfcc
 rdepends
 topgrade
 recifrar
+escopado
+Conffile
+sysstat
+zram

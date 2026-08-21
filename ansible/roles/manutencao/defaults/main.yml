@@ -1,0 +1,22 @@
+---
+manutencao_namespaces_projeto:
+  - ladesa-ro-production
+  - ladesa-ro-development
+
+manutencao_kubeconfig: /etc/rancher/k3s/k3s.yaml
+manutencao_script: /usr/local/sbin/ladesa-gc
+manutencao_horario: "*-*-* 04:30:00"
+manutencao_atraso_aleatorio: 30min
+manutencao_podar_imagens: true
+
+manutencao_origens_unattended:
+  - "origin=Debian,codename=${distro_codename},label=Debian"
+  - "origin=Debian,codename=${distro_codename},label=Debian-Security"
+  - "origin=Debian,codename=${distro_codename}-security,label=Debian-Security"
+
+manutencao_reinicio_automatico: false
+manutencao_remover_kernels_antigos: true
+
+manutencao_topgrade_residuos:
+  - /root/.config/topgrade.toml
+  - /root/.config/topgrade.d

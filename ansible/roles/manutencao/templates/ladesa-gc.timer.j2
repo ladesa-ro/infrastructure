@@ -1,0 +1,10 @@
+[Unit]
+Description=Rodar a coleta de lixo do node ldsa periodicamente
+
+[Timer]
+OnCalendar={{ manutencao_horario }}
+RandomizedDelaySec={{ manutencao_atraso_aleatorio }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

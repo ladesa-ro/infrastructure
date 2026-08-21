@@ -1,0 +1,12 @@
+Unattended-Upgrade::Origins-Pattern {
+{% for origem in manutencao_origens_unattended %}
+        "{{ origem }}";
+{% endfor %}
+};
+
+Unattended-Upgrade::Package-Blacklist {
+};
+
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "{{ manutencao_remover_kernels_antigos | ternary('true', 'false') }}";
+Unattended-Upgrade::Remove-Unused-Dependencies "false";
+Unattended-Upgrade::Automatic-Reboot "{{ manutencao_reinicio_automatico | ternary('true', 'false') }}";

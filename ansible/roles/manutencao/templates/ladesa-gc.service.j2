@@ -1,0 +1,8 @@
+[Unit]
+Description=Coleta de lixo do node ldsa: replicasets zerados e imagens sem uso
+After=k3s.service
+Wants=k3s.service
+
+[Service]
+Type=oneshot
+ExecStart={{ manutencao_script }}

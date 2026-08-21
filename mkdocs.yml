@@ -103,6 +103,7 @@ nav:
       - Roles do Ansible:
           - pacotes-base: arquitetura/roles/pacotes-base.md
           - sistema: arquitetura/roles/sistema.md
+          - manutencao: arquitetura/roles/manutencao.md
           - k3s: arquitetura/roles/k3s.md
           - firewalld: arquitetura/roles/firewalld.md
           - vault-repo: arquitetura/roles/vault-repo.md
