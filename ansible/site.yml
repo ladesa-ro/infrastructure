@@ -3,6 +3,10 @@
   hosts: all
   become: true
   roles:
+    - role: pacotes_base
+      tags: [pacotes-base]
+    - role: sistema
+      tags: [sistema]
     - role: k3s
       tags: [k3s]
     - role: firewalld

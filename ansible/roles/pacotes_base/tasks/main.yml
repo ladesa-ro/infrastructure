@@ -1,0 +1,71 @@
+---
+- name: Instalar os pré-requisitos do bootstrap
+  ansible.builtin.apt:
+    name: "{{ pacotes_base_prerequisitos }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Instalar os pacotes de operação do node
+  ansible.builtin.apt:
+    name: "{{ pacotes_base_operacao }}"
+    state: present
+
+- name: Instalar as conveniências de quem administra o node
+  ansible.builtin.apt:
+    name: "{{ pacotes_base_conveniencia }}"
+    state: present
+
+- name: Ler quais pacotes já foram instalados à mão neste node
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      zcat -f /var/log/apt/history.log* 2>/dev/null \
+        | sed -n '/^Commandline: .*apt/ s/^.* install //p' \
+        | tr ' ' '\n' \
+        | cut -d= -f1 \
+        | grep -Ev '^(-|$)' \
+        | sort -u
+    executable: /bin/bash
+  register: pacotes_base_instalados_a_mao
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Separar o que foi instalado à mão e este repositório não explica
+  ansible.builtin.set_fact:
+    pacotes_base_sem_explicacao: >-
+      {{ (pacotes_base_instalados_a_mao.stdout_lines | default([]))
+         | difference(pacotes_base_prerequisitos)
+         | difference(pacotes_base_operacao)
+         | difference(pacotes_base_conveniencia)
+         | difference(pacotes_base_de_outros_roles)
+         | difference(pacotes_base_do_ambiente)
+         | difference(pacotes_base_a_remover)
+         | difference(pacotes_base_ja_removidos) }}
+
+- name: Dizer que todo pacote instalado à mão está explicado
+  ansible.builtin.debug:
+    msg: >-
+      {{ pacotes_base_instalados_a_mao.stdout_lines | default([]) | length }}
+      pacotes já foram instalados à mão neste node, e todos estão declarados
+      ou classificados em defaults/main.yml deste role.
+  when: pacotes_base_sem_explicacao | length == 0
+
+- name: Mostrar os pacotes instalados à mão que este repositório não explica
+  ansible.builtin.debug:
+    msg: >-
+      {{ pacotes_base_sem_explicacao | join(', ') }} foram instalados à mão
+      neste node e não estão em nenhuma lista de defaults/main.yml deste role.
+      Classificar cada um antes de considerar o node declarado, ver
+      docs/arquitetura/roles/pacotes-base.md.
+  when: pacotes_base_sem_explicacao | length > 0
+
+- name: Falhar quando houver pacote instalado à mão sem classificação
+  ansible.builtin.assert:
+    that: pacotes_base_sem_explicacao | length == 0
+    fail_msg: >-
+      pacotes_base_falhar_em_drift está ligado e
+      {{ pacotes_base_sem_explicacao | length }} pacotes instalados à mão
+      seguem sem classificação: {{ pacotes_base_sem_explicacao | join(', ') }}.
+  when: pacotes_base_falhar_em_drift

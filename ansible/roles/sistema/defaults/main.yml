@@ -1,0 +1,10 @@
+---
+sistema_journald_teto: 5G
+sistema_journald_teto_por_arquivo: 128M
+sistema_reduzir_journal_agora: false
+
+sistema_sysctl_kubelet:
+  vm.panic_on_oom: 0
+  vm.overcommit_memory: 1
+  kernel.panic: 10
+  kernel.panic_on_oops: 1

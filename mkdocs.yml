@@ -99,7 +99,10 @@ nav:
       - Visão geral e fluxo: arquitetura/index.md
       - Estrutura: arquitetura/estrutura.md
       - Topologia declarada do cluster: arquitetura/topologia-declarada.md
+      - Ambiente do node: arquitetura/ambiente-do-node.md
       - Roles do Ansible:
+          - pacotes-base: arquitetura/roles/pacotes-base.md
+          - sistema: arquitetura/roles/sistema.md
           - k3s: arquitetura/roles/k3s.md
           - firewalld: arquitetura/roles/firewalld.md
           - vault-repo: arquitetura/roles/vault-repo.md

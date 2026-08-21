@@ -1,0 +1,49 @@
+---
+- name: Garantir o diretório de configuração do journald
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Declarar os limites de disco do journal
+  ansible.builtin.template:
+    src: journald.conf.j2
+    dest: /etc/systemd/journald.conf.d/10-ladesa.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reiniciar o journald
+
+- name: Declarar os parâmetros de kernel exigidos pelo kubelet
+  ansible.builtin.template:
+    src: sysctl-kubelet.conf.j2
+    dest: /etc/sysctl.d/90-kubelet.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Aplicar os parâmetros de kernel
+
+- name: Aplicar o reinício do journald e os parâmetros de kernel agora, se algum arquivo mudou
+  ansible.builtin.meta: flush_handlers
+
+- name: Conferir quanto o journal ocupa em disco
+  ansible.builtin.command:
+    cmd: journalctl --disk-usage
+  register: sistema_journal_uso
+  changed_when: false
+  check_mode: false
+
+- name: Mostrar quanto o journal ocupa em disco
+  ansible.builtin.debug:
+    msg: "{{ sistema_journal_uso.stdout | default('') }}"
+
+- name: Reduzir o journal ao teto declarado
+  ansible.builtin.command:
+    cmd: "journalctl --vacuum-size={{ sistema_journald_teto }}"
+  register: sistema_journal_reducao
+  when: sistema_reduzir_journal_agora
+  changed_when: >-
+    'freed 0B' not in
+    (sistema_journal_reducao.stdout | default('') ~ sistema_journal_reducao.stderr | default(''))

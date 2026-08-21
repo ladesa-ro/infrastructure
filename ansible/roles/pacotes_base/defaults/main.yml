@@ -1,0 +1,47 @@
+---
+pacotes_base_prerequisitos:
+  - ansible-core
+  - ca-certificates
+  - curl
+  - git
+  - jq
+  - python3
+
+pacotes_base_operacao:
+  - rsync
+  - smartmontools
+
+pacotes_base_conveniencia:
+  - bat
+  - htop
+  - mtr
+  - tree
+  - vim
+
+pacotes_base_de_outros_roles:
+  - firewalld
+  - openssh-server
+  - zerotier-one
+
+pacotes_base_do_ambiente:
+  - qemu-guest-agent
+
+pacotes_base_a_remover:
+  - bpfcc-tools
+  - libbpfcc
+  - libbpfcc-dev
+  - libicu-dev
+  - liblttng-ust1
+  - linux-headers-6.12.48+deb13-cloud-amd64
+  - make
+  - podman
+  - podman-compose
+  - spectre-meltdown-checker
+  - zsh
+
+pacotes_base_ja_removidos:
+  - dstat
+  - fio
+  - sysstat
+
+pacotes_base_falhar_em_drift: false
