@@ -1,6 +1,6 @@
 # Desenvolvimento
 
-**TLDR**: três modos, três vozes (Aprender impessoal, Arquitetura fatual, Operação imperativa). Linha editorial consolidada de sete style guides externos, com a regra exata de cada um, não só o link. Dois gates de CI da documentação (lychee + travessão), oito checks de código e infraestrutura não bloqueantes rodando numa imagem thin com hermit, e dois gates de segurança bloqueantes (gitleaks + trivy). Commits Conventional Commits só no título.
+**TLDR**: três modos, três vozes (Aprender impessoal, Arquitetura fatual, Operação imperativa). Linha editorial consolidada de sete style guides externos mais a ISO 24495-1 de linguagem clara, com a regra exata de cada um, não só o link. Zero comentário em código, enforçado por `ast-grep`. Dois gates de CI da documentação (lychee + travessão), nove checks de código e infraestrutura não bloqueantes rodando numa imagem thin com hermit, e dois gates de segurança (gitleaks bloqueante, trivy consultivo). Commits Conventional Commits só no título, enforçado por `commit-lint.yml`.
 
 | Termo | Vá pra |
 |---|---|
@@ -38,7 +38,7 @@ flowchart TB
 
 ## Linha editorial
 
-As regras de redação abaixo vêm de ler sete style guides de documentação técnica, os mais citados do mercado, e ficam aqui consolidadas com a regra exata de cada um, não só o link: se o guia original sair do ar ou mudar de conteúdo, esta seção continua completa por conta própria. Nem toda regra de cada guia se aplica aqui, cada um foi escrito pro contexto de quem o mantém. O que segue é o subconjunto adotado, o rejeitado, e o porquê de cada decisão.
+As regras de redação abaixo vêm de ler sete style guides de documentação técnica, os mais citados do mercado, mais a norma internacional de linguagem clara **ISO 24495-1** (ver [Normas de redação técnica](../aprender/normas-de-redacao-tecnica.md) pra essa e outras normas do mesmo campo, incluindo as que foram descartadas), e ficam aqui consolidadas com a regra exata de cada um, não só o link: se o guia original sair do ar ou mudar de conteúdo, esta seção continua completa por conta própria. Nem toda regra de cada guia se aplica aqui, cada um foi escrito pro contexto de quem o mantém. O que segue é o subconjunto adotado, o rejeitado, e o porquê de cada decisão.
 
 **O que cada guia diz, na fonte:**
 
@@ -84,6 +84,8 @@ mindmap
 
 **Adotado:**
 
+- As quatro pilastras de linguagem clara da **ISO 24495-1** (relevância, encontrabilidade, compreensão, usabilidade) como critério de fundo por trás de toda regra abaixo, não uma regra a mais: uma frase só é "clara" nesse sentido se o leitor certo a acha, entende, usa, e consegue avaliar se fez o que precisava. Nenhuma frase desta seção é auditada formalmente contra o texto da norma, o princípio é a referência, não a conformidade (ver [Princípio como inspiração, não como conformidade](../aprender/normas-de-redacao-tecnica.md#principio-como-inspiracao-nao-como-conformidade)).
+- Estrutura por tarefa e análise de audiência, princípio geral da **IEC/IEEE 82079-1** (a norma de instrução de uso mais abrangente do campo), por trás da divisão em três modos já descrita em [Estrutura de conteúdo](#estrutura-de-conteudo-modo-e-voz-por-secao): Aprender pra quem não conhece o conceito, Arquitetura pra quem quer o fato, Operação pra quem vai executar o passo, a mesma lógica de "informação certa pro estágio certo de quem lê" que a norma formaliza pra manual de produto físico.
 - Título em sentence case, nunca Title Case: convenção idêntica em Google, GitHub, GitLab, Red Hat, MDN e Docker (seis dos sete concordam), já natural em português, onde Title Case nem é gramatical.
 - Sem travessão em texto corrido, regra do GitLab, apesar de Google recomendar o oposto e Docker permitir com espaço: poluição visual sem ganho de clareza foi o critério decisivo, não o consenso entre os guias (que não existe aqui).
 - Sem ponto e vírgula, regra de GitLab e Docker: duas frases separadas em vez de uma frase composta. Revisado em 2026-08-20, depois de ter ficado do lado de "considerado e descartado" logo abaixo, quando a legibilidade de frase curta passou a valer mais que a densidade de prosa já estabelecida.
@@ -100,6 +102,7 @@ mindmap
 - Proibição de ponto e vírgula, regra explícita de GitLab e Docker. Rejeitada na primeira versão desta seção, com o argumento de que o ponto e vírgula une duas orações relacionadas em português sem quebrar o parágrafo em frases curtas demais. Depois adotada mesmo assim (ver "Sem ponto e vírgula" em Adotado, acima), decisão editorial explícita do mantenedor, não um argumento técnico que reverteu o anterior.
 - Uso de contração como sinal de tom amigável, regra de GitLab, MDN e Docker. Não se aplica: contração é um mecanismo do inglês (`don't`, `it's`) sem equivalente direto em português.
 - Travessão permitido com espaço (posição do Docker) ou sem espaço (posição do Google), as duas descartadas em favor da proibição total do GitLab, único dos sete a proibir por completo.
+- Numeração progressiva de seção estilo ABNT NBR 6024 (`1`, `1.1`, `1.1.2`). Não pelo motivo óbvio ("é norma acadêmica"), o escopo declarado da norma é mesmo trabalho acadêmico, mas o motivo real é conflito de ferramenta: o gerador de site desta doc já produz sumário por âncora de heading, numeração decimal manual duplicaria esse trabalho sem reforçar organização nenhuma (ver [Normas de redação técnica](../aprender/normas-de-redacao-tecnica.md) pro resto da família ABNT, nenhuma adotada pelo mesmo motivo de escopo).
 - Vírgula de Oxford, regra do Docker: não existe em português (a língua não tem essa ambiguidade de lista que a vírgula de Oxford resolve em inglês).
 - Heading limitado a 3-11 palavras (Red Hat) ou 8 palavras (Docker): não adotado como regra rígida, títulos desta documentação priorizam ser descritivos sobre caber num limite de palavra, mesmo quando passam de oito.
 
@@ -117,6 +120,8 @@ flowchart LR
     Onde -->|SEMPRE| Doc[.md em Arquitetura ou Operação]
     Onde -.->|NUNCA| Inline[comentário inline no código]
 ```
+
+Essa regra é enforçada de verdade, não só de boa-fé, pelo check `ast-grep` de [Qualidade de código e infraestrutura](#qualidade-de-codigo-e-infraestrutura): usa o parser real de cada linguagem (`yaml`, `hcl`, `bash`) pra achar todo nó de comentário, exceto as duas exceções mecânicas acima (pragma de linter, shebang).
 
 ## Lint
 
@@ -169,9 +174,9 @@ docker run --rm -v "$PWD":/docs -w /docs lycheeverse/lychee --config .lychee.tom
 
 ## Qualidade de código e infraestrutura
 
-**TLDR**: oito checks não bloqueantes (yamllint, ansible-lint, jscpd, kubeconform, shellcheck, actionlint, zizmor, cspell), cada um rodando na sua própria imagem, todas nascidas de um stage `base` compartilhado via `docker buildx bake`.
+**TLDR**: nove checks não bloqueantes (yamllint, ansible-lint, jscpd, kubeconform, shellcheck, actionlint, zizmor, cspell, ast-grep), cada um rodando na sua própria imagem, todas nascidas de um stage `base` compartilhado via `docker buildx bake`.
 
-O job `codigo-e-infra` de `quality.yml` roda em todo push e PR que toca `docs/`, `ansible/`, `argocd/`, `scripts/`, `.ansible-lint`, `.yamllint`, `.cspell.config.yaml`, `tools/quality/` ou `.github/workflows/`. Todos os seus oito checks são não bloqueantes por enquanto (`continue-on-error: true`), até o time revisar o baseline de cada um e decidir quando promover a bloqueante:
+O job `codigo-e-infra` de `quality.yml` roda em todo push e PR que toca `docs/`, `ansible/`, `argocd/`, `scripts/`, `.ansible-lint`, `.yamllint`, `.cspell.config.yaml`, `tools/quality/` ou `.github/workflows/`. Todos os seus nove checks são não bloqueantes por enquanto (`continue-on-error: true`), até o time revisar o baseline de cada um e decidir quando promover a bloqueante:
 
 - `yamllint` e `ansible-lint`: os dois lints já descritos em [Lint](#lint).
 - `jscpd`: duplicação de bloco entre roles do Ansible e manifests do `argocd/`, mesmo padrão do task `infra-duplication` do portfólio (formato yaml, limiar de 65 tokens ou 5 linhas). Por baixo, tokeniza cada arquivo e usa Rabin-Karp (um algoritmo de hash de janela deslizante, o mesmo usado por ferramenta de detecção de plágio) pra achar trecho tokenizado igual em lugares diferentes, rápido o suficiente pra rodar em todo push mesmo num repositório grande. O manifesto vendorizado do cert-manager já passa hoje de 60% de duplicação sozinho, por isso este check começa não bloqueante.
@@ -179,10 +184,11 @@ O job `codigo-e-infra` de `quality.yml` roda em todo push e PR que toca `docs/`,
 - `shellcheck`: lint de `scripts/*.sh`. Cobre desde sintaxe incompatível com o shell declarado no shebang até bug real de quoting (variável sem aspas que quebra em espaço, glob que expande sem querer) e lógica inalcançável, cada categoria de aviso identificada por um código `SC` seguido de número (`SC2086`, por exemplo).
 - `actionlint` e `zizmor`: lint e análise de segurança dos próprios arquivos em `.github/workflows/`. `actionlint` faz checagem de tipo de verdade nas expressões `${{ }}` (acessar propriedade que não existe, comparar tipo incompatível), confere que os `with:`/`outputs:` batem com o que a action de terceiro realmente declara, e roda `shellcheck`/`pyflakes` dentro de todo bloco `run:`. `zizmor` foca no lado de segurança: ação sem pin por hash (`unpinned-uses`, o achado que motivou a política de pin deste repositório), `checkout` sem `persist-credentials: false` que deixa credencial de push disponível pra um step seguinte não confiável (`artipacked`), e permissão declarada mais ampla que o job precisa (`excessive-permissions`).
 - `cspell`: ortografia de `docs/`, `README.md` e dos nomes de step dos workflows. Entende identificador de código (separa `camelCase`/`snake_case` em palavras antes de checar cada uma), o que evita falso positivo em nome de variável mas também é o motivo de identificador sem acento em diagrama mermaid (`Seguranca`, `Operacao`) precisar entrar no dicionário próprio de `tools/quality/cspell-dictionary.txt`, junto com dicionário pt-BR e nome de ferramenta/sigla.
+- `ast-grep`: enforça a regra de [Comentários em código](#comentarios-em-codigo), estruturalmente, não com grep de texto. Usa o parser de verdade de cada linguagem (tree-sitter) pra achar todo nó `comment` em `.yml`/`.yaml`, `.hcl` e `.sh`, com uma exceção por regex pra pragma funcional de ferramenta (`# noqa`, `# yamllint`, `# shellcheck disable`) e pro shebang, mais um `ignores` pro manifesto vendorizado do cert-manager na regra de yaml, mesmo tratamento que `jscpd`/`yamllint` já dão a ele. Config em `tools/quality/ast-grep/sgconfig.yml`, uma regra por linguagem em `tools/quality/ast-grep/rules/`.
 
-Os oito não rodam numa imagem só: `tools/quality/Containerfile` é multi-stage, com um stage `base` (bootstrap mínimo de apt, mais `.config/hermit/` copiado) e um stage final por ferramenta (`actionlint`, `shellcheck`, `zizmor`, `python-lint`, `kubeconform`, `node-tools`), cada um só com o `hermit install` da sua própria ferramenta. `tools/quality/docker-bake.hcl` declara um target por stage, e um `docker buildx bake` só builda as seis imagens em paralelo, reaproveitando a camada `base` entre todas (o bootstrap de apt não repete por ferramenta, só o download de cada binário). O job `codigo-e-infra` builda tudo de uma vez com `docker/bake-action` e depois roda cada check contra a imagem certa: `python-lint` pro `uvx`/`yamllint`/`ansible-lint`, `node-tools` pro `jscpd`/`cspell`, uma imagem dedicada pra `kubeconform`, `shellcheck`, `actionlint` e `zizmor`.
+Os nove não rodam numa imagem só: `tools/quality/Containerfile` é multi-stage, com um stage `base` (bootstrap mínimo de apt, mais `.config/hermit/` copiado) e um stage final por ferramenta (`actionlint`, `shellcheck`, `zizmor`, `python-lint`, `kubeconform`, `node-tools`, `ast-grep`), cada um só com o `hermit install` da sua própria ferramenta. `tools/quality/docker-bake.hcl` declara um target por stage, e um `docker buildx bake` só builda as sete imagens em paralelo, reaproveitando a camada `base` entre todas (o bootstrap de apt não repete por ferramenta, só o download de cada binário). O job `codigo-e-infra` builda tudo de uma vez com `docker/bake-action` e depois roda cada check contra a imagem certa: `python-lint` pro `uvx`/`yamllint`/`ansible-lint`, `node-tools` pro `jscpd`/`cspell`, uma imagem dedicada pra `kubeconform`, `shellcheck`, `actionlint`, `zizmor` e `ast-grep`.
 
-Os seis stages finais compartilham o mesmo `base` (mesma relação de um `FROM base AS <stage>` no Dockerfile), o que um diagrama de classe representa melhor que um flowchart, porque a relação entre eles é literalmente herança de imagem, não sequência de passo:
+Os sete stages finais compartilham o mesmo `base` (mesma relação de um `FROM base AS <stage>` no Dockerfile), o que um diagrama de classe representa melhor que um flowchart, porque a relação entre eles é literalmente herança de imagem, não sequência de passo:
 
 ```mermaid
 classDiagram
@@ -209,15 +215,19 @@ classDiagram
         +hermitInstall node_24_18_0
         +npmInstall jscpd_cspell
     }
+    class astGrep["ast-grep"] {
+        +hermitInstall ast_grep_0_45_1
+    }
     base <|-- actionlint
     base <|-- shellcheck
     base <|-- zizmor
     base <|-- pythonLint
     base <|-- kubeconform
     base <|-- nodeTools
+    base <|-- astGrep
 ```
 
-`actionlint`, `shellcheck`, `zizmor`, `uv` e `kubeconform` vêm do [Hermit](https://cashapp.github.io/hermit/) em versão pinada (pacotes `.hcl` em `.config/hermit/hermit-packages/`, os três primeiros copiados do portfólio, `kubeconform.hcl` e `node.hcl` escritos no mesmo formato). `uv`/`uvx` por sua vez materializa `yamllint` e `ansible-lint` como ferramentas Python isoladas. `jscpd` e `cspell` são os dois únicos que só existem no registro do npm, sem binário solto pra virar pacote hermit: por isso o stage `node-tools` hermitiza só o `node`, e usa o `npm` dele pra instalar os dois. Cada `hermit install` roda dentro de `script -qefc "..." /dev/null`: sem isso, o prompt de confirmação de plataforma do próprio hermit trava o build com `sync /dev/stdout: invalid argument` num `RUN` sem TTY.
+`actionlint`, `shellcheck`, `zizmor`, `uv`, `kubeconform` e `ast-grep` vêm do [Hermit](https://cashapp.github.io/hermit/) em versão pinada (pacotes `.hcl` em `.config/hermit/hermit-packages/`, os três primeiros copiados do portfólio, `kubeconform.hcl`, `node.hcl` e `ast-grep.hcl` escritos no mesmo formato). O release do `ast-grep` traz dois binários no mesmo zip, `sg` (um wrapper fino, hoje deprecado a favor do outro) e `ast-grep` (o binário real, ~53 MB, com o parser de toda linguagem suportada embutido): o `.hcl` declara só `ast-grep`, e é esse nome que os checks usam, não `sg`. `uv`/`uvx` por sua vez materializa `yamllint` e `ansible-lint` como ferramentas Python isoladas. `jscpd` e `cspell` são os dois únicos que só existem no registro do npm, sem binário solto pra virar pacote hermit: por isso o stage `node-tools` hermitiza só o `node`, e usa o `npm` dele pra instalar os dois. Cada `hermit install` roda dentro de `script -qefc "..." /dev/null`: sem isso, o prompt de confirmação de plataforma do próprio hermit trava o build com `sync /dev/stdout: invalid argument` num `RUN` sem TTY. Cada stage também roda como usuário `1000:1000` no runtime, não root. O stage `ast-grep` precisou de um `chmod -R a+rwX /opt/hermit-cache` logo depois do `hermit install`, porque o binário do próprio hermit saiu instalado sem permissão de execução pra quem não é root, e ao ser invocado como UID 1000 ele tenta se autorreparar (`chown`) e falha, já que `chown` exige privilégio que esse usuário não tem. Os outros seis stages não precisaram do mesmo `chmod` na prática (testado individualmente), mas o risco é o mesmo em todos: se algum uso futuro de qualquer ferramenta aqui disparar essa mesma tentativa de autorreparo do hermit, o sintoma vai ser idêntico.
 
 ```mermaid
 flowchart LR
@@ -230,6 +240,7 @@ flowchart LR
     Bake --> Shellcheck[shellcheck: scripts]
     Bake --> Actionlint[actionlint: sintaxe dos workflows]
     Bake --> Zizmor[zizmor: segurança dos workflows]
+    Bake --> AstGrep[ast-grep: zero comentário em código]
 ```
 
 Toda ação de terceiro nos três workflows (`quality.yml`, `security.yml`, `docs.yml`) é referenciada por hash de commit, nunca por tag (`@v4`), e o hash escolhido é sempre de um release com pelo menos 7 dias publicado, não o mais recente disponível: um release comprometido costuma ser detectado e removido nesse intervalo, então esperar a janela reduz a chance de fixar exatamente a versão maliciosa. `zizmor` é quem verifica a primeira parte (hash, não tag). A janela de 7 dias é checada manualmente contra a data de publicação de cada release antes de trocar o pin.
@@ -328,4 +339,20 @@ flowchart LR
 
 ## Commits
 
-Os commits aqui seguem [Conventional Commits](../aprender/git.md#conventional-commits) só no título, `type(scope): subject`. Sem corpo, sem Co-Authored-By.
+**TLDR**: [Conventional Commits](../aprender/git.md#conventional-commits) só no título, sem corpo, sem `Co-Authored-By`, enforçado por `commit-lint.yml` a cada push em `main`, hoje não bloqueante.
+
+Os commits aqui seguem Conventional Commits só no título, `type(scope): subject`. Sem corpo, sem Co-Authored-By.
+
+`commit-lint.yml` roda `scripts/lint-commit-messages.sh` contra o intervalo de commit novo de cada push (`github.event.before..github.sha`, ou só o commit único quando `before` é a SHA zerada de um branch novo), checando as três regras acima em cada um: título bate o regex `^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(escopo\))?: assunto`, mensagem sem linha de corpo, sem `Co-Authored-By` em nenhum lugar da mensagem completa.
+
+```mermaid
+flowchart TD
+    Push[push em main] --> Extrai[git rev-list before..after]
+    Extrai --> ParaCada[pra cada commit novo]
+    ParaCada --> C1{título bate Conventional Commits?}
+    ParaCada --> C2{tem corpo?}
+    ParaCada --> C3{tem Co-Authored-By?}
+    C1 -->|não| Reporta[reporta no log, não bloqueante ainda]
+    C2 -->|sim| Reporta
+    C3 -->|sim| Reporta
+```

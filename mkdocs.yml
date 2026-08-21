@@ -90,6 +90,7 @@ nav:
               - Virtualização: aprender/virtualizacao.md
               - Documentação como código: aprender/documentacao-como-codigo.md
               - Diátaxis: aprender/diataxis.md
+              - Normas de redação técnica: aprender/normas-de-redacao-tecnica.md
       - Referências: aprender/referencias.md
   - Arquitetura:
       - Visão geral e fluxo: arquitetura/index.md
