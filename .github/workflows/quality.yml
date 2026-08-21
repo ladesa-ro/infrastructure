@@ -84,6 +84,19 @@ jobs:
           files: tools/quality/docker-bake.hcl
           load: true
 
+      - name: Fumaça, cada ferramenta roda como o usuário real antes de checar código
+        run: |
+          docker run --rm infra-quality/actionlint:local actionlint --version
+          docker run --rm infra-quality/shellcheck:local shellcheck --version
+          docker run --rm infra-quality/zizmor:local zizmor --version
+          docker run --rm infra-quality/kubeconform:local kubeconform -v
+          docker run --rm infra-quality/ast-grep:local ast-grep --version
+          docker run --rm infra-quality/kubescape:local kubescape version
+          docker run --rm infra-quality/node-tools:local cspell --version
+          docker run --rm infra-quality/node-tools:local jscpd --version
+          docker run --rm infra-quality/python-lint:local uvx yamllint --version
+          docker run --rm infra-quality/python-lint:local uvx --from ansible-lint ansible-lint --version
+
       - name: Lint de YAML (yamllint, via hermit uv)
         continue-on-error: true
         run: |

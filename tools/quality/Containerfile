@@ -8,25 +8,31 @@ WORKDIR /workspace
 COPY .config/hermit/ .config/hermit/
 ENV HERMIT_STATE_DIR=/opt/hermit-cache
 ENV PATH=/workspace/.config/hermit/bin:$PATH
+ENV HOME=/tmp
 
 FROM base AS actionlint
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install actionlint-1.7.12" /dev/null
+RUN chmod -R a+rwX /opt/hermit-cache
 USER 1000:1000
 
 FROM base AS shellcheck
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install shellcheck-0.11.0" /dev/null
+RUN chmod -R a+rwX /opt/hermit-cache
 USER 1000:1000
 
 FROM base AS zizmor
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install zizmor-1.29.0" /dev/null
+RUN chmod -R a+rwX /opt/hermit-cache
 USER 1000:1000
 
 FROM base AS python-lint
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install uv-0.12.1" /dev/null
+RUN chmod -R a+rwX /opt/hermit-cache
 USER 1000:1000
 
 FROM base AS kubeconform
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install kubeconform-0.8.0" /dev/null
+RUN chmod -R a+rwX /opt/hermit-cache
 USER 1000:1000
 
 FROM base AS ast-grep
@@ -39,8 +45,19 @@ RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install kubescape-
 RUN chmod -R a+rwX /opt/hermit-cache
 USER 1000:1000
 
+FROM python-lint AS kube-diagrams
+USER root
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+      gcc graphviz libgraphviz-dev pkg-config python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN chmod -R a+rwX /opt/hermit-cache
+RUN uv tool install kubediagrams==0.8.0
+ENV PATH=/tmp/.local/bin:$PATH
+USER 1000:1000
+
 FROM base AS node-tools
 RUN printf 'y\ny\n' | script -qefc ".config/hermit/bin/hermit install node-24.18.0" /dev/null
 ENV PATH=/opt/hermit-cache/pkg/node-24.18.0/bin:$PATH
 RUN npm install --global jscpd@5.0.14 cspell@10.0.1 @cspell/dict-pt-br@2.4.2
+RUN chmod -R a+rwX /opt/hermit-cache
 USER 1000:1000

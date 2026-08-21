@@ -1,0 +1,120 @@
+flowchart TB
+  subgraph cluster_Namespace_dados [Namespace: dados]
+    direction TB
+    style cluster_Namespace_dados fill:white,color:#2D3436,font:sans-serif,font-size:12pt,stroke:black,stroke-dasharray:7 7
+    subgraph cluster_K8s_Application_dados-configs [K8s Application: dados-configs]
+      direction TB
+      style cluster_K8s_Application_dados-configs fill:#ECE8F6,color:#2D3436,font:sans-serif,font-size:12pt,stroke:#AEB6BE
+      76c10689b4a9455ab0d13f0910478ebc@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "infisicalsecret-dados-minio-env", h: 120, constraint: "on" }
+      style 76c10689b4a9455ab0d13f0910478ebc fill:none,stroke:none
+      ea8faf7d49dd45e8a0e52fc6db86350a@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "infisicalsecret-dados-mariadb-env", h: 120, constraint: "on" }
+      style ea8faf7d49dd45e8a0e52fc6db86350a fill:none,stroke:none
+    end
+    25f154de426143408870a8899786121b@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "mariadb", h: 120, constraint: "on" }
+    style 25f154de426143408870a8899786121b fill:none,stroke:none
+    23f153a6caeb42f3b26e8573daf8caac@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/network/svc.png", label: "db-mariadb", h: 120, constraint: "on" }
+    style 23f153a6caeb42f3b26e8573daf8caac fill:none,stroke:none
+    a8a0b2729f2b4235b1c69f824b60ad02@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "postgres", h: 120, constraint: "on" }
+    style a8a0b2729f2b4235b1c69f824b60ad02 fill:none,stroke:none
+    cbf381b6912c4f35aa1b79246f99787c@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "api-dev-v1", h: 120, constraint: "on" }
+    style cbf381b6912c4f35aa1b79246f99787c fill:none,stroke:none
+    d34960f8a4e54585bb8d0b59a5c4455d@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "api-dev-v2", h: 120, constraint: "on" }
+    style d34960f8a4e54585bb8d0b59a5c4455d fill:none,stroke:none
+    2b36517990df4913ab66d928dae18e8e@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "infisical", h: 120, constraint: "on" }
+    style 2b36517990df4913ab66d928dae18e8e fill:none,stroke:none
+    bb13505b9ec6489788e578beb2a9ca41@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "sso-production", h: 120, constraint: "on" }
+    style bb13505b9ec6489788e578beb2a9ca41 fill:none,stroke:none
+    bad6f987abcd472cbe7a1f8e7735a55c@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "management-service-v3", h: 120, constraint: "on" }
+    style bad6f987abcd472cbe7a1f8e7735a55c fill:none,stroke:none
+    4fdcbf4f69d74119906c92f9e4c89399@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/network/svc.png", label: "db-postgres", h: 120, constraint: "on" }
+    style 4fdcbf4f69d74119906c92f9e4c89399 fill:none,stroke:none
+    f07c91761bb74178bae679f44a6e3f37@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/compute/deploy.png", label: "adminer", h: 120, constraint: "on" }
+    style f07c91761bb74178bae679f44a6e3f37 fill:none,stroke:none
+    4937dc6393ba423da0ffa8bf7cd5fd26@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/network/svc.png", label: "adminer", h: 120, constraint: "on" }
+    style 4937dc6393ba423da0ffa8bf7cd5fd26 fill:none,stroke:none
+    60f1a383686241799afef4ad20faeba5@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/compute/deploy.png", label: "minio", h: 120, constraint: "on" }
+    style 60f1a383686241799afef4ad20faeba5 fill:none,stroke:none
+    c3a66b9c3e724b13bb671e41bc724898@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/network/svc.png", label: "minio", h: 120, constraint: "on" }
+    style c3a66b9c3e724b13bb671e41bc724898 fill:none,stroke:none
+  end
+  subgraph cluster_Namespace_ladesa-ro-production [Namespace: ladesa-ro-production]
+    direction TB
+    style cluster_Namespace_ladesa-ro-production fill:white,color:#2D3436,font:sans-serif,font-size:12pt,stroke:black,stroke-dasharray:7 7
+    subgraph cluster_Application_rabbitmq [Application: rabbitmq]
+      direction TB
+      style cluster_Application_rabbitmq fill:#ECE8F6,color:#2D3436,font:sans-serif,font-size:12pt,stroke:#AEB6BE
+      34cdf1bea04f49c78eae22bfcfee7cc9@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/network/svc.png", label: "rabbitmq-amqp", h: 120, constraint: "on" }
+      style 34cdf1bea04f49c78eae22bfcfee7cc9 fill:none,stroke:none
+      004c5032728945f7ab2c76efc09a4bf1@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/network/svc.png", label: "rabbitmq-web", h: 120, constraint: "on" }
+      style 004c5032728945f7ab2c76efc09a4bf1 fill:none,stroke:none
+    end
+    42f9ccca245f4446b9ee18b54933c3ff@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "infisicalsecret-rabbitmq-configs-prod", h: 120, constraint: "on" }
+    style 42f9ccca245f4446b9ee18b54933c3ff fill:none,stroke:none
+    dd31121cabbb4de99dfb9d33adc4f7d1@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/compute/deploy.png", label: "rabbitmq", h: 120, constraint: "on" }
+    style dd31121cabbb4de99dfb9d33adc4f7d1 fill:none,stroke:none
+    176fdb73dcc44eeb8abb3c27c04121d7@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/storage/pvc.png", label: "rabbitmq-mnesia-pvc", h: 120, constraint: "on" }
+    style 176fdb73dcc44eeb8abb3c27c04121d7 fill:none,stroke:none
+  end
+  subgraph cluster_Namespace_redis-server [Namespace: redis-server]
+    direction TB
+    style cluster_Namespace_redis-server fill:white,color:#2D3436,font:sans-serif,font-size:12pt,stroke:black,stroke-dasharray:7 7
+    e4d5b61144ab4901b603a768302d6ee6@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/compute/deploy.png", label: "redis-server", h: 120, constraint: "on" }
+    style e4d5b61144ab4901b603a768302d6ee6 fill:none,stroke:none
+    c1282ff2f71641f08f4ea8b96a1af125@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/storage/pvc.png", label: "redis-pvc", h: 120, constraint: "on" }
+    style c1282ff2f71641f08f4ea8b96a1af125 fill:none,stroke:none
+    5d39d3d152c74038b2de3d476f8fb64b@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/network/svc.png", label: "redis-server", h: 120, constraint: "on" }
+    style 5d39d3d152c74038b2de3d476f8fb64b fill:none,stroke:none
+  end
+  subgraph cluster_Namespace_argocd [Namespace: argocd]
+    direction TB
+    style cluster_Namespace_argocd fill:white,color:#2D3436,font:sans-serif,font-size:12pt,stroke:black,stroke-dasharray:7 7
+    c8bd0f9eb7b648eeb16f0f130a95f76b@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "ladesa-satellites", h: 120, constraint: "on" }
+    style c8bd0f9eb7b648eeb16f0f130a95f76b fill:none,stroke:none
+    ba83c828b3fb434c82718f413caf8ef0@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "ladesa", h: 120, constraint: "on" }
+    style ba83c828b3fb434c82718f413caf8ef0 fill:none,stroke:none
+    08ec0b76d7c1447cb18f1afbfbf499a9@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "root", h: 120, constraint: "on" }
+    style 08ec0b76d7c1447cb18f1afbfbf499a9 fill:none,stroke:none
+    fe44f4e701a14437a0abb2a12345aa17@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-secrets-operator", h: 120, constraint: "on" }
+    style fe44f4e701a14437a0abb2a12345aa17 fill:none,stroke:none
+    9c9ae7090e5747a5997a1edce17c3e73@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-mariadb-operator-crds", h: 120, constraint: "on" }
+    style 9c9ae7090e5747a5997a1edce17c3e73 fill:none,stroke:none
+    45e921c36f9f42d09ea97afba98d3b87@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-mariadb-operator", h: 120, constraint: "on" }
+    style 45e921c36f9f42d09ea97afba98d3b87 fill:none,stroke:none
+    8a5d9009e46a409eb3c0273f8b12501b@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-dados-mariadb", h: 120, constraint: "on" }
+    style 8a5d9009e46a409eb3c0273f8b12501b fill:none,stroke:none
+    4ea8a09466b04c41b4a5053599245c1e@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-cert-manager", h: 120, constraint: "on" }
+    style 4ea8a09466b04c41b4a5053599245c1e fill:none,stroke:none
+    8994a798c70442e79fd1c9e657863e54@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-rabbitmq", h: 120, constraint: "on" }
+    style 8994a798c70442e79fd1c9e657863e54 fill:none,stroke:none
+    5bc53813bf6f42289541ddec9294e7b0@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-dados-postgres-cluster", h: 120, constraint: "on" }
+    style 5bc53813bf6f42289541ddec9294e7b0 fill:none,stroke:none
+    b14bae378feb4e7b9f24c7f29df97ba0@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-portainer", h: 120, constraint: "on" }
+    style b14bae378feb4e7b9f24c7f29df97ba0 fill:none,stroke:none
+    7bf80f2ab2874e529e93d8122f064de4@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-redis", h: 120, constraint: "on" }
+    style 7bf80f2ab2874e529e93d8122f064de4 fill:none,stroke:none
+    d1a0b8fe52554d9686c04c48f19fff35@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-cnpg", h: 120, constraint: "on" }
+    style d1a0b8fe52554d9686c04c48f19fff35 fill:none,stroke:none
+    fd81474b4d054e2f89e8c446b6dca04d@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-infisical", h: 120, constraint: "on" }
+    style fd81474b4d054e2f89e8c446b6dca04d fill:none,stroke:none
+    8658a988dac24825b30034a0864876fc@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/aws/enablement/managed-services.png", label: "foundation-dados", h: 120, constraint: "on" }
+    style 8658a988dac24825b30034a0864876fc fill:none,stroke:none
+  end
+  757d13b36f7e4122869e70a9855a465a@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/group/ns.png", label: "redis-server", h: 120, constraint: "on" }
+  style 757d13b36f7e4122869e70a9855a465a fill:none,stroke:none
+  1c24425be6ef45f5b9caf9253db1e08d@{ img: "https://raw.githubusercontent.com/mingrammer/diagrams/refs/heads/master/resources/k8s/group/ns.png", label: "dados", h: 120, constraint: "on" }
+  style 1c24425be6ef45f5b9caf9253db1e08d fill:none,stroke:none
+  e4d5b61144ab4901b603a768302d6ee6 --> c1282ff2f71641f08f4ea8b96a1af125
+  linkStyle 0 stroke:black,color:#2D3436,font:sans-serif,font-size:13pt
+  5d39d3d152c74038b2de3d476f8fb64b -- "6379/TCP" --> e4d5b61144ab4901b603a768302d6ee6
+  linkStyle 1 stroke:black,color:#2D3436,font:sans-serif,font-size:10pt,stroke-dasharray:7 7
+  34cdf1bea04f49c78eae22bfcfee7cc9 -- "5672->amqp/TCP" --> dd31121cabbb4de99dfb9d33adc4f7d1
+  linkStyle 2 stroke:black,color:#2D3436,font:sans-serif,font-size:10pt,stroke-dasharray:7 7
+  004c5032728945f7ab2c76efc09a4bf1 -- "80->web/TCP" --> dd31121cabbb4de99dfb9d33adc4f7d1
+  linkStyle 3 stroke:black,color:#2D3436,font:sans-serif,font-size:10pt,stroke-dasharray:7 7
+  dd31121cabbb4de99dfb9d33adc4f7d1 --> 176fdb73dcc44eeb8abb3c27c04121d7
+  linkStyle 4 stroke:black,color:#2D3436,font:sans-serif,font-size:13pt
+  4937dc6393ba423da0ffa8bf7cd5fd26 -- "8080/TCP" --> f07c91761bb74178bae679f44a6e3f37
+  linkStyle 5 stroke:black,color:#2D3436,font:sans-serif,font-size:10pt,stroke-dasharray:7 7
+  c3a66b9c3e724b13bb671e41bc724898 -- "9000/TCP
+9001/TCP" --> 60f1a383686241799afef4ad20faeba5
+  linkStyle 6 stroke:black,color:#2D3436,font:sans-serif,font-size:10pt,stroke-dasharray:7 7

@@ -71,3 +71,11 @@ target "kubescape" {
   cache-from = ["type=gha,scope=infra-quality-kubescape"]
   cache-to   = ["type=gha,scope=infra-quality-kubescape,mode=max"]
 }
+
+target "kube-diagrams" {
+  inherits   = ["base"]
+  target     = "kube-diagrams"
+  tags       = ["infra-quality/kube-diagrams:local"]
+  cache-from = ["type=gha,scope=infra-quality-kube-diagrams"]
+  cache-to   = ["type=gha,scope=infra-quality-kube-diagrams,mode=max"]
+}

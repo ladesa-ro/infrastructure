@@ -327,3 +327,11 @@ crds
 vendorizadas
 linkar
 hermitizadas
+graphviz
+libgraphviz
+crashando
+Fumaca
+kubediagrams
+kustomize
+apiserver
+Akuity
