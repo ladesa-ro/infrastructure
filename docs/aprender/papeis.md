@@ -11,6 +11,30 @@ flowchart TB
     PlatEng --> GitOps
 ```
 
+## Infraestrutura e DevOps: qual contém qual
+
+Pergunta comum, e a resposta direta é: **nenhum dos dois contém o outro**, são dois eixos diferentes, não uma hierarquia. **Infraestrutura** é um **domínio técnico** (o quê é gerenciado: servidor, rede, storage, compute, plataforma), existente desde muito antes do termo DevOps existir (sysadmin, engenheiro de rede, DBA já geriam infraestrutura nos anos 90). **DevOps** é uma **prática/cultura** (como a mudança é feita: automação, colaboração Dev+Ops, CI/CD), que pode ser aplicada tanto a infraestrutura quanto a código de aplicação. Confundir os dois é comum: [Splunk descreve o Infrastructure Engineer como "o arquiteto da fundação de TI de uma organização"](https://www.splunk.com/en_us/blog/learn/infrastructure-engineering.html), enquanto DevOps foca no lado de software do ciclo de entrega; mas os artigos comparativos da própria indústria já constatam que, na prática, [as duas disciplinas "trabalham interconectadas" e seu trabalho se sobrepõe boa parte do tempo](https://invictusprotalent.com/understanding-the-difference-between-infrastructure-and-devops-engineers/).
+
+```mermaid
+flowchart TB
+    subgraph Dominio["Domínio: O QUE é gerenciado"]
+        Infra["Infraestrutura\n(servidor, rede, storage, compute, plataforma)"]
+        App["Código de aplicação"]
+    end
+    subgraph Pratica["Prática/cultura: COMO a mudança é feita"]
+        DevOpsP[DevOps]
+        SREp[SRE]
+        PlatEngP[Platform Engineering]
+        GitOpsP[GitOps]
+    end
+    Pratica -.->|aplicada a| Infra
+    Pratica -.->|aplicada a| App
+```
+
+**Por que parece que um contém o outro na prática**: em organização cloud-native moderna (o caso deste próprio repositório), infraestrutura quase sempre É gerida via prática DevOps (infraestrutura como código, ver [IaC e provisionamento](iac-provisionamento.md), GitOps, ver [Argo CD](argocd.md)), então quem só viu infraestrutura sendo gerida desse jeito enxerga as duas coisas como uma só. Historicamente é o oposto do que a intuição sugere: infraestrutura existia antes, DevOps é a camada de prática que foi aplicada em cima dela (e depois estendida pra cobrir entrega de aplicação também), não o contrário. Um "Infrastructure Engineer" tradicional que nunca usou automação/CI ainda está fazendo trabalho de infraestrutura, só que sem prática DevOps; um "DevOps Engineer" que só automatiza pipeline de aplicação, sem nunca tocar servidor/rede/cluster, está fazendo DevOps sem estar necessariamente dentro do domínio de infraestrutura.
+
+Cargo de mercado tende a fundir os dois nomes de propósito (mencionado também na seção [DevOps](#devops) abaixo: "muitas empresas usam DevOps Engineer como sinônimo de alguém que cuida de CI/CD e infraestrutura"), o que reforça a confusão de nomenclatura mas não muda a relação real entre os dois conceitos.
+
 ## SRE (Site Reliability Engineering)
 
 Disciplina criada no Google, formalizada no livro *Site Reliability Engineering*, disponível de graça em [sre.google/books](https://sre.google/books). O foco é confiabilidade tratada como engenharia, não como heroísmo: SLOs (objetivos de nível de serviço), orçamento de erro (error budget), post-mortems sem culpa, automação do trabalho repetitivo ("toil"). Ver também [Site reliability engineering](https://en.wikipedia.org/wiki/Site_reliability_engineering) na Wikipédia.

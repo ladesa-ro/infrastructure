@@ -8,6 +8,11 @@
 | Rollback automático sem depender de alguém perceber | [Dead man's switch e blast radius](#dead-mans-switch-e-blast-radius) |
 | Checklist, FMEA, pré-mortem | [Checklist e análise de risco antes de executar](#checklist-e-analise-de-risco-antes-de-executar) |
 | Reprocessar sem duplicar efeito | [Idempotência como propriedade de segurança](#idempotencia-como-propriedade-de-seguranca) |
+| Script escrito pra um interpretador, rodando embaixo de outro | [Confusão de shell](#confusao-de-shell-script-escrito-pra-um-interpretador-rodando-embaixo-de-outro) |
+| Verificação que engana pro lado errado | [Falso positivo e falso negativo na própria verificação](#falso-positivo-e-falso-negativo-na-propria-verificacao) |
+| Comportamento que ninguém escreveu, mas que existe | [Coisas implícitas](#coisas-implicitas-comportamento-que-ninguem-escreveu-mas-que-existe) |
+| Pesquisar incidente de terceiro antes de repetir o erro | [Pesquisa externa antes de mudança de risco](#pesquisa-externa-antes-de-mudanca-de-risco) |
+| Checklist prático pra aplicar tudo isso neste repositório | [Metodologia recomendada pra mudança e migração](../operacao/metodologia-de-mudanca.md) |
 | A norma que define o que é qualidade de software | [ISO/IEC 25010](#isoiec-25010-as-caracteristicas-de-qualidade-de-software) |
 
 ## Mudança como maior fonte de risco
@@ -62,6 +67,30 @@ flowchart LR
     Pos[postmortem: depois de um incidente real] -->|investiga o que aconteceu| Causa[acha a causa raiz]
     Causa --> Aprende[vira ação de melhoria pro próximo]
 ```
+
+## Confusão de shell: script escrito pra um interpretador, rodando embaixo de outro
+
+Um risco discreto, fácil de não perceber até quebrar em produção: um comando ou script escrito pensando em `bash` (redirecionamento `<()`, arrays associativos, `[[ ]]`, heredoc) executado a partir de um shell interativo diferente, como [fish](https://fishshell.com), que não é POSIX-compliant e não entende essa sintaxe. `fish` não consegue nem `source` um script `bash` (variáveis definidas lá dentro simplesmente não aparecem no fish depois), e sintaxe de array associativo bash (`declare -A`) é um erro de parse direto no fish, não um aviso. A [thread de compatibilidade completa com bash, aberta no próprio repositório do fish-shell](https://github.com/fish-shell/fish-shell/issues/4152), documenta que essa incompatibilidade é uma decisão de design, não um bug a ser corrigido algum dia.
+
+**Regra prática**: todo script/heredoc pensado pra `bash` precisa ser invocado explicitamente como `bash -c '...'` ou `bash script.sh` quando o shell interativo de quem está executando é outro (fish, zsh com opções não-padrão, dash). Nunca assumir que "um shell é um shell": um comando que parece ter rodado sem erro pode ter, na verdade, sido interpretado por um parser diferente do que foi escrito pra ele, produzindo um resultado silenciosamente diferente do esperado (a forma mais perigosa de falha, porque não avisa que algo deu errado). Achado real: uma associação bash (`declare -A PRUNE=(...)`) escrita durante uma sessão real de operação deste repositório falhou com `bad substitution` no shell fish do operador, exigindo reescrever a lógica como um script Python standalone em vez de depender da sintaxe de array do bash.
+
+## Falso positivo e falso negativo na própria verificação
+
+Toda verificação (lint, scanner de segurança, `diff` antes de aplicar, teste automatizado) pode errar em duas direções, e as duas têm custo diferente: **falso positivo** (a verificação acusa problema onde não há, ex.: alerta que não é ameaça real) desperdiça tempo investigando algo inofensivo; **falso negativo** (a verificação não acusa problema onde há) deixa passar algo real, o [tipo de erro mais caro em segurança](https://corelight.com/resources/glossary/false-positives-cybersecurity), porque cria falsa sensação de segurança. Reduzir falso positivo geralmente aumenta falso negativo, a não ser que o modelo/regra de detecção em si melhore, não é uma troca gratuita.
+
+Na prática deste repositório: um `argocd app diff` vazio é evidência forte de que não há mudança pendente, mas não é infalível, pode haver campo que o comparador normaliza ou ignora sem avisar (foi exatamente o caso do `Namespace` que carecia da annotation `tracking-id`: o `diff` não acusava nada de errado com o `Namespace` em si até o wrapper chart declará-lo explicitamente). Do mesmo jeito, `CI` verde não prova ausência de risco, prova ausência dos riscos específicos que aquele conjunto de checks foi desenhado pra pegar; um `lychee` com `Timeouts: 1` e `Errors: 0` é um falso positivo de falha (o job falha, mas não há link quebrado de verdade), enquanto um `helm template` idêntico entre wrapper e chart direto, checado documento a documento, é o oposto: alta confiança de verdade, porque a técnica elimina a fonte mais comum de falso positivo de diff (reordenação e comentário `# Source:` que `helm template` insere e nunca chega no cluster).
+
+## Coisas implícitas: comportamento que ninguém escreveu, mas que existe
+
+A classe de risco mais traiçoeira em automação de infraestrutura não é o que o manifesto declara, é o que **acontece por conta de outra coisa** sem estar escrito em lugar nenhum que alguém leria antes de agir: um `CreateNamespace=true` que cria um recurso que nunca aparece como "gerenciado"; um webhook de defaulting que preenche campo que o Git nunca declarou; um `--prune` que não distingue "recurso que eu quero apagar de propósito" de "recurso que só não está declarado por natureza do chart"; um arquivo (`argocd/root/application.yaml`) que existe dentro do próprio diretório que a ferramenta gerencia, mas que ela mesma não consegue atualizar sozinha, porque é o próprio ponteiro que ela usa pra saber onde procurar.
+
+Esses três exemplos (o `Namespace` prunado por acidente no CNPG, o webhook do CNPG deixando o `Cluster` `OutOfSync` pra sempre, e a `root/application.yaml` que precisou de `kubectl apply` manual) aconteceram de verdade nesta sessão, ver [Aprender: Argo CD](argocd.md), e o padrão comum entre eles é o mesmo: **nenhum documento de configuração, sozinho, contava a história completa**. A defesa prática não é "ler com mais atenção" (o comportamento implícito não está no arquivo pra ser lido), é: (1) sempre inspecionar o estado *ao vivo* antes de confiar só no que o Git declara (`kubectl get -o json`, não só `cat manifest.yaml`), (2) perguntar explicitamente "o que mais pode estar acontecendo por causa desta flag/annotation/webhook, que não está neste arquivo?" antes de qualquer mudança que envolva `prune`, rename, ou troca de mecanismo (chart remoto → local, manifesto cru → operator), e (3) tratar "o diff está vazio" e "eu entendo tudo que está acontecendo aqui" como duas afirmações diferentes, não confundir uma pela outra.
+
+## Pesquisa externa antes de mudança de risco
+
+Antes de qualquer migração ou mudança de mecanismo com blast radius real (trocar de chart, trocar de operador, renomear recurso que outro sistema depende), vale pesquisar deliberadamente se alguém já bateu nesse problema: issue aberta no próprio repositório da ferramenta (ex.: a [thread de compatibilidade bash/fish no `fish-shell`](https://github.com/fish-shell/fish-shell/issues/4152), usada nesta sessão pra confirmar que a incompatibilidade shell é decisão de design, não bug a esperar que seja corrigido), changelog/release notes da versão sendo adotada, e relato de terceiro (post-mortem público, thread de fórum, Hacker News) sobre o mesmo tipo de operação. O ganho não é achar garantia de que "vai dar certo", é achar o **modo de falha que já aconteceu com outra pessoa**, que costuma ser mais barato de prevenir de propósito do que de descobrir sozinho em produção. É a mesma lógica do pré-mortem (seção abaixo), só que emprestando a experiência de fora em vez de simular a própria.
+
+Continuidade prática: se a pesquisa não acha nada (ferramenta nova, caso de uso incomum), isso também é informação, o não conhecido testado só por dry-run/backup/dead man switch, com ainda mais cautela do que uma mudança onde já existe relato de terceiro pra comparar contra.
 
 ## Idempotência como propriedade de segurança
 

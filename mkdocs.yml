@@ -111,6 +111,7 @@ nav:
       - Lições do bootstrap: arquitetura/licoes-do-bootstrap.md
   - Operação:
       - Checklist: operacao/checklist.md
+      - Metodologia de mudança: operacao/metodologia-de-mudanca.md
       - Bootstrap na VM: operacao/bootstrap.md
       - Pendências: operacao/pendencias.md
       - Scripts: operacao/scripts.md
