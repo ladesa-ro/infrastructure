@@ -24,3 +24,23 @@ spec:
   storage:
     size: 1Gi
     storageClassName: local-path
+---
+# Reaproveita o nome exato "db-mariadb": labels reais conferidas ao vivo no
+# pod primário (app.kubernetes.io/instance=mariadb, k8s.mariadb.com/role=
+# primary) depois do CR subir, não adivinhadas. Sem isso, esta Service
+# fica órfã: existe no cluster (corrigida manualmente no cutover), mas sem
+# lastro nenhum no git, arriscando desaparecer numa sincronização futura
+# com prune de outra Application.
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-mariadb
+  namespace: dados
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/instance: mariadb
+    k8s.mariadb.com/role: primary
+  ports:
+    - port: 3306
+      targetPort: 3306
