@@ -8,19 +8,14 @@ metadata:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   project: ladesa
-  sources:
-    - repoURL: https://helm.mariadb.com/mariadb-operator
-      chart: mariadb-cluster
-      targetRevision: 26.6.0
-      helm:
-        valueFiles:
-          - $values/argocd/foundation/data/dados-mariadb/values.yaml
-    - repoURL: https://github.com/ladesa-ro/infrastructure.git
-      targetRevision: main
-      ref: values
-    - repoURL: https://github.com/ladesa-ro/infrastructure.git
-      targetRevision: main
-      path: argocd/foundation/data/dados-mariadb
+  source:
+    repoURL: https://github.com/ladesa-ro/infrastructure.git
+    targetRevision: main
+    path: argocd/foundation/data/dados-mariadb
+    helm:
+      releaseName: foundation-dados-mariadb
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: dados

@@ -1,15 +1,16 @@
-fullnameOverride: mariadb
+mariadb-cluster:
+  fullnameOverride: mariadb
 
-mariadb:
-  image: docker.io/mariadb:12@sha256:a02fe89cb597d4375812b2eac90cf9d0775d4686daa7f7cc750ebbcad7525bbc
-  rootPasswordSecretKeyRef:
-    name: mariadb-env
-    key: MARIADB_ROOT_PASSWORD
-    generate: false
-  replicas: 1
-  port: 3306
-  storage:
-    size: 1Gi
-    storageClassName: local-path
-  galera:
-    enabled: false
+  mariadb:
+    image: docker.io/mariadb:12@sha256:a02fe89cb597d4375812b2eac90cf9d0775d4686daa7f7cc750ebbcad7525bbc
+    rootPasswordSecretKeyRef:
+      name: mariadb-env
+      key: MARIADB_ROOT_PASSWORD
+      generate: false
+    replicas: 1
+    port: 3306
+    storage:
+      size: 1Gi
+      storageClassName: local-path
+    galera:
+      enabled: false

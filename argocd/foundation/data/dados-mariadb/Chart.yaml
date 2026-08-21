@@ -1,0 +1,9 @@
+apiVersion: v2
+name: dados-mariadb
+type: application
+version: 0.1.0
+appVersion: "26.6.0"
+dependencies:
+  - name: mariadb-cluster
+    version: "26.6.0"
+    repository: https://helm.mariadb.com/mariadb-operator
