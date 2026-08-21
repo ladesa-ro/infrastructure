@@ -39,6 +39,14 @@ sequenceDiagram
     Rollback->>Canary: reverte sozinho, sem esperar humano perceber
 ```
 
+### Um dead man's switch pode falhar silenciosamente se outra coisa mexeu no mesmo recurso, achado real em 2026-08-21
+
+Durante o cutover do RabbitMQ (ver [Foundation](../arquitetura/foundation.md)), foi armado um `systemd-run --on-active=10min` que reaplicaria o `Service` original (`kubectl apply -f <backup>`) caso o cutover não fosse confirmado a tempo. Quando o timer disparou (porque o cutover real levou mais tempo que o esperado, não porque algo deu errado), o `kubectl apply` **falhou**: `Operation cannot be fulfilled on services "rabbitmq-amqp": the object has been modified; please apply your changes to the latest version and try again`.
+
+A causa: entre armar o switch e ele disparar, o `Service` foi editado ao vivo com `kubectl patch --type=json` (não `kubectl apply`). `kubectl patch` não atualiza a annotation `kubectl.kubernetes.io/last-applied-configuration` que `kubectl apply` usa pra calcular o 3-way merge; a próxima chamada de `apply` viu um estado que não batia com o que ela esperava encontrar e recusou aplicar, em vez de sobrescrever silenciosamente.
+
+**A falha acabou sendo inofensiva** (o cutover real já tinha sido confirmado antes do timer disparar, então o revert nem deveria acontecer mesmo), mas expõe uma suposição que não é garantida: **um dead man's switch baseado em `kubectl apply -f <backup>` só reverte de verdade se nada mais tocou o mesmo recurso via um método diferente de `apply` entre a hora de armar e a hora de disparar**. Misturar `kubectl patch`/`kubectl edit` com o `kubectl apply` que o switch vai rodar depois é o cenário que quebra essa garantia. Pra um dead man's switch confiável quando o próprio operador vai continuar mexendo no recurso durante a janela armada: usar `kubectl replace --force` (não depende de `last-applied-configuration`) no comando do timer, ou reduzir a janela pro mínimo necessário e não tocar o recurso por nenhum outro caminho enquanto ela está aberta.
+
 ## Checklist e análise de risco antes de executar
 
 *The Checklist Manifesto*, de Atul Gawande, é a referência mais citada fora do software (aviação, cirurgia) sobre por que checklist reduz erro mesmo em quem já é especialista: o ponto do livro não é que profissional experiente esquece o básico, é que sistema complexo tem passo demais pra confiar só em memória, mesmo de quem já fez aquilo cem vezes. Boa parte do vocabulário de runbook e playbook operacional (documentação executável de um procedimento arriscado, passo a passo) vem dessa mesma ideia aplicada a operação de infraestrutura.
