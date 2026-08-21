@@ -10,6 +10,7 @@
 | Por que nunca burlar o `--check` | [Por que nunca forçar mutação real sob `--check`](#por-que-nunca-forcar-mutacao-real-sob-check) |
 | Rodar só um pedaço | [Tags](#tags) |
 | Cifrar segredo em arquivo | [Ansible Vault](#ansible-vault) |
+| Testar um role contra um sistema de verdade, não só simular | [Molecule](#molecule) |
 
 Ansible descreve o estado desejado de uma máquina (pacotes instalados, arquivos de configuração, serviços ativos) em YAML, e aplica isso via SSH, sem precisar de agente instalado no destino. Cada unidade de trabalho é uma **task**; um conjunto ordenado de tasks reutilizável é um **role**; um **playbook** decide quais roles rodam, em que ordem, contra quais hosts.
 
@@ -53,6 +54,7 @@ Uma task idempotente, rodada de novo sem nenhuma mudança real necessária, não
 - `get_url`, `template`, `copy` (de origem local): simulam, relatam `changed` sem tocar o destino.
 - `stat`, `assert`: sempre refletem o estado real, `--check` não muda o comportamento deles.
 - `copy` com `remote_src: true` (copiar um arquivo que já está no node): tenta validar que a origem existe, mesmo sob `--check`. Se a origem só existiria depois de outra task que foi simulada (não real), isso quebra: um bug de classe comum na primeira execução de um role contra um host que ainda não tem nada instalado, corrigido pulando essas tasks específicas sob `--check` em vez de forçar execução real.
+- `systemd` (gerenciar `enabled`/`state` de uma unit): sempre consulta o estado real da unit no systemd, `--check` não muda isso. Se a task anterior que instalaria o pacote ou copiaria o arquivo da unit foi só simulada (`package`, `copy`), a unit genuinamente não existe ainda, e o módulo falha com um erro fatal em vez de simular graciosamente. Mesma classe de bug do `copy` com `remote_src: true` acima, mas sem um jeito de simplesmente pular a task, porque ela também precisa rodar de verdade fora do `--check`. A correção é `ignore_errors: "{{ ansible_check_mode }}"`: sob `--check` a falha vira só um aviso (`ignored`) na saída, numa execução real continua falhando duro se algo estiver genuinamente errado.
 
 ## Por que nunca forçar mutação real sob `--check`
 
@@ -73,6 +75,37 @@ Cada role pode ter sua própria tag, o que permite rodar só um pedaço com `--t
 ## Ansible Vault
 
 `ansible-vault` cifra arquivos com uma senha simétrica, guardada fora do git (ver [Segredos](../arquitetura/segredos.md) e [Estado fora do git](../operacao/estado-fora-do-git.md)). Um arquivo cifrado começa com `$ANSIBLE_VAULT;1.1;AES256` e só é decriptado no momento de uso, com `--vault-password-file` apontando pra senha.
+
+## Molecule
+
+`--check` simula, mas simular não é o mesmo que rodar contra um sistema de verdade: `command`/`shell` nem sequer executam sob `--check` (ver acima), e nenhum `--check` confere se a task, quando de fato executada, faz o sistema convergir pro estado esperado. [Molecule](https://ansible.readthedocs.io/projects/molecule/) é a ferramenta padrão de facto da comunidade Ansible pra fechar essa lacuna: cria um alvo efêmero e descartável (container ou VM), roda o role de verdade contra ele, e destrói o alvo no final, sem tocar em nada além desse ambiente temporário.
+
+Uma sequência de teste típica encadeia vários passos, cada um com um objetivo diferente:
+
+- **create**: sobe o alvo efêmero (o driver mais comum é Docker, por ser rápido de criar e destruir).
+- **converge**: roda o role de verdade contra esse alvo, o equivalente a uma primeira execução real.
+- **idempotence**: roda o **mesmo** role uma segunda vez e falha o teste se alguma task reportar `changed`, automatizando exatamente a verificação manual descrita em [Idempotência na prática](#idempotencia-na-pratica), sem depender de alguém lembrar de rodar duas vezes e comparar o resultado na mão.
+- **verify**: roda checagem extra, escrita à parte, pra confirmar o estado final além do que o próprio `changed`/`ok` de cada task já garante.
+- **destroy**: descarta o alvo, garantindo que o próximo teste começa de um estado limpo, sem resíduo do anterior.
+
+```mermaid
+flowchart LR
+    Create[create: sobe alvo efêmero] --> Converge[converge: roda o role de verdade]
+    Converge --> Idempotence[idempotence: roda de novo, exige changed=0]
+    Idempotence --> Verify[verify: checagem extra do estado final]
+    Verify --> Destroy[destroy: descarta o alvo]
+```
+
+Nem todo role cabe num container Docker "pelado": qualquer role que gerencia um serviço via systemd (`ansible.builtin.systemd`) precisa de uma imagem que rode systemd de verdade como processo 1, dentro de um container privilegiado com o cgroup do host montado, bem diferente da imagem mínima que Molecule usa por padrão. E mesmo com systemd rodando, existe uma classe de daemon onde um container aninhado simplesmente não reproduz o ambiente real de forma confiável: qualquer coisa que dependa de D-Bus junto de PolicyKit (polkit) pra autorizar uma chamada privilegiada, comum em daemons de sistema como o `firewalld` (ver [firewalld](firewalld.md)). Isso acontece porque polkit depende de gestão de sessão via `systemd-logind`, que tem comportamento documentadamente instável dentro de um container aninhado, tanto em [relatos do próprio projeto Ansible](https://github.com/ansible/ansible/issues/36483) quanto em [issues do systemd](https://github.com/systemd/systemd/issues/13955). Quando essa fragilidade pesa mais que a velocidade de um container, a alternativa citada pela comunidade é trocar o driver Docker por uma VM real (libvirt/QEMU via Vagrant), que roda um kernel próprio e não depende de nenhuma emulação de systemd dentro de outro container.
+
+```mermaid
+flowchart TD
+    Role{o que o role gerencia?} -->|arquivo, pacote, diretório| Docker[Docker simples resolve bem]
+    Role -->|serviço systemd| DockerPriv[Docker privilegiado + imagem com systemd]
+    Role -->|D-Bus/polkit, ex.: firewalld| VM[VM real via libvirt/QEMU, Docker é frágil aqui]
+```
+
+Isso também torna Molecule uma ferramenta a aplicar com critério, não em todo role por padrão: pra um role simples, onde o único risco real é uma task mal escrita, `--check` mais lint já cobre a maior parte do risco, sem o peso extra de manter um scenario completo. Vale o investimento de um scenario Molecule quando o custo de um erro é alto (mudança de rede, serviço de sistema, algo com implicação de segurança) e o que precisa ser validado é o comportamento do sistema real convergindo, não só a lógica das tasks.
 
 ## Pra ir além
 
@@ -106,5 +139,8 @@ flowchart LR
 | `--vault-password-file <arquivo>` | Aponta pra senha na hora de decifrar |
 | `ok` no resultado de uma task | Idempotente, nada mudou |
 | `changed` no resultado de uma task | Aplicou uma mudança real |
+| `molecule test` | Roda a sequência inteira: create, converge, idempotence, verify, destroy |
+| `molecule converge` | Só sobe o alvo e roda o role, sem destruir no final (útil pra depurar) |
+| `molecule idempotence` | Roda o role de novo contra um alvo já convergido, exige `changed=0` |
 
 Onde aprofundar: a documentação oficial em [docs.ansible.com](https://docs.ansible.com) cobre todo módulo em detalhe, mas é referência, não material de aprendizado sequencial. Pra isso, *Ansible for DevOps*, de Jeff Geerling ([ansiblefordevops.com](https://www.ansiblefordevops.com)), é o livro mais citado da comunidade, escrito por alguém que administra Ansible em produção desde 2013 e mantém o livro atualizado continuamente.

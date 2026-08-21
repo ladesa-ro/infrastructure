@@ -134,15 +134,41 @@ Só segue pro próximo passo depois que isso rodar limpo, sem diff nenhum, em to
 
 Atenção: quem administra acessa o node por uma porta externa não-padrão, mas isso é NAT feito antes de chegar na VM. O `sshd` da própria VM escuta na porta 22 padrão (confira com `ss -tlnp | grep sshd`), e é essa porta, 22, que o firewalld precisa liberar, já comitada como default. Usar a porta externa por engano bloquearia o próprio SSH.
 
+Essa é a mudança de maior risco de todo o bootstrap: é a primeira vez que o firewalld fica ativo num k3s que já roda há muito tempo sem ele. Antes de rodar de verdade, monta a rede de segurança:
+
+Numa segunda sessão SSH separada (não a que vai rodar o playbook), deixa rodando pra acompanhar em tempo real:
+
+```bash
+watch -n2 'kubectl get nodes -o wide; echo; kubectl get pods -A | grep -v Running'
+```
+
+Na sessão principal, arma um dead man switch: se em 10 minutos ninguém cancelar, desliga o firewalld sozinho, voltando pro estado atual (sem firewall nenhum, mas acessível):
+
+```bash
+systemd-run --on-active=10min --unit=firewall-rollback --description="rollback automatico do firewalld se nao confirmado" /bin/bash -c 'systemctl stop firewalld; systemctl disable firewalld'
+```
+
+Só então roda o `--check` e a execução real:
+
 ```bash
 ansible-playbook -i ansible/inventory/hosts.yml ansible/site.yml --tags firewalld --vault-password-file /root/infrastructure-vault-pass --check
 ```
+
+Se `firewalld` nunca foi instalado neste node, esse `--check` mostra `ignored=1` ou `2` nas tasks que habilitam/ativam a unit systemd, um erro esperado, não um problema real (ver [o bug de `--check` que só apareceu contra o node real](../arquitetura/roles/firewalld.md#o-bug-de-check-que-só-apareceu-contra-o-node-real)). O que importa conferir é `failed=0` no resumo final.
 
 ```bash
 ansible-playbook -i ansible/inventory/hosts.yml ansible/site.yml --tags firewalld --vault-password-file /root/infrastructure-vault-pass
 ```
 
-Depois de rodar, testar uma nova conexão SSH numa aba separada antes de fechar a sessão atual, pra confirmar que o acesso não quebrou.
+Depois de rodar, testar uma **nova** conexão SSH numa aba separada antes de fechar a sessão atual, e conferir a sessão de monitoramento (nodes `Ready`, sem pod fora de `Running`) e `argocd app list --core` respondendo (se a resposta for `configmap "argocd-cm" not found`, o contexto do `kubectl` não está apontando pro namespace `argocd`; rodar `kubectl config set-context --current --namespace=argocd` antes de repetir). Só cancela o dead man switch depois de tudo confirmado:
+
+```bash
+systemctl stop firewall-rollback.timer
+```
+
+Se alguma dessas checagens falhar, não cancela o timer, deixa ele agir sozinho, ou desativa manualmente na hora (`systemctl stop firewalld`) se não puder esperar os 10 minutos.
+
+Nota: a porta 9993 (ZeroTier, a interface administrativa) não precisa estar na lista de portas públicas do firewalld. A documentação oficial do ZeroTier confirma que só é necessário acesso outbound, o firewall já permite a resposta de conexões iniciadas de dentro por padrão.
 
 ## 9. Ligar a reconciliação automática
 
@@ -151,6 +177,8 @@ Só depois de tudo confirmado acima:
 ```bash
 ansible-playbook -i ansible/inventory/hosts.yml ansible/site.yml --tags self-pull-timer --vault-password-file /root/infrastructure-vault-pass --check
 ```
+
+Na primeira vez, esse `--check` mostra `ignored=1` na task que habilita o timer, pelo mesmo motivo do passo 8 (ver [self-pull-timer](../arquitetura/roles/self-pull-timer.md#o-mesmo-bug-de-check-do-role-firewalld)). O que importa conferir é `failed=0`.
 
 ```bash
 ansible-playbook -i ansible/inventory/hosts.yml ansible/site.yml --tags self-pull-timer --vault-password-file /root/infrastructure-vault-pass

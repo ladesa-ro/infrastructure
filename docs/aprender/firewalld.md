@@ -67,6 +67,10 @@ flowchart LR
     end
 ```
 
+## Uma pegadinha real com orquestrador de container já em execução
+
+`firewall-cmd --reload` não é tão inofensivo quanto parece quando outro processo já gerencia suas próprias regras de `iptables`/`nftables` no mesmo host, um orquestrador de container como k3s/Kubernetes é o caso mais comum. O reload recarrega a configuração do próprio firewalld, mas o efeito colateral em sistemas mais antigos de nftables é recriar as chains do zero, o que pode flushar regras que outro processo tinha inserido por fora do firewalld (rede de pod via CNI, `hostPort` de um Ingress Controller). A recuperação depende de esse outro processo perceber a mudança e reaplicar sozinho; em alguns casos isso é parcial ou não acontece automaticamente, exigindo reiniciar o serviço afetado (ou, em último caso, reboot) pra normalizar. Ativar firewalld pela primeira vez num host que já roda esse tipo de orquestrador há tempo, em vez de configurar os dois juntos desde o início, é o cenário onde isso mais aparece.
+
 ## Cheatsheet
 
 | Comando | O que faz |

@@ -73,6 +73,7 @@ nav:
               - Service discovery: aprender/service-discovery.md
               - Chaos engineering: aprender/chaos-engineering.md
               - Backup e disaster recovery: aprender/backup-e-disaster-recovery.md
+              - Execução segura de mudança e qualidade de software: aprender/execucao-segura-e-qualidade.md
           - Segurança e compliance:
               - Supply chain e SBOM: aprender/supply-chain-e-sbom.md
               - Threat modeling: aprender/threat-modeling.md
@@ -101,6 +102,7 @@ nav:
       - Segredos: arquitetura/segredos.md
       - Foundation: arquitetura/foundation.md
       - Gate de drift zero: arquitetura/gate-de-drift-zero.md
+      - Lições do bootstrap: arquitetura/licoes-do-bootstrap.md
   - Operação:
       - Checklist: operacao/checklist.md
       - Bootstrap na VM: operacao/bootstrap.md

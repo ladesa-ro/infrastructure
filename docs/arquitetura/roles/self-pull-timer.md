@@ -21,3 +21,9 @@ flowchart LR
     Ciclo --> SelfPullTimer[role self-pull-timer roda de novo, tag não pulada]
     SelfPullTimer -->|mantém sincronizado| Timer
 ```
+
+Executado de verdade em produção em 2026-08-21, como [passo 9 do bootstrap](../../operacao/bootstrap.md#9-ligar-a-reconciliação-automática): `ansible-pull.timer` ficou `active (waiting)`, `enabled`, com o primeiro disparo em até 5 minutos e depois a cada 30 minutos (± 5 de jitter). Uma segunda execução real confirmou idempotência (`changed=0`). A partir daqui o node reconcilia este repositório sozinho, sem depender de ninguém rodando `ansible-playbook` na mão.
+
+## O mesmo bug de `--check` do role firewalld
+
+A task final, `Habilitar e iniciar o timer` (módulo `ansible.builtin.systemd`), tinha o mesmo problema descrito em [por que o firewalld não tem scenario Molecule](firewalld.md#o-bug-de-check-que-só-apareceu-contra-o-node-real): sob `--check`, as duas tasks `ansible.builtin.copy` anteriores (unit e timer) só simulam a escrita, não criam os arquivos de verdade, então o módulo `systemd` falha com "Could not find the requested service ansible-pull.timer: host" ao tentar consultar uma unit que ainda não existe no disco. Corrigido do mesmo jeito, `ignore_errors: "{{ ansible_check_mode }}"` só na task final, sem afetar o comportamento da execução real.
