@@ -1,3 +1,4 @@
+---
 name: quality
 
 on:
@@ -7,13 +8,29 @@ on:
       - docs/**
       - README.md
       - .lychee.toml
-      - .github/workflows/quality.yml
+      - ansible/**
+      - argocd/**
+      - scripts/**
+      - .ansible-lint
+      - .yamllint
+      - .cspell.config.yaml
+      - tools/quality/**
+      - .config/hermit/**
+      - .github/**
   pull_request:
     paths:
       - docs/**
       - README.md
       - .lychee.toml
-      - .github/workflows/quality.yml
+      - ansible/**
+      - argocd/**
+      - scripts/**
+      - .ansible-lint
+      - .yamllint
+      - .cspell.config.yaml
+      - tools/quality/**
+      - .config/hermit/**
+      - .github/**
   workflow_dispatch:
 
 permissions:
@@ -23,10 +40,12 @@ jobs:
   links:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Checar links quebrados (lychee)
-        uses: lycheeverse/lychee-action@v2
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8
         with:
           args: >-
             --config .lychee.toml
@@ -38,7 +57,9 @@ jobs:
   estilo:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Sem travessão em nenhuma doc (regra de estilo deste repositório)
         run: |
@@ -46,3 +67,70 @@ jobs:
             echo "Achei travessão (—) num arquivo de documentação. Reescreva com vírgula, ponto, ou frase separada."
             exit 1
           fi
+
+  codigo-e-infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+
+      - name: Construir uma imagem por ferramenta (bake, base do hermit compartilhada)
+        uses: docker/bake-action@d3418bd7d0e9324001bca92fa8ba175ea7e6dc9b
+        with:
+          files: tools/quality/docker-bake.hcl
+          load: true
+
+      - name: Lint de YAML (yamllint, via hermit uv)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            infra-quality/python-lint:local uvx yamllint .
+
+      - name: Lint do Ansible (ansible-lint, via hermit uv)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            infra-quality/python-lint:local uvx --from ansible-lint ansible-lint
+
+      - name: Duplicação entre roles e manifests (jscpd)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            infra-quality/node-tools:local jscpd --min-tokens 65 --min-lines 5 \
+            --format yaml --reporters console --threshold 0.7 --exit-code 1 \
+            --ignore "argocd/foundation/cert-manager/**,argocd/foundation/cnpg/**" ansible argocd
+
+      - name: Validar manifests do Argo CD contra o schema do Kubernetes (kubeconform)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            infra-quality/kubeconform:local sh -c \
+            "find argocd -name '*.yaml' -print0 | xargs -0 kubeconform -strict -ignore-missing-schemas -summary"
+
+      - name: Lint dos scripts de manutenção (shellcheck, via hermit)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            infra-quality/shellcheck:local sh -c "shellcheck scripts/*.sh"
+
+      - name: Lint dos próprios workflows (actionlint, via hermit)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            infra-quality/actionlint:local actionlint -color
+
+      - name: Segurança dos próprios workflows (zizmor, via hermit)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            infra-quality/zizmor:local zizmor .github/workflows
+
+      - name: Ortografia da documentação (cspell)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" -w /repo \
+            infra-quality/node-tools:local cspell --config .cspell.config.yaml --no-progress .

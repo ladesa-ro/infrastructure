@@ -1,12 +1,17 @@
 ---
 extends: default
 
+ignore: |
+  argocd/foundation/cert-manager/
+  argocd/foundation/cnpg/
+
 rules:
   line-length:
     max: 120
     level: warning
   truthy:
     allowed-values: ["true", "false"]
+    check-keys: false
   comments:
     require-starting-space: true
     min-spaces-from-content: 1

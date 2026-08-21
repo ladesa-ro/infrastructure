@@ -1,0 +1,30 @@
+---
+version: '0.2'
+language: 'en,pt-BR'
+globRoot: '${cwd}'
+import:
+  - '@cspell/dict-pt-br/cspell-ext.json'
+dictionaries:
+  - infrastructure
+  - pt-br
+dictionaryDefinitions:
+  - name: infrastructure
+    path: ./tools/quality/cspell-dictionary.txt
+    addWords: false
+    noSuggest: false
+files:
+  - 'docs/**/*.md'
+  - 'README.md'
+  - '.github/workflows/**/*.yml'
+ignorePaths:
+  - '**/node_modules/**'
+  - '_site/**'
+  - 'site/**'
+  - 'tools/quality/cspell-dictionary.txt'
+  - 'argocd/foundation/cert-manager/**'
+  - 'argocd/foundation/cnpg/**'
+overrides:
+  - filename: '**/*.md'
+    languageId: markdown
+  - filename: '**/*.yml'
+    languageId: yaml

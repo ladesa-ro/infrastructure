@@ -1,5 +1,6 @@
 ---
 exclude_paths:
   - argocd/
+  - mkdocs.yml
 warn_list:
   - yaml[line-length]
