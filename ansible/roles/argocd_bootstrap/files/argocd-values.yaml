@@ -15,8 +15,8 @@ server:
     tls: true
   resources:
     requests:
-      cpu: 50m
-      memory: 96Mi
+      cpu: 10m
+      memory: 32Mi
     limits:
       cpu: 500m
       memory: 256Mi
@@ -24,8 +24,8 @@ server:
 controller:
   resources:
     requests:
-      cpu: 100m
-      memory: 384Mi
+      cpu: 25m
+      memory: 64Mi
     limits:
       cpu: 1000m
       memory: 768Mi
@@ -33,8 +33,8 @@ controller:
 repoServer:
   resources:
     requests:
-      cpu: 50m
-      memory: 128Mi
+      cpu: 10m
+      memory: 48Mi
     limits:
       cpu: 500m
       memory: 512Mi
@@ -42,8 +42,8 @@ repoServer:
 redis:
   resources:
     requests:
-      cpu: 25m
-      memory: 32Mi
+      cpu: 5m
+      memory: 16Mi
     limits:
       cpu: 250m
       memory: 128Mi
