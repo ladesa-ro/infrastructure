@@ -15,5 +15,5 @@ exclude_all_private = true
 exclude = [
   # infrastructure-vault é privado: 404 pra requisição não autenticada é o
   # comportamento esperado do GitHub pra repositório privado, não um link quebrado.
-  "^https://github\\.com/ladesa-ro/infrastructure-vault$",
+  "^https://github\\.com/ladesa-ro/infrastructure-vault(/.*)?$",
 ]
