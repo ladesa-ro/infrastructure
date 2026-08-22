@@ -274,7 +274,10 @@ virtualenv
 virtualizacao
 Voluntarios
 VXLAN
+waha
+WAHA
 Weaveworks
+WhatsApp
 wmariuss
 Zizmor
 zizmor

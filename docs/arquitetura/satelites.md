@@ -57,3 +57,17 @@ Por isso a migração segue o [gate de drift zero](gate-de-drift-zero.md): a `Ap
 O rastreio de posse do Argo CD neste cluster usa a chave `argocd.argoproj.io/instance`, e não `app.kubernetes.io/instance`. Isso é o que permite adotar um release Helm sem disputar o label que o próprio chart já escreve.
 
 O release Helm antigo não desaparece sozinho. O Secret de release fica órfão no namespace depois da adoção, e sai junto da variável de ambiente que guardava os values, como parte da limpeza.
+
+## Quando um repositório tem mais de uma `Application`
+
+Uma `Application` renderiza um chart com um nome de release. Um repositório que já roda dois releases Helm distintos, portanto, vira duas `Application`, não uma com dois charts dentro. É o caso do `management-service`, que serve a API e o WAHA como releases separados desde antes da migração, e continua assim depois dela: `ladesa-ro-api` na onda 0 e `ladesa-ro-waha` na onda 1.
+
+Fundir os dois num chart só seria possível, usando o mecanismo de alias de dependência do Helm, mas trocaria o nome de todos os recursos vivos e quebraria a adoção com diff vazio. A regra prática é que a fronteira de `Application` acompanha a fronteira de release que já existe, e consolidar releases é uma mudança à parte, com a sua própria janela.
+
+## O que fica de fora do chart de propósito
+
+Nem todo recurso do namespace precisa entrar. Os dois `PersistentVolumeClaim` do `management-service`, o de uploads da API e o que guarda a sessão do WhatsApp no WAHA, ficaram sem declarar, por dois motivos que se somam: eles nunca pertenceram a release Helm nenhum, e a maior parte da especificação de um `PVC` é imutável depois de criado, então declarar não daria controle real, daria só a chance de um sync futuro tentar uma mudança impossível.
+
+Deixar de fora é seguro porque a poda do Argo CD só alcança recurso que carrega o label de rastreio da própria `Application`. Um `PVC` que nunca foi adotado não é candidato a poda, mesmo com `prune: true` ligado. Vale conferir esse label antes de ligar o sync automático, e não confiar na memória: `kubectl get pvc -n <namespace> -o jsonpath` no campo `argocd.argoproj.io/instance` tem que sair vazio.
+
+O custo de deixar de fora é que o `PVC` vira estado não declarado, e recriar o namespace do zero não o traria de volta. É uma troca consciente, registrada aqui para que a próxima pessoa não a confunda com esquecimento.
