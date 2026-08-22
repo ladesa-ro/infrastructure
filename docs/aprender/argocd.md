@@ -183,6 +183,18 @@ Migração do Redis pro chart `stakater/application` (ver [Pendências](../opera
 
 **Lição pra qualquer migração futura que troque o mecanismo de um `Deployment` já existente**: preservar nome de recurso evita rename/prune, mas não evita conflito de campo imutável. Vale conferir explicitamente se o novo chart/manifesto muda `spec.selector` (ou qualquer outro campo imutável: `spec.storageClassName`/`volumeName` de PVC, por exemplo) antes de assumir que "os nomes batem, então é seguro". Se mudar, a correção é apagar só o recurso específico com o campo imutável (não a `Application` inteira, não os recursos que carregam dado real), e deixar o próximo sync recriar.
 
+## Recurso não rastreado com nome diferente do novo fica órfão coexistindo, não substituído, 2026-08-22
+
+Migração do `web` (repositório satélite) pro Argo CD (ver [Pendências](../operacao/pendencias.md)) tinha um `Ingress` aplicado à mão por script (`kubectl apply`, sem `Application` nenhuma dona dele, sem `tracking-id`), chamado `ladesa-ro-web-ingress`. O chart novo (`stakater/application`, `applicationName: ladesa-ro-web`) gera o `Ingress` com o nome do `applicationName`, sem sufixo: `ladesa-ro-web`, nome diferente do antigo.
+
+**Por que isso é mais arriscado que um rename comum**: nas migrações anteriores desta sessão (CNPG, cert-manager, secrets-operator), o recurso antigo e o novo eram rastreados pela mesma `Application`, então o Argo CD sabia que um substituía o outro e prunava o antigo depois de criar o novo. Aqui não: o `Ingress` antigo nunca foi rastreado por nenhuma `Application`, então não existe prune nenhum agindo sobre ele. O resultado de sincronizar sem limpar antes não seria um `Ingress` faltando, seria **dois `Ingress` distintos**, `ladesa-ro-web-ingress` (antigo, órfão, continuando a existir pra sempre) e `ladesa-ro-web` (novo, rastreado), os dois declarando o mesmo host (`dev.ladesa.com.br`) e o mesmo path (`/`) ao mesmo tempo, uma condição de rota duplicada que depende do comportamento do controller de Ingress (aqui, Traefik) pra decidir qual vence, não de nada que o Argo CD controle.
+
+**Como isso foi percebido antes de sincronizar**: o mesmo hábito já documentado em ["Coisas implícitas"](execucao-segura-e-qualidade.md#coisas-implicitas-comportamento-que-ninguem-escreveu-mas-que-existe). Inspecionar o `argocd app diff` da `Application` nova mostrou o `Ingress` novo inteiro como "só no alvo" (esperado, primeira criação), e uma checagem separada, fora do `diff` (que só descreve o que a própria `Application` rastreia, não o resto do cluster), confirmou que o `ladesa-ro-web-ingress` antigo continuava vivo e sem dono.
+
+**Correção**: apagar o recurso não rastreado antes do primeiro sync, não depois, já que não há prune nenhum que vá fazer isso sozinho. Mesmo raciocínio de sempre pra recurso sem dado real (sem PVC nem estado, só uma regra de roteamento): baixo risco, reversível reaplicando o backup se algo desse errado.
+
+**Lição geral**: um recurso aplicado fora do Argo CD (`kubectl apply` direto, UI do Portainer, script imperativo) nunca aparece em nenhum `argocd app diff`, de nenhuma `Application`, porque `diff` só compara contra o que a própria `Application` declara. Antes de introduzir uma `Application` nova que vai gerenciar um namespace que já tem recurso imperativo dentro, vale procurar explicitamente por esse tipo de recurso (`kubectl get <kind> -n <namespace>` comparado contra o que a `Application` nova vai criar), não confiar que o `diff` já contaria a história toda.
+
 ## O rastreio de posse é anotação, não label, e o `argocd-cm` engana, 2026-08-21
 
 Perguntar "o que neste cluster está fora do Argo CD" parece trivial: basta listar os recursos sem o marcador de posse. O erro está em qual marcador procurar.
