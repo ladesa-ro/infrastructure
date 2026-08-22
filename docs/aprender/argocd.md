@@ -183,6 +183,33 @@ Migração do Redis pro chart `stakater/application` (ver [Pendências](../opera
 
 **Lição pra qualquer migração futura que troque o mecanismo de um `Deployment` já existente**: preservar nome de recurso evita rename/prune, mas não evita conflito de campo imutável. Vale conferir explicitamente se o novo chart/manifesto muda `spec.selector` (ou qualquer outro campo imutável: `spec.storageClassName`/`volumeName` de PVC, por exemplo) antes de assumir que "os nomes batem, então é seguro". Se mudar, a correção é apagar só o recurso específico com o campo imutável (não a `Application` inteira, não os recursos que carregam dado real), e deixar o próximo sync recriar.
 
+## O rastreio de posse é anotação, não label, e o `argocd-cm` engana, 2026-08-21
+
+Perguntar "o que neste cluster está fora do Argo CD" parece trivial: basta listar os recursos sem o marcador de posse. O erro está em qual marcador procurar.
+
+Historicamente o Argo CD marcava cada recurso adotado com o **label** `app.kubernetes.io/instance`, configurável por `application.instanceLabelKey` no `argocd-cm`. Label tem duas limitações sérias: o valor é limitado a 63 caracteres, então nome de `Application` longo é truncado, e o campo colide com o que os próprios charts Helm já escrevem. Por isso o Argo CD ganhou o modo `annotation`, que grava `argocd.argoproj.io/tracking-id` com o nome da `Application`, o grupo, o tipo e o caminho do recurso, tudo num valor só, sem disputar nada com o chart.
+
+A armadilha é que **o padrão implícito mudou** e o `argocd-cm` não reflete isso. Neste cluster, `application.resourceTrackingMethod` está **vazio**, e `application.instanceLabelKey` está declarado como `argocd.argoproj.io/instance`. Lendo só o ConfigMap, a conclusão natural é que o rastreio é por label. Ao vivo, nenhum recurso adotado carrega esse label, e todos carregam a anotação. O `instanceLabelKey` continua ali, configurado e sem efeito nenhum, que é o pior estado possível para um campo de configuração: parece a resposta e não é.
+
+O sintoma prático é uma varredura que mente na direção mais perigosa, a de falso alarme invertido. Uma listagem filtrando pelo label devolve como "fora do Argo CD" recursos que acabaram de ser adotados com sucesso, e a mesma lógica aplicada a um `PersistentVolumeClaim` responde "não está rastreado, logo está a salvo da poda" sem ter verificado coisa alguma. A resposta certa pelo motivo errado é indistinguível da errada até alguém conferir.
+
+```mermaid
+flowchart TD
+    P["listar o que está fora do Argo CD"] --> L["filtrar pelo label instance"]
+    P --> A["filtrar pela anotação tracking-id"]
+    L --> F["recurso adotado aparece como não gerido, resposta falsa"]
+    A --> V["reflete a posse real"]
+```
+
+A conferência que não engana é ir ao recurso ao vivo e olhar o que o Argo CD de fato escreveu, em vez de deduzir do ConfigMap:
+
+```bash
+kubectl get deploy <nome> -n <namespace> \
+  -o jsonpath='{.metadata.annotations.argocd\.argoproj\.io/tracking-id}{"\n"}'
+```
+
+**Lição pra qualquer auditoria de posse**: o marcador de rastreio é uma decisão de versão do Argo CD, não do `argocd-cm`, e configuração declarada não prova comportamento. Antes de varrer o cluster inteiro em busca do que está fora, confirmar em **um** recurso sabidamente adotado qual marcador ele carrega, e só então generalizar a consulta. É o mesmo princípio já registrado na lição do `continue-on-error` em [Desenvolvimento](../operacao/desenvolvimento.md): uma verificação que nunca rodou de verdade é visualmente idêntica a uma que rodou e não achou nada.
+
 ## Pra ir além
 
 Argo CD é uma implementação da categoria GitOps, um termo cunhado pela Weaveworks: Git como fonte única da verdade, um agente dentro do cluster que reconcilia continuamente. Flux CD é o sibling mais direto, com filosofia igual mas mecânica diferente (Flux é modular, várias controllers separadas, cada uma cuidando de um pedaço; Argo CD é mais monolítico e vem com UI própria). Jenkins X e Weave GitOps (também da própria Weaveworks) são outras opções na mesma categoria, menos comuns hoje que Argo CD e Flux. [opengitops.dev](https://opengitops.dev) documenta os princípios do GitOps de forma independente de ferramenta.

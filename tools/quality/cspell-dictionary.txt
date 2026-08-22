@@ -373,3 +373,5 @@ Conffile
 sysstat
 zram
 stakater
+instanceLabelKey
+resourceTrackingMethod
