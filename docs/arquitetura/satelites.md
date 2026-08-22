@@ -54,7 +54,9 @@ Um serviço migrado não é implantado do zero, ele já está no ar, normalmente
 
 Por isso a migração segue o [gate de drift zero](gate-de-drift-zero.md): a `Application` nasce sem bloco `automated`, e o `automated` só é ligado depois que `argocd app diff` sai vazio. Diff vazio prova que a adoção reproduz o estado. Qualquer melhoria pretendida, como acrescentar TLS a um `Ingress` que não tinha, entra num passo seguinte, para que ninguém confunda "o chart mudou o que roda" com "o chart não reproduz o que roda".
 
-O rastreio de posse do Argo CD neste cluster usa a chave `argocd.argoproj.io/instance`, e não `app.kubernetes.io/instance`. Isso é o que permite adotar um release Helm sem disputar o label que o próprio chart já escreve.
+O rastreio de posse do Argo CD neste cluster é feito por **anotação**, não por label: cada recurso adotado recebe `argocd.argoproj.io/tracking-id`, que carrega o nome da `Application`, o grupo, o tipo e o caminho do recurso. É o padrão do Argo CD 3.x, e vale mesmo com o `argocd-cm` não declarando `application.resourceTrackingMethod`, porque o padrão implícito mudou de `label` para `annotation`. O `application.instanceLabelKey` que o `argocd-cm` declara (`argocd.argoproj.io/instance`) fica sem efeito nesse modo, o que engana quem confere pelo label e conclui que um recurso adotado não está sendo rastreado.
+
+A anotação é preferível justamente por isso: adotar um release Helm não disputa nenhum label que o chart já escreve, e o valor único por recurso permite ao Argo CD detectar dois `Application` reivindicando o mesmo objeto.
 
 O release Helm antigo não desaparece sozinho. O Secret de release fica órfão no namespace depois da adoção, e sai junto da variável de ambiente que guardava os values, como parte da limpeza.
 
@@ -68,6 +70,12 @@ Fundir os dois num chart só seria possível, usando o mecanismo de alias de dep
 
 Nem todo recurso do namespace precisa entrar. Os dois `PersistentVolumeClaim` do `management-service`, o de uploads da API e o que guarda a sessão do WhatsApp no WAHA, ficaram sem declarar, por dois motivos que se somam: eles nunca pertenceram a release Helm nenhum, e a maior parte da especificação de um `PVC` é imutável depois de criado, então declarar não daria controle real, daria só a chance de um sync futuro tentar uma mudança impossível.
 
-Deixar de fora é seguro porque a poda do Argo CD só alcança recurso que carrega o label de rastreio da própria `Application`. Um `PVC` que nunca foi adotado não é candidato a poda, mesmo com `prune: true` ligado. Vale conferir esse label antes de ligar o sync automático, e não confiar na memória: `kubectl get pvc -n <namespace> -o jsonpath` no campo `argocd.argoproj.io/instance` tem que sair vazio.
+Deixar de fora é seguro porque a poda do Argo CD só alcança recurso que carrega a anotação de rastreio da própria `Application`. Um `PVC` que nunca foi adotado não é candidato a poda, mesmo com `prune: true` ligado. Vale conferir antes de ligar o sync automático, e não confiar na memória, mirando a anotação e não o label:
+
+```bash
+kubectl get pvc -n <namespace> -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.metadata.annotations.argocd\.argoproj\.io/tracking-id}{"\n"}{end}'
+```
+
+O campo tem que sair vazio para todo `PVC` que se pretende manter fora.
 
 O custo de deixar de fora é que o `PVC` vira estado não declarado, e recriar o namespace do zero não o traria de volta. É uma troca consciente, registrada aqui para que a próxima pessoa não a confunda com esquecimento.
