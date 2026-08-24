@@ -1,5 +1,0 @@
-apiVersion: v2
-name: rabbitmq-cluster
-description: RabbitmqCluster do RabbitMQ Cluster Operator, mensageria de produção
-type: application
-version: 0.1.0
