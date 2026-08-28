@@ -242,4 +242,12 @@ Mecanismo final: [Argo CD Image Updater](https://argocd-image-updater.readthedoc
 - [ ] **`web` e `authentication-service` ainda não migrados**: mesmas anotações a replicar, nenhuma peça de infraestrutura nova necessária (o `ImageUpdater` CR já cobre qualquer satélite `ladesa-ro-*` novo).
 - [ ] **Webhook de organização no GitHub ainda não criado**: token `gh` local não tinha o escopo `admin:org_hook`; pedido de elevação (`gh auth refresh -s admin:org_hook`) expirou sem aprovação a tempo. Falta: aprovar o fluxo de dispositivo e rodar a criação do webhook (evento `package`, URL `https://image-updater.ladesa.com.br/webhook?type=ghcr.io`). Até lá, o Image Updater funciona só por polling (padrão do controller, tipicamente ~2min).
 - [x] **Webhook de organização criado**: id `671516711`, evento `package`, `active: true`.
-- [ ] **Projeto `foundation-image-updater-w0cw` criado no Infisical, chave ainda não confirmada**: falta garantir que existe uma chave `webhook.ghcr-secret` no ambiente `prod` desse projeto, com o mesmo valor configurado no webhook do GitHub, sem isso o `InfisicalSecret` do cluster fica sem conteúdo pra sincronizar e o webhook rejeita toda requisição por falta de secret.
+- [x] **Projeto `foundation-image-updater-w0cw` criado no Infisical, chave `webhook.ghcr-secret` registrada em `prod`**.
+
+## Webhook do GitHub pro `argocd-server`, reduzindo o delay de `root`, 2026-08-28
+
+Diferente do webhook do GHCR (que acorda o Image Updater), este é pro próprio `argocd-server`: reduz o delay do ciclo de polling padrão do Argo CD pra detectar mudanças em `main` do `infrastructure` (o que afeta principalmente o `root`, hoje sem `automated.selfHeal` reativo a webhook, só a polling).
+
+- [x] **`root` ganhou `syncPolicy.automated`**: `argocd/root/application.yaml`, PR [#7](https://github.com/ladesa-ro/infrastructure/pull/7), mergeado. Ainda não aplicado no cluster: este arquivo é `kubectl apply`'d pelo Ansible, não pelo próprio Argo CD (ver [Trabalho inicial da organização](#trabalho-inicial-da-organizacao-ainda-nao-retomado)), falta rerodar o playbook contra `ldsa`.
+- [x] **Webhook de organização no GitHub criado**: evento `push`, URL `https://argocd.ladesa.com.br/api/webhook`.
+- [ ] **Secret do webhook (`webhook.github.secret` em `argocd-secret`) ainda não aplicado no cluster**: precisa entrar como manifest cifrado novo em `infrastructure-vault` (`secrets/k8s/argocd/webhook-github-secret.yaml`), registrado em `argocd_bootstrap_kubernetes_manifests_vault` (feito, `host_vars/ldsa.yml`). Falta: criar e cifrar o arquivo no `infrastructure-vault` (senha do Ansible Vault, fora do alcance de quem não é o operador do node) e rerodar o playbook.

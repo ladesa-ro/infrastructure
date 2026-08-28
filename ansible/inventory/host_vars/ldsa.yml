@@ -21,3 +21,4 @@ argocd_bootstrap_kubernetes_manifests_vault:
   - "{{ vault_repo_dir }}/secrets/k8s/infisical/infisical-secrets.yaml"
   - "{{ vault_repo_dir }}/secrets/k8s/dados/postgres-superuser-bootstrap.yaml"
   - "{{ vault_repo_dir }}/secrets/k8s/dados/postgres-ladesa-rotated.yaml"
+  - "{{ vault_repo_dir }}/secrets/k8s/argocd/webhook-github-secret.yaml"
