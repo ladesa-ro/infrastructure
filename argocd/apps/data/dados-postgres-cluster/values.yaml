@@ -1,4 +1,4 @@
-image: ghcr.io/cloudnative-pg/postgresql:18.0-standard-trixie@sha256:e56be4982b17aa701b1263dbfc2fa95741177bbd3fe55d487a981e134d08625c
+image: ghcr.io/cloudnative-pg/postgresql:18.6-standard-trixie@sha256:e5e820a9083134141caac23cad1d6affd39101a9fefe7bf6cc07738a3fa89452
 
 instances: 1
 
