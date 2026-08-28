@@ -1,6 +1,7 @@
 argocd-image-updater:
   config:
     "webhook.enable": "true"
+    "watch.namespaces": "argocd"
   service:
     enabled: true
   ingress:
