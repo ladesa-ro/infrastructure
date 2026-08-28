@@ -1,0 +1,15 @@
+argocd-image-updater:
+  config:
+    "webhook.enable": "true"
+  service:
+    enabled: true
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hostname: image-updater.ladesa.com.br
+    annotations:
+      cert-manager.io/cluster-issuer: ladesa-ro-issuer-production
+    tls:
+      - secretName: image-updater-tls
+        hosts:
+          - image-updater.ladesa.com.br

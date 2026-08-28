@@ -1,0 +1,10 @@
+---
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: ladesa-ro-satellites
+  namespace: argocd
+spec:
+  applicationRefs:
+    - namePattern: "ladesa-ro-*"
+      useAnnotations: true

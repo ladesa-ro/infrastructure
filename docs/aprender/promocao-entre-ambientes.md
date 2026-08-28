@@ -8,6 +8,7 @@
 | Release separada do build | [Azure DevOps](#azure-devops-release-classico-e-environments-em-yaml) |
 | Environment + input manual | [GitHub Actions](#github-actions-environments-approvals-e-o-que-falta-nativamente) |
 | Snapshot, stage de pipeline, plugin, PR revisado | [Outras estratégias](#outras-estrategias-relevantes) |
+| GitOps nativo, promoção por estágio | [Kargo](#kargo-promocao-como-cidadao-de-primeira-classe-do-gitops) |
 | Comparação lado a lado | [Comparação entre os modelos](#comparacao-entre-os-modelos) |
 
 CI produz um artefato. Promoção é a etapa seguinte, e conceitualmente separada: decidir qual artefato específico, já construído, vai rodar em qual ambiente, e quando. As plataformas de CI/CD tratam essa etapa de formas bem diferentes: algumas têm um objeto de "release" separado do build, algumas modelam promoção como só mais um job de pipeline, e algumas assumem que git já é o registro de promoção e não precisam de UI nenhuma pra isso.
@@ -55,28 +56,49 @@ O que falta nativamente é o pedaço específico que o Azure DevOps oferece: esc
 
 **Jenkins**, sem conceito nativo de ambiente nem de release, historicamente resolve isso via plugin: o Copy Artifact Plugin copia artefato de um job pra outro, o Promoted Builds Plugin marca um build específico como "promovido" depois de critério manual ou automático, o que abre um job de deploy parametrizado com o número daquele build. É a versão "faça você mesmo" do que GitLab/Azure/Octopus oferecem prontos.
 
-**GitOps** (ver [Argo CD](argocd.md)) inverte a pergunta inteira: em vez de uma tela onde alguém escolhe "esta versão, para este ambiente", a versão desejada de cada ambiente já está declarada num arquivo, uma pasta ou branch por ambiente, cada um apontando pra uma tag de imagem. Promover é abrir um PR mudando essa referência (manualmente, ou automaticamente por uma ferramenta como o Argo CD Image Updater) e mergear, revisado como qualquer mudança de código; o agente de reconciliação (ver [pull vs. push](ci-cd.md#pull-vs-push-e-onde-o-runner-fica)) aplica sozinho a partir daí. Rastreabilidade e histórico de aprovação vivem no `git log`, não numa tela de release separada.
+**GitOps** (ver [Argo CD](argocd.md)) inverte a pergunta inteira: em vez de uma tela onde alguém escolhe "esta versão, para este ambiente", a versão desejada de cada ambiente já está declarada num arquivo, uma pasta ou branch por ambiente, cada um apontando pra uma tag de imagem. Existem duas formas de manter essa referência atualizada, e a diferença entre elas importa:
+
+- **Escrita em git**: algo (uma pessoa, ou uma ferramenta como o Argo CD Image Updater configurado em modo `write-back-method: git`) abre um PR mudando a referência, revisado como qualquer mudança de código, e o agente de reconciliação (ver [pull vs. push](ci-cd.md#pull-vs-push-e-onde-o-runner-fica)) aplica sozinho depois do merge. Rastreabilidade e histórico de aprovação vivem inteiros no `git log`.
+- **Patch direto no controller**: a mesma ferramenta, configurada em modo `write-back-method: argocd`, aplica a nova referência como parâmetro sobrescrito direto no objeto `Application` do Argo CD, sem passar por commit nenhum. Não existe PR pra revisar (o histórico de "o que rodou quando" vive no Argo CD, não no `git log`), mas também não existe fricção de aprovação nem depende da branch de destino estar desprotegida — é o modelo certo quando o "ambiente" em questão é um lugar onde ninguém precisaria aprovar a própria imagem que acabou de sair do CI de qualquer forma (`development`, por exemplo).
 
 ```mermaid
 flowchart LR
-    Tag[nova tag de imagem publicada] --> PR[PR mudando a referência no manifest do ambiente]
-    PR --> Revisao[revisado como código]
-    Revisao --> Merge[merge]
+    Tag[nova tag de imagem publicada] --> Escolha{write-back-method}
+    Escolha -->|git| PR[PR mudando a referência no manifest]
+    PR --> Revisao[revisado como código] --> Merge[merge]
+    Escolha -->|argocd| Patch[patch direto na Application]
     Merge --> Agente[agente de reconciliação observa]
+    Patch --> Agente
     Agente --> Ambiente[aplica sozinho no ambiente]
 ```
 
+## Kargo: promoção como cidadão de primeira classe do GitOps
+
+Onde o Argo CD Image Updater resolve "uma imagem nova chegou, atualiza esse ambiente sozinho", o [Kargo](https://kargo.io) resolve o passo seguinte, que nenhuma das ferramentas acima cobre de verdade: levar essa mesma versão, já validada num ambiente, através de uma sequência de ambientes — dev → staging → production — com controle explícito sobre quando e como cada promoção acontece.
+
+O vocabulário do Kargo tem três peças. Um `Warehouse` observa fontes de artefato (imagem de container, chart Helm, repositório git) e, quando encontra algo novo, empacota numa `Freight` — um bundle imutável referenciando exatamente aquelas versões, com sua própria identidade e histórico. Um `Stage` representa um ambiente (tipicamente, por trás dos panos, uma `Application` do Argo CD) e declara de onde aceita `Freight`: direto do `Warehouse`, ou só depois que outro `Stage` (anterior na cadeia) já promoveu aquela mesma `Freight` com sucesso. Promover é criar uma `Promotion` movendo uma `Freight` específica pra dentro de um `Stage` — manual (alguém aciona) ou automática (o `Stage` aceita qualquer `Freight` nova do upstream sozinho), e pode incluir verificação antes de considerar a promoção bem-sucedida (rodar um `AnalysisRun` do Argo Rollouts, por exemplo, checando métricas antes de liberar o próximo estágio).
+
+```mermaid
+flowchart LR
+    Warehouse[Warehouse observa o registry] --> Freight[Freight: bundle imutável da versão nova]
+    Freight --> Dev[Stage: dev, promoção automática]
+    Dev -->|verificado| Staging[Stage: staging, promoção manual]
+    Staging -->|aprovado + verificado| Prod[Stage: production]
+```
+
+A diferença de fundo em relação ao PR-revisado tradicional: no modelo de PR, "promover" é editar texto num arquivo, e a garantia de que dev/staging/production rodam versões relacionadas é uma convenção que alguém segue, não algo que a ferramenta impõe. No Kargo, a `Freight` é uma entidade de primeira classe com identidade própria — dá pra perguntar "quais estágios já rodaram esta `Freight` específica" ou "o que está em `production` agora, e de onde veio" sem reconstruir essa história a partir de commits. É o preço de mais uma ferramenta e mais um CRD pra operar, então só compensa quando existe de fato uma cadeia de ambientes pra promover — com um ambiente só, não tem o que uma `Freight` adicionaria sobre o que o Argo CD Image Updater já resolve sozinho.
+
 ## Comparação entre os modelos
 
-| Dimensão | GitLab | Azure DevOps | GitHub Actions | Octopus / Spinnaker | GitOps |
-|---|---|---|---|---|---|
-| Geração e persistência do artefato | Job de build na mesma pipeline, artefato vai pra um registry externo | Pipeline de build separado, publica num feed/artifact store próprio | Job de build no workflow, artefato em Actions Artifacts ou registry externo | Delegada a uma ferramenta de CI externa | Delegada a uma ferramenta de CI externa |
-| Separação CI/CD | Fundida (mesma pipeline, jobs diferentes) | Historicamente separada (build vs. release); YAML moderno funde | Fundida (mesmo workflow ou workflow separado por convenção) | Sempre separada (ferramenta só de deploy) | Sempre separada (Git é o meio) |
-| Selecionar versão específica pra promover | Limitado, geralmente a pipeline mais recente daquela branch | Nativo, dropdown na criação da release | Não nativo, via input manual de `workflow_dispatch` | Nativo (Octopus) / via stage dedicado (Spinnaker) | Nativo: qualquer commit/tag anterior, referenciado no PR |
-| Manual vs. automático | Ambos, `when: manual` por job | Ambos, por stage | Ambos, por ambiente | Ambos | Ambos, `sync` manual ou automático |
-| Approvals/gates | Ambientes protegidos, múltiplos aprovadores | Approvals + gates automatizados por stage | Required reviewers, wait timer, restrição de branch/tag | Aprovação por lifecycle (Octopus) / Manual Judgment (Spinnaker) | Revisão de PR |
-| Rastreabilidade | Histórico de pipeline e ambiente | Histórico de release, vinculado ao build de origem | Deployment objects via API | Histórico de release (Octopus) / execução (Spinnaker) | `git log` do repositório de manifests |
-| Rollback | Reimplantar job anterior manualmente | Reimplantar release anterior, um clique | Reimplantar workflow run anterior (limitado) | Reimplantar release anterior (nativo) | Reverter o commit/PR |
+| Dimensão | GitLab | Azure DevOps | GitHub Actions | Octopus / Spinnaker | GitOps (PR) | GitOps (Kargo) |
+|---|---|---|---|---|---|---|
+| Geração e persistência do artefato | Job de build na mesma pipeline, artefato vai pra um registry externo | Pipeline de build separado, publica num feed/artifact store próprio | Job de build no workflow, artefato em Actions Artifacts ou registry externo | Delegada a uma ferramenta de CI externa | Delegada a uma ferramenta de CI externa | Delegada a uma ferramenta de CI externa |
+| Separação CI/CD | Fundida (mesma pipeline, jobs diferentes) | Historicamente separada (build vs. release); YAML moderno funde | Fundida (mesmo workflow ou workflow separado por convenção) | Sempre separada (ferramenta só de deploy) | Sempre separada (Git é o meio) | Sempre separada (Git/registry são o meio) |
+| Selecionar versão específica pra promover | Limitado, geralmente a pipeline mais recente daquela branch | Nativo, dropdown na criação da release | Não nativo, via input manual de `workflow_dispatch` | Nativo (Octopus) / via stage dedicado (Spinnaker) | Nativo: qualquer commit/tag anterior, referenciado no PR | Nativo: qualquer `Freight` já descoberta pelo `Warehouse` |
+| Manual vs. automático | Ambos, `when: manual` por job | Ambos, por stage | Ambos, por ambiente | Ambos | Ambos, `sync` manual ou automático | Ambos, por `Stage` |
+| Approvals/gates | Ambientes protegidos, múltiplos aprovadores | Approvals + gates automatizados por stage | Required reviewers, wait timer, restrição de branch/tag | Aprovação por lifecycle (Octopus) / Manual Judgment (Spinnaker) | Revisão de PR | `Promotion` manual + verificação via `AnalysisRun` |
+| Rastreabilidade | Histórico de pipeline e ambiente | Histórico de release, vinculado ao build de origem | Deployment objects via API | Histórico de release (Octopus) / execução (Spinnaker) | `git log` do repositório de manifests | Objetos `Freight`/`Promotion`, identidade própria por versão |
+| Rollback | Reimplantar job anterior manualmente | Reimplantar release anterior, um clique | Reimplantar workflow run anterior (limitado) | Reimplantar release anterior (nativo) | Reverter o commit/PR | Promover uma `Freight` anterior de volta |
 
 ## Pra ir além
 
