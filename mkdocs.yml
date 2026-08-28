@@ -112,6 +112,7 @@ nav:
       - Segredos: arquitetura/segredos.md
       - Foundation: arquitetura/foundation.md
       - Repositórios satélite: arquitetura/satelites.md
+      - Rollout de imagens: arquitetura/rollout-de-imagens.md
       - Gate de drift zero: arquitetura/gate-de-drift-zero.md
       - Lições do bootstrap: arquitetura/licoes-do-bootstrap.md
   - Operação:
