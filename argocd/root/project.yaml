@@ -86,3 +86,5 @@ spec:
       kind: Database
     - group: k8s.mariadb.com
       kind: MariaDB
+    - group: argocd-image-updater.argoproj.io
+      kind: ImageUpdater
