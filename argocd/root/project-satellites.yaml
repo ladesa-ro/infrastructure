@@ -12,7 +12,6 @@ spec:
     - https://github.com/ladesa-ro/management-service.git
     - https://github.com/ladesa-ro/timetable-generator.git
     - https://github.com/ladesa-ro/authentication-service.git
-    - https://github.com/ladesa-ro/interns-webapp.git
     - https://stakater.github.io/stakater-charts
   destinations:
     - server: https://kubernetes.default.svc
