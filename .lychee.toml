@@ -16,4 +16,6 @@ exclude = [
   # infrastructure-vault é privado: 404 pra requisição não autenticada é o
   # comportamento esperado do GitHub pra repositório privado, não um link quebrado.
   "^https://github\\.com/ladesa-ro/infrastructure-vault(/.*)?$",
+  # iplfederation.org é lento e frequentemente resulta em timeouts em runners de CI
+  "^https://www\\.iplfederation\\.org(/.*)?$",
 ]
